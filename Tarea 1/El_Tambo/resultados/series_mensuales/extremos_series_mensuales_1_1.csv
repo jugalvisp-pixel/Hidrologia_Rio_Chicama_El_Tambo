@@ -1,0 +1,9 @@
+variable,unidades,tipo,fecha,valor
+P_L_mm_mes,mm/mes,máximo,1998-03,414.47
+P_L_mm_mes,mm/mes,mínimo,2012-07,0.18
+Q_m3_s,m³/s,máximo,1998-03,678.26
+Q_m3_s,m³/s,mínimo,2004-09,0.39
+R_mm_mes,mm/mes,máximo,1998-03,836.56
+R_mm_mes,mm/mes,mínimo,2004-09,0.46
+T_C,°C,máximo,2016-01,17.75
+T_C,°C,mínimo,2001-01,15.05

@@ -1,0 +1,12 @@
+{
+  "producto": "PISCOp v2p1_update",
+  "doi": "10.6084/m9.figshare.21127423.v2",
+  "proveedor": "SENAMHI (figshare)",
+  "archivos": {
+    "PISCOp_monthly.nc": {
+      "url": "https://ndownloader.figshare.com/files/37488715",
+      "md5": "038d625efbec91048ea1fe1210503d16"
+    }
+  },
+  "descargado": "2026-10-08"
+}

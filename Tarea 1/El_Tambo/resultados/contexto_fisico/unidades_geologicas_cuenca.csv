@@ -1,0 +1,26 @@
+NAME,UNIDAD,DESCRIP,km2,pct,grupo_hidrogeologico
+Ki-ca,Formación Carhuaz,"Areniscas gris verdosas,  lutitas negras y limolitas marrones.",530.303,24.438,3
+Ki-chi,Formación Chimú,"Areniscas cuarzosas blancas, limoarcillitas grises y niveles de carbón.",448.954,20.689,2
+Ki-f,Formación Farrat,"Areniscas blancas, areniscas y limolitas rojizas, microconglomerados con clastos de cuarcitas.",420.474,19.377,2
+PN-c,Grupo Calipuy,"Andesitas, dacitas y riolitas de color gris pardo, marrón, morado, en bancos gruesos. conglomerados y lutitas marón rojizos.",171.157,7.887,5
+Ki-chu,Formación Chúlec,"Calizas arenosas, areniscas calcareas en capas medianas, coloraciones parduzcas a beige.",123.967,5.713,4
+Js-ch,Formación Chicama,"Areniscas cuarzosas, lutitas oscuras pizarrosas.",123.144,5.675,3
+Ki-s,Formación Santa,"Areniscas, cuarcitas, lutitas, niveles de carbón",77.185,3.557,3
+Ki-pt,Formación Pariatambo,"Lutitas grises a negras, calizas bituminosas nodulares",44.239,2.039,4
+Ki-i,Formación Inca,Areniscas calcáreas y lutitas ferruginosas,41.234,1.9,3
+Qh-al,Depósito aluvial,"Acumulación de grava, arena, limo y arcilla con clastos subangulosos a angulosos de diferente composición.",34.072,1.57,1
+KsP-gd,Granodiorita,Granodiorita,28.846,1.329,6
+Pp-gd,Granodiorita,Granodiorita.,21.862,1.007,6
+Ks-pu,Grupo Pulluicana,Calizas micríticas y calizas margosas con nódulos calcáreos,20.941,0.965,4
+Q-fl,Depósito fluvial,"Acumulaciones de gravas, arenas, limos y arcillas transportadas en el cauce de río y quebradas.",17.817,0.821,1
+KsP-h,Formación Huaylas,Conglomerados rojos en estratos gruesos.,17.532,0.808,3
+Ks-ca,Formación Cajamarca,Calizas gris oscuras a gris azuladas asociados a secuencias margosas verdosas.,11.377,0.524,4
+"Ki-s,ca","Formación Santa, Carhuaz","Calizas color azul grises, limoarcillitas color gris a verde, capas de yeso, limoarcillitas rojizas.",10.689,0.493,3
+"Ks-qu,m","Grupo Quilquiñán, Mujarrún","Calizas nodulares macizas, margas y lutitas pardo amarillentas fosilíferas",8.234,0.379,4
+P-and,Andesita,Andesita,5.279,0.243,5
+Q-gl,Depósito glaciar,"Depósitos morrénicos, bloques angulosos rellenados con arcillas, limos y arenas.",3.324,0.153,1
+P-sp,Formación San Pablo,"Tobas blanco amarillentas, areniscas rojizas, aglomerados y piroclástos",2.463,0.114,5
+P-da,Dacita,Dacita,2.421,0.112,5
+P-ch,Formación Chilete,"Andesitas, tobas blanquecinas, areniscas tobáceas y conglomerados lenticulares",2.188,0.101,5
+KP-gr,Granito,Granito,1.958,0.09,6
+Laguna,Laguna,Laguna,0.272,0.013,7

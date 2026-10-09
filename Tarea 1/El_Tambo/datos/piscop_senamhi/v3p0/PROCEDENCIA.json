@@ -1,0 +1,20 @@
+{
+  "producto": "PISCOp v3p0",
+  "doi": "10.6084/m9.figshare.32411886.v1",
+  "proveedor": "SENAMHI (figshare)",
+  "archivos": {
+    "PISCOp_m.nc": {
+      "url": "https://ndownloader.figshare.com/files/64968111",
+      "md5": "fbf4f19b5d537183a75d08615c404010"
+    },
+    "readme.txt": {
+      "url": "https://ndownloader.figshare.com/files/64968015",
+      "md5": "f8940f5331d9710a95e135cd0d2c4b56"
+    },
+    "PISCOp_d.nc": {
+      "url": "https://ndownloader.figshare.com/files/64968183",
+      "md5": "01a7259f4a4fa38158496e3670bb1794"
+    }
+  },
+  "descargado": "2026-10-08"
+}

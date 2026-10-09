@@ -1,0 +1,23 @@
+,valor
+Área A (km2),2169.996
+Área CAMELS-PE (km2),2171.585
+Diferencia de área vs CAMELS (%),-0.073
+IoU con polígono CAMELS-PE,0.994
+Perímetro raster (km),338.64
+Perímetro suavizado P (km),263.662
+Coef. de compacidad Kc = 0.282 P/sqrt(A),1.596
+Longitud río principal L (km),84.373
+Factor de forma Kf = A/L^2,0.305
+Cota mínima (m s.n.m.),678.493
+Cota máxima (m s.n.m.),4308.467
+Cota media (m s.n.m.),2555.833
+Cota mediana (m s.n.m.),2577.869
+Pendiente media de la cuenca (°),26.94
+Cota naciente río principal (m),4193.45
+Cota cierre (m),678.493
+Pendiente media río principal (m/m),0.042
+"Longitud red de drenaje, umbral 5.0 km2 (km)",699.76
+Densidad de drenaje Dd (km/km2),0.322
+Orden de Strahler máximo,6.0
+Coord. cierre ajustado UTM17S E (m),753006.562
+Coord. cierre ajustado UTM17S N (m),9162129.002

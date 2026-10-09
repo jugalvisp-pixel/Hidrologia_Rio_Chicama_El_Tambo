@@ -1,0 +1,2 @@
+gauge_id,gauge_name,gauge_region,gauge_lat,gauge_lon,gauge_elev,gauge_record_start,gauge_record_end,gauge_perc_obs,name_cat,is_nested,nested_group_id,nested_group_size,downstream_gauge_id,upstream_gauge_id
+PE_47E0A2A8,El Tambo,Pacific,-7.574,-78.707,684,1998-01-01,2025-12-31,60.31,Cuenca Chicama,True,PE_211001,4,PE_211001,PE_472E74CC

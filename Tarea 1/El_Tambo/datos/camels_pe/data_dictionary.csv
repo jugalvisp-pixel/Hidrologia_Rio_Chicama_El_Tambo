@@ -1,0 +1,95 @@
+folder,file,category,variable,description,unit,source
+01_metadata,stations.csv,metadata,gauge_id,Catchment identifier provided by SENAMHI,-,SENAMHI
+01_metadata,stations.csv,metadata,gauge_name,Gauge name provided by SENAMHI,-,SENAMHI
+01_metadata,stations.csv,metadata,gauge_region,Hydrographic region,-,SENAMHI
+01_metadata,stations.csv,metadata,gauge_lat,Gauge latitude (WGS84),degN,SENAMHI
+01_metadata,stations.csv,metadata,gauge_lon,Gauge longitude (WGS84),degE,SENAMHI
+01_metadata,stations.csv,metadata,gauge_elev,Gauge elevation,m_asl,SENAMHI
+01_metadata,stations.csv,metadata,gauge_record_start,Start date of streamflow records,-,SENAMHI
+01_metadata,stations.csv,metadata,gauge_record_end,End date of streamflow records,-,SENAMHI
+01_metadata,stations.csv,metadata,gauge_perc_obs,Percentage of valid streamflow records (19812025),%,Derived from data
+01_metadata,stations.csv,metadata,name_cat,Official catchment name,-,ANA
+01_metadata,stations.csv,metadata,is_nested,Indicates whether the gauge belongs to a nested catchment system,logical,Derived from spatial topology
+01_metadata,stations.csv,metadata,nested_group_id,Gauge identifier of the terminal downstream gauge within the nested catchment,-,Derived from spatial topology
+01_metadata,stations.csv,metadata,nested_group_size,Number of gauges belonging to the same nested catchment group,-,Derived from spatial topology
+01_metadata,stations.csv,metadata,downstream_gauge_id,Gauge identifier of the immediately downstream nested catchment,-,Derived from spatial topology
+01_metadata,stations.csv,metadata,upstream_gauge_id,Gauge identifier of the immediately upstream nested catchment,,Derived from spatial topology
+02_attributes,climatic_indices.csv,climatic,gauge_id,Catchment identifier,,SENAMHI
+02_attributes,climatic_indices.csv,climatic,p_mean,Mean daily precipitation,mm/day,PISCOp v2.1
+02_attributes,climatic_indices.csv,climatic,pet_mean,Mean daily potential evapotranspiration (PET),mm/day,PISCOeo_pm v1.0
+02_attributes,climatic_indices.csv,climatic,aridity,Ratio of mean PET to mean precipitation,,PISCOeo_pm v1.0 and PISCOp v2.1
+02_attributes,climatic_indices.csv,climatic,p_seasonality,Seasonality and timing of precipitation,,PISCOp v2.1
+02_attributes,climatic_indices.csv,climatic,high_prec_freq,Frequency of high precipitation days,days/year,PISCOp v2.1
+02_attributes,climatic_indices.csv,climatic,high_prec_dur,Average duration of high precipitation events,days,PISCOp v2.1
+02_attributes,climatic_indices.csv,climatic,high_prec_timing,Season during which most high precipitation days occur,season,PISCOp v2.1
+02_attributes,climatic_indices.csv,climatic,low_prec_freq,Frequency of dry days,days/year,PISCOp v2.1
+02_attributes,climatic_indices.csv,climatic,low_prec_dur,Average duration of dry periods,days,PISCOp v2.1
+02_attributes,climatic_indices.csv,climatic,low_prec_timing,Season during which most dry days occur,season,PISCOp v2.1
+02_attributes,geologic_attributes.csv,geologic,geol_class_1st,Most common geologic class in the catchment,,GLiM
+02_attributes,geologic_attributes.csv,geologic,geol_class_1st_perc,Percentage of the catchment covered by the most common geologic class,%,GLiM
+02_attributes,geologic_attributes.csv,geologic,geol_class_2nd,Second most common geologic class in the catchment,,GLiM
+02_attributes,geologic_attributes.csv,geologic,geol_class_2nd_perc,Percentage of the catchment covered by the second most common geologic class,%,GLiM
+02_attributes,geologic_attributes.csv,geologic,inter_volca_rocks_perc,Percentage of the catchment covered by intermediate volcanic rocks,%,GLiM
+02_attributes,geologic_attributes.csv,geologic,geol_porosity,Subsurface porosity of the catchment,,GLHYMPS v2.0
+02_attributes,geologic_attributes.csv,geologic,geol_permeability,Average catchment area-weighted subsurface permeability,log10(m2),GLHYMPS v2.0
+02_attributes,human_intervention_attributes.csv,human_intervention,surface_adh_n,Number of surface-water availability accreditation records within the catchment,,ANA
+02_attributes,human_intervention_attributes.csv,human_intervention,surface_adh_vol,Total volume associated with surface-water availability accreditation records within the catchment,hm3/year,ANA
+02_attributes,human_intervention_attributes.csv,human_intervention,surface_adh_use,Dominant use category of surface-water availability accreditation records within the catchment,,ANA
+02_attributes,human_intervention_attributes.csv,human_intervention,groundwater_adh_n,Number of groundwater availability accreditation records within the catchment,,ANA
+02_attributes,human_intervention_attributes.csv,human_intervention,groundwater_adh_vol,Total volume associated with groundwater availability accreditation records within the catchment,hm3/year,ANA
+02_attributes,human_intervention_attributes.csv,human_intervention,groundwater_adh_use,Dominant use category of groundwater availability accreditation records within the catchment,,ANA
+02_attributes,human_intervention_attributes.csv,human_intervention,reservoir_n,Number of reservoirs located within the catchment,,ANA
+02_attributes,human_intervention_attributes.csv,human_intervention,reservoir_vol,Total reservoir storage capacity within the catchment,hm3,ANA
+02_attributes,human_intervention_attributes.csv,human_intervention,reservoir_use,Dominant reservoir use category within the catchment,,ANA
+02_attributes,hydrological_signatures.csv,hydrological,q_mean,Mean daily streamflow,mm/day,SENAMHI and PISCO-ARNOVIC v1.1
+02_attributes,hydrological_signatures.csv,hydrological,runoff_ratio,Ratio between mean daily streamflow and mean daily precipitation,,SENAMHI and PISCOp v2.1
+02_attributes,hydrological_signatures.csv,hydrological,stream_elas,Elasticity of streamflow with respect to precipitation,,SENAMHI and PISCOp v2.1
+02_attributes,hydrological_signatures.csv,hydrological,baseflow_index,Ratio of mean baseflow to mean total discharge,,SENAMHI
+02_attributes,hydrological_signatures.csv,hydrological,slope_fdc,Slope of the flow duration curve,,SENAMHI
+02_attributes,hydrological_signatures.csv,hydrological,hfd_mean,Mean half-flow date,day_of_year,SENAMHI
+02_attributes,hydrological_signatures.csv,hydrological,Q5,5th percentile of streamflow,mm/day,SENAMHI
+02_attributes,hydrological_signatures.csv,hydrological,Q95,95th percentile of streamflow,mm/day,SENAMHI
+02_attributes,hydrological_signatures.csv,hydrological,high_q_freq,Frequency of high-flow days,days/year,SENAMHI
+02_attributes,hydrological_signatures.csv,hydrological,high_q_dur,Average duration of high-flow events,days,SENAMHI
+02_attributes,hydrological_signatures.csv,hydrological,low_q_freq,Frequency of low-flow days,1/year,SENAMHI
+02_attributes,hydrological_signatures.csv,hydrological,low_q_dur,Average duration of low-flow events,days,SENAMHI
+02_attributes,hydrological_signatures.csv,hydrological,zero_q_freq,Percentage of days with zero discharge,%,SENAMHI
+02_attributes,landcover_attributes.csv,landcover,agricul_perc,Percentage of the catchment covered by agricultural area,%,Mapbiomas 2025
+02_attributes,landcover_attributes.csv,landcover,forest_perc,Percentage of the catchment covered by forest formation,%,Mapbiomas 2025
+02_attributes,landcover_attributes.csv,landcover,non_veget_perc,Percentage of the catchment covered by non-vegetated area,%,Mapbiomas 2025
+02_attributes,landcover_attributes.csv,landcover,non_woody_perc,Percentage of the catchment covered by non-woody natural formation,%,Mapbiomas 2025
+02_attributes,landcover_attributes.csv,landcover,water_perc,Percentage of the catchment covered by water bodies,%,Mapbiomas 2025
+02_attributes,landcover_attributes.csv,landcover,non_forest_perc,Percentage of the catchment covered by non-forest natural formation,%,Mapbiomas 2025
+02_attributes,landcover_attributes.csv,landcover,non_identi_perc,Percentage of the catchment covered by non-identified land cover,%,Mapbiomas 2025
+02_attributes,landcover_attributes.csv,landcover,land_dominant_class,Dominant land cover class,,Mapbiomas 2025
+02_attributes,soil_attributes.csv,soil,inceptisols_perc,Percentage of catchment covered by inceptisols,%,DSOLMap
+02_attributes,soil_attributes.csv,soil,entisols_perc,Percentage of catchment covered by entisols,%,DSOLMap
+02_attributes,soil_attributes.csv,soil,alfisols_perc,Percentage of catchment covered by alfisols,%,DSOLMap
+02_attributes,soil_attributes.csv,soil,ultisols_perc,Percentage of catchment covered by ultisols,%,DSOLMap
+02_attributes,soil_attributes.csv,soil,aridisols_perc,Percentage of catchment covered by aridisols,%,DSOLMap
+02_attributes,soil_attributes.csv,soil,gelisols_perc,Percentage of catchment covered by gelisols,%,DSOLMap
+02_attributes,soil_attributes.csv,soil,oxisols_perc,Percentage of catchment covered by oxisols,%,DSOLMap
+02_attributes,soil_attributes.csv,soil,mollisols_perc,Percentage of catchment covered by mollisols,%,DSOLMap
+02_attributes,soil_attributes.csv,soil,vertisols_perc,Percentage of catchment covered by vertisols,%,DSOLMap
+02_attributes,soil_attributes.csv,soil,soil_dominant_class,Dominant soil type,,DSOLMap
+02_attributes,topographic_attributes.csv,topographic,area,Catchment area,km2,FABDEM v1.2
+02_attributes,topographic_attributes.csv,topographic,perimeter,Catchment perimeter,km,FABDEM v1.2
+02_attributes,topographic_attributes.csv,topographic,elev_min,Catchment minimum elevation,m_asl,FABDEM v1.2
+02_attributes,topographic_attributes.csv,topographic,elev_max,Catchment maximum elevation,m_asl,FABDEM v1.2
+02_attributes,topographic_attributes.csv,topographic,elev_mean,Catchment mean elevation,m_asl,FABDEM v1.2
+02_attributes,topographic_attributes.csv,topographic,elev_median,Catchment median elevation,m_asl,FABDEM v1.2
+02_attributes,topographic_attributes.csv,topographic,slope_mean,Catchment mean slope,m/km,FABDEM v1.2
+03_timeseries,timeseries.csv,timeseries,date,Date (YYYY-MM-DD),,Derived
+03_timeseries,timeseries.csv,timeseries,gauge_id,Unique gauge identifier (PE_xxxxx),,SENAMHI
+03_timeseries,timeseries.csv,timeseries,prec,Daily precipitation,mm/day,PISCOp v2.1
+03_timeseries,timeseries.csv,timeseries,prec_var,Precipitation variance,mm2/day2,PISCOp v2.1
+03_timeseries,timeseries.csv,timeseries,flow_obs,Observed streamflow,mm/day,Observed stations
+03_timeseries,timeseries.csv,timeseries,flow_sim,Simulated streamflow,mm/day,PISCO-ARNOVIC v1.1
+03_timeseries,timeseries.csv,timeseries,pet,Potential evapotranspiration,mm/day,PISCOeo_pm v1.0
+03_timeseries,timeseries.csv,timeseries,tmin,Minimum air temperature,degC,PISCOt v1.2
+03_timeseries,timeseries.csv,timeseries,tmean,Mean air temperature,degC,PISCOt v1.2
+03_timeseries,timeseries.csv,timeseries,tmax,Maximum air temperature,degC,PISCOt v1.2
+03_timeseries,timeseries.csv,timeseries,srad,Surface solar radiation,MJ/m2/day,ERA5-Land
+03_timeseries,timeseries.csv,timeseries,vprp,Vapor pressure,hPa,ERA5-Land
+04_geospatial,camels_pe_gauges.gpkg,geospatial,gauges,Geospatial layer containing gauge outlet locations,,Derived
+04_geospatial,camels_pe_catchments.gpkg,geospatial,catchments,Geospatial layer containing catchment boundaries,,Derived

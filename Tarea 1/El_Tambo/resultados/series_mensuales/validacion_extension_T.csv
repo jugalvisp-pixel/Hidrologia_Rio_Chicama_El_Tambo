@@ -1,0 +1,9 @@
+indicador,valor
+ajuste,1998-01 a 2010-12
+evaluacion,2011-01 a 2020-12
+n_eval,120
+sesgo_C,-0.051
+MAE_C,0.191
+RMSE_C,0.236
+r,0.891
+MAE_climatologia_C,0.405

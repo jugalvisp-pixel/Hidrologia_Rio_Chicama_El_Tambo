@@ -1,0 +1,7 @@
+# Created by venv; see https://docs.python.org/3/library/venv.html
+*
+# Excepción: los códigos del proyecto sí se suben (el entorno virtual no)
+!.gitignore
+!Codigos/
+!Codigos/**
+Codigos/**/__pycache__/

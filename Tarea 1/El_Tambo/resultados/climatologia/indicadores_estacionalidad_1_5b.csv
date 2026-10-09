@@ -1,0 +1,13 @@
+muestra,variable,mes_max,max,mes_min,min,amplitud,var_H1_pct,var_H2_pct,total_anual_medio,amplitud_relativa,SI,PCI,centroide_mes,centroide,concentracion,n_picos,picos,meses_humedos,pct_en_dic_abr,meses_secos_gaussen,regimen
+periodo común 1998-01 a 2025-08,P_L,Mar,213.239,Jul,3.25,209.989,77.981,14.616,840.587,2.998,0.786,15.396,2.064,Feb (2.06),0.575,1.0,Mar,"5: Ene, Feb, Mar, Abr, Dic",80.967,"5: May, Jun, Jul, Ago, Sep",unimodal
+periodo común 1998-01 a 2025-08,P_I,Mar,135.126,Ago,6.266,128.86,72.557,14.294,542.54,2.85,0.632,13.693,1.974,Ene (1.97),0.483,1.0,Mar,"5: Ene, Feb, Mar, Abr, Dic",73.25,"5: May, Jun, Jul, Ago, Sep",unimodal
+periodo común 1998-01 a 2025-08,R,Abr,107.526,Sep,3.724,103.802,69.956,19.853,380.021,3.278,0.891,19.085,3.454,Mar (3.45),0.672,1.0,Abr,"4: Feb, Mar, Abr, May",76.208,,unimodal
+periodo común 1998-01 a 2025-08,T,Sep,16.723,Jun,16.103,0.619,33.324,37.86,,,,,,,,,,,,,
+subperiodo 1998–2011,P_L,Mar,216.072,Ago,3.005,213.067,77.948,15.993,855.141,2.99,0.798,15.72,2.079,Feb (2.08),0.588,1.0,Mar,"5: Ene, Feb, Mar, Abr, Dic",81.553,"5: May, Jun, Jul, Ago, Sep",unimodal
+subperiodo 1998–2011,P_I,Mar,143.773,Ago,6.805,136.968,69.946,15.733,565.314,2.907,0.632,13.9,1.943,Ene (1.94),0.483,1.0,Mar,"5: Ene, Feb, Mar, Abr, Dic",73.286,"5: May, Jun, Jul, Ago, Sep",unimodal
+subperiodo 1998–2011,R,Mar,145.774,Oct,3.951,141.823,63.762,21.127,417.546,4.076,0.922,21.022,3.309,Mar (3.31),0.697,1.0,Mar,"4: Feb, Mar, Abr, May",79.459,,unimodal
+subperiodo 1998–2011,T,Sep,16.456,Jul,15.898,0.558,19.554,51.249,,,,,,,,,,,,,
+subperiodo 2012–2025-08,P_L,Mar,210.406,Jul,2.666,207.74,76.926,13.128,826.655,3.016,0.774,15.162,2.045,Feb (2.04),0.561,1.0,Mar,"5: Ene, Feb, Mar, Abr, Dic",80.387,"5: May, Jun, Jul, Ago, Sep",unimodal
+subperiodo 2012–2025-08,P_I,Mar,126.478,Ago,5.727,120.752,75.029,12.64,519.126,2.791,0.633,13.536,2.012,Feb (2.01),0.484,1.0,Mar,"5: Ene, Feb, Mar, Abr, Dic",73.319,"6: May, Jun, Jul, Ago, Sep, Nov",unimodal
+subperiodo 2012–2025-08,R,Abr,113.193,Sep,3.33,109.863,68.328,17.648,342.342,3.851,0.854,18.562,3.649,Mar (3.65),0.648,1.0,Abr,"4: Feb, Mar, Abr, May",72.191,,unimodal
+subperiodo 2012–2025-08,T,Sep,17.009,Jun,16.252,0.758,43.798,24.421,,,,,,,,,,,,,

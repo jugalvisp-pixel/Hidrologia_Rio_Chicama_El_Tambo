@@ -1,0 +1,27 @@
+# --- Raíz: solo se sube lo listado aquí ---
+/*
+!/.gitignore
+!/README.md
+!/ESTADO_PROYECTO.md
+!/requirements.txt
+!/visor_resultados.html
+!/Hidrologiat1/
+!/Tarea 1/
+
+# --- Tarea 1: solo la cuenca El Tambo (datos recortados + resultados) ---
+/Tarea 1/*
+!/Tarea 1/El_Tambo/
+
+# Datos pesados o regenerables con los scripts de descarga (06, 07a, 13)
+/Tarea 1/El_Tambo/datos/dem/
+/Tarea 1/El_Tambo/datos/geologia/
+/Tarea 1/El_Tambo/datos/piscop_senamhi/**/*.nc
+!/Tarea 1/El_Tambo/datos/piscop_senamhi/v3p0/PISCOp_v3_d_El_Tambo_recorte.nc
+
+# --- Nunca subir ---
+__pycache__/
+*.pyc
+.cdsapirc*
+_netrc
+.netrc
+*.env

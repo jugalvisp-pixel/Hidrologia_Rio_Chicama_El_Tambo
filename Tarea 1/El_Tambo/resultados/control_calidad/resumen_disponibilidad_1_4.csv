@@ -1,0 +1,9 @@
+variable,periodo,completo,escalado,excluido,sin_dato,pct_dias_faltantes
+P_L,registro completo 1981-01 a 2025-12,540,0,0,0,0.0
+P_L,periodo común 1998-01 a 2025-08,332,0,0,0,0.0
+P_I,registro completo 1981-01 a 2025-12,332,0,0,208,
+P_I,periodo común 1998-01 a 2025-08,332,0,0,0,
+Q,registro completo 1981-01 a 2025-12,256,53,26,205,39.69
+Q,periodo común 1998-01 a 2025-08,252,53,26,1,3.11
+T,registro completo 1981-01 a 2025-12,480,0,0,60,11.11
+T,periodo común 1998-01 a 2025-08,276,0,0,56,16.86
