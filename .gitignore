@@ -1,6 +1,7 @@
 # --- Raíz: solo se sube lo listado aquí ---
 /*
 !/.gitignore
+!/.nojekyll
 !/README.md
 !/ESTADO_PROYECTO.md
 !/requirements.txt
