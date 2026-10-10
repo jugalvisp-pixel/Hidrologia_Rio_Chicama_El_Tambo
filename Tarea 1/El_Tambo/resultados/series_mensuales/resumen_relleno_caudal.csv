@@ -1,0 +1,5 @@
+R_flag_obs,completo,escalado,interpolado_diario,modelo_mensual
+completo,252,0,0,0
+escalado,0,0,53,0
+excluido,0,3,23,0
+sin_dato,0,0,0,1

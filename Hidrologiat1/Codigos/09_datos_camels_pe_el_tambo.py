@@ -28,6 +28,8 @@ import zipfile
 import numpy as np
 import pandas as pd
 
+import relleno_caudal as rc
+
 GID = "PE_47E0A2A8"
 RECORD = "21195425"
 DOI = "10.5281/zenodo.21195425"
@@ -113,9 +115,43 @@ m["Q_mm_d"] = g["flow_obs"].mean().where(ok_q)
 m["Q_m3_s"] = m["Q_mm_d"] * area / 86.4
 ok_t = (1 - m["dias_validos_T"] / m["n_dias"]) <= MAX_FALT
 m["T_C"] = g["tmean"].mean().where(ok_t)
+# Serie observada (criterio anterior) conservada en columnas *_obs; las columnas R_mm_mes, R_flag, Q_mm_d y
+# Q_m3_s pasan a ser la serie rellenada (relleno_caudal.py; decisión del grupo, 2026-10-10).
+m = m.rename(columns={"R_mm_mes": "R_obs_mm_mes", "R_flag": "R_flag_obs", "Q_mm_d": "Q_obs_mm_d",
+                      "Q_m3_s": "Q_obs_m3_s"})
+
+# ------------------------------------------------------------------ 4. relleno del caudal
+ini_q, fin_q = d["flow_obs"].first_valid_index(), d["flow_obs"].last_valid_index()
+q_rel, interp = rc.interpolar_log(d["flow_obs"].loc[ini_q:fin_q])
+gq = q_rel.resample("MS")
+m["dias_interpolados_Q"] = interp.resample("MS").sum().reindex(m.index).fillna(0).astype(int)
+dentro = (m.index >= ini_q.to_period("M").to_timestamp()) & (m.index <= fin_q.to_period("M").to_timestamp())
+quedan = (m["n_dias"] - gq.count().reindex(m.index).fillna(0)).where(dentro)   # días aún faltantes
+R_rel = (gq.sum(min_count=1) * gq.size() / gq.count()).reindex(m.index).where(quedan / m["n_dias"] <= rc.MAX_FALT_ESCALA)
+S = g["flow_sim"].sum(min_count=1)
+modelos = rc.ajustar_modelo(m["R_obs_mm_mes"].where(m["R_flag_obs"] == "completo"), S)
+flag = pd.Series("sin_dato", index=m.index)
+flag[m["R_flag_obs"] == "completo"] = "completo"
+flag[R_rel.notna() & (quedan == 0) & (m["R_flag_obs"] != "completo")] = "interpolado_diario"
+flag[R_rel.notna() & (quedan > 0)] = "escalado"
+assert S[quedan.notna() & R_rel.isna()].notna().all(), "falta flow_sim en meses a reconstruir"
+modelo_usado = pd.Series("", index=m.index)
+for fecha in m.index[quedan.notna() & R_rel.isna()]:                 # en orden: el mes anterior ya está relleno
+    R_rel[fecha], modelo_usado[fecha] = rc.predecir(modelos, S[fecha], R_rel.shift(1).get(fecha, np.nan), fecha)
+    flag[fecha] = "modelo_mensual"
+m["R_mm_mes"] = R_rel
+m["R_flag"] = flag
+m["R_modelo"] = modelo_usado
+m["Q_mm_d"] = m["R_mm_mes"] / m["n_dias"]
+m["Q_m3_s"] = m["Q_mm_d"] * area / 86.4
+# Serie diaria rellenada (solo paso 1) para análisis que la necesiten (punto 4)
+pd.DataFrame({"q_mm_d": q_rel.round(4), "interpolado": interp.astype(int)}).rename_axis("fecha").to_csv(
+    OUT / "caudal_diario_interpolado.csv")
+
 m = m.round(4)
 cols = ["n_dias", "dias_validos_P", "P_L_mm_mes", "dias_validos_Q", "dias_faltantes_Q",
-        "R_suma_dias_validos_mm", "R_mm_mes", "R_flag", "Q_mm_d", "Q_m3_s", "dias_validos_T", "T_C"]
+        "R_suma_dias_validos_mm", "R_obs_mm_mes", "R_flag_obs", "Q_obs_mm_d", "Q_obs_m3_s",
+        "dias_interpolados_Q", "R_mm_mes", "R_flag", "R_modelo", "Q_mm_d", "Q_m3_s", "dias_validos_T", "T_C"]
 m = m[cols]
 m.to_csv(OUT / "series_mensuales_camels_pe.csv")
 # Serie del periodo común de análisis (1998-01 .. 2025-12), la que se usa en los puntos 1–5
@@ -135,18 +171,22 @@ for col in ["P_L_mm_mes", "Q_m3_s", "R_mm_mes", "T_C"]:
     s = m[col]
     print(f"{col:11s} meses válidos {s.notna().sum():3d}/{len(s)} | primer {s.first_valid_index():%Y-%m}"
           f" | último {s.last_valid_index():%Y-%m}")
-excl = m.loc["1998":, "Q_mm_d"].isna()
-print("\nMeses de Q excluidos desde 1998 (> 10 % de días faltantes):",
+excl = m.loc["1998":, "Q_obs_mm_d"].isna()
+print("\nMeses de Q observada excluidos desde 1998 (> 10 % de días faltantes):",
       ", ".join(f"{t:%Y-%m}" for t in m.loc["1998":].index[excl]))
 print("Meses de T sin dato:", f"{m['T_C'].isna().sum()} ({m.index[m['T_C'].isna()].min():%Y-%m} a "
       f"{m.index[m['T_C'].isna()].max():%Y-%m})")
-print("\nMeses de R desde 1998 por condición:",
-      m.loc["1998":, "R_flag"].value_counts().to_dict())
+print("\nMeses de R observada desde 1998 por condición:", m.loc["1998":, "R_flag_obs"].value_counts().to_dict())
+print("Meses de R rellenada desde 1998 por condición:", m.loc["1998":, "R_flag"].value_counts().to_dict())
+for f_, r in m[m["R_flag"] == "modelo_mensual"].iterrows():
+    print(f"  {f_:%Y-%m} reconstruido ({r['R_modelo']}): R = {r['R_mm_mes']:.1f} mm "
+          f"({int(r['dias_validos_Q'])} días observados en el mes)")
 # Revisión manual (punto 1.4.2): un mes completo y uno escalado, recalculados desde los diarios
 for fecha in ["2010-03", "1998-03"]:
     mes = d.loc[fecha]
     nv, nd = mes["flow_obs"].count(), len(mes)
     print(f"Revisión {fecha}: ΣP = {mes['prec'].sum():.2f} mm (tabla {m.loc[fecha, 'P_L_mm_mes'].iloc[0]})"
           f" | Σq = {mes['flow_obs'].sum():.2f} mm en {nv}/{nd} días → R = {mes['flow_obs'].sum()*nd/nv:.2f}"
-          f" mm (tabla {m.loc[fecha, 'R_mm_mes'].iloc[0]}, {m.loc[fecha, 'R_flag'].iloc[0]})")
+          f" mm (tabla observada {m.loc[fecha, 'R_obs_mm_mes'].iloc[0]}, {m.loc[fecha, 'R_flag_obs'].iloc[0]};"
+          f" rellenada {m.loc[fecha, 'R_mm_mes'].iloc[0]}, {m.loc[fecha, 'R_flag'].iloc[0]})")
 print(f"\nSalidas: {OUT}")

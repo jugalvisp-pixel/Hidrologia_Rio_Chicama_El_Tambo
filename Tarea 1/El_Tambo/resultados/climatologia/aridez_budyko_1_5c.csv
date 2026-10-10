@@ -1,0 +1,7 @@
+fuente_P,fuente_PET,periodo,P_mm_anio,PET_mm_anio,AI_P_PET,clase_UNEP,PET_P,R_mm_anio,R_P_obs,R_P_Budyko,P_menos_R_mm
+P_L (CAMELS-PE),Penman–Monteith (PISCOeo_pm),1998-01..2016-12,834.9,1344.0,0.621,subhúmedo seco,1.61,403.3,0.483,0.157,431.6
+P_I (IMERG),Penman–Monteith (PISCOeo_pm),1998-01..2016-12,559.8,1344.0,0.416,semiárido,2.401,403.3,0.721,0.073,156.4
+PISCOp v3.0,Penman–Monteith (PISCOeo_pm),1998-01..2016-12,709.0,1344.0,0.528,subhúmedo seco,1.896,403.3,0.569,0.117,305.7
+P_L (CAMELS-PE),Hargreaves–Samani (PISCOt),1998-01..2020-12,827.0,1349.1,0.613,subhúmedo seco,1.631,403.8,0.488,0.153,423.1
+P_I (IMERG),Hargreaves–Samani (PISCOt),1998-01..2020-12,558.3,1349.1,0.414,semiárido,2.416,403.8,0.723,0.072,154.5
+PISCOp v3.0,Hargreaves–Samani (PISCOt),1998-01..2020-12,710.8,1349.1,0.527,subhúmedo seco,1.898,403.8,0.568,0.117,306.9

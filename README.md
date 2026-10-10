@@ -34,7 +34,7 @@ pip install -r requirements.txt
 cd Hidrologiat1/Codigos
 ```
 
-Orden de ejecución: `06 → 07a → 13 → 14 → 09 → 10 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 22`.
+Orden de ejecución: `06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 27 → 22`.
 
 No se incluyen en el repositorio, por tamaño, el DEM Copernicus GLO-30, la geología INGEMMET,
 los NetCDF nacionales de PISCOp ni el CAMELS-PE completo. Los scripts 06, 07a y 13 los descargan,
@@ -46,4 +46,5 @@ Copernicus CDS (`~/.cdsapirc`). Las credenciales nunca se guardan en el reposito
 
 CAMELS-PE v1.0.1 (PISCOp v2.1, PISCOt v1.2, caudales SENAMHI) · GPM IMERG V07 Final mensual ·
 PISCOp v3.0 (doi:10.6084/m9.figshare.32411886.v1) · ERA5-Land mensual (doi:10.24381/cds.68d2bb30) ·
+CHIRPS v2.0 (doi:10.15780/G2RP4Q) · ERA5 mensual (doi:10.24381/cds.6860a573, 10.24381/cds.f17050d7) ·
 Copernicus GLO-30.

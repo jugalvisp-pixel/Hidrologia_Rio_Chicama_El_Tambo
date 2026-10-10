@@ -23,6 +23,7 @@ import urllib.request
 import numpy as np
 import pandas as pd
 import geopandas as gpd
+import xarray as xr
 import rasterio
 from rasterio.merge import merge
 from rasterio.warp import calculate_default_transform, reproject, Resampling
@@ -66,6 +67,7 @@ NE_URL = ("https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master
           "geojson/ne_50m_admin_0_countries.geojson")
 NE_FILE = ROOT / "El_Tambo" / "datos" / "ne_50m_admin_0_countries.geojson"
 SENAMHI_URL = "https://www.senamhi.gob.pe/mapas/mapa-estaciones-2/"
+ERA5_CLIM = ROOT / "El_Tambo" / "datos" / "era5" / "era5_viento_ivt_climatologia_estacional.nc"
 
 # ------------------------------------------------------------------ 1. mosaico y recorte
 tiles = sorted(TILES.glob("Copernicus_DSM_COG_10_*_DEM.tif"))
@@ -316,8 +318,8 @@ sen_plot = gpd.GeoDataFrame(sen_plot, crs=4326)
 print("\n=== Estaciones SENAMHI en el rectángulo del mapa (sin duplicar aforos CAMELS) ===")
 print(sen_plot.drop(columns="geometry").to_string(index=False))
 
-fig = plt.figure(figsize=(13.5, 11))
-gs = GridSpec(3, 2, figure=fig, width_ratios=[3.6, 1], height_ratios=[1, 1, 1.15],
+fig = plt.figure(figsize=(15, 11))
+gs = GridSpec(3, 2, figure=fig, width_ratios=[3.6, 1.7], height_ratios=[1.2, 1, 1.0],
               wspace=0.06, hspace=0.12)
 ax = fig.add_subplot(gs[:, 0])
 im = ax.imshow(zg, cmap="terrain", extent=ext_g, alpha=0.9, interpolation="nearest",
@@ -349,19 +351,6 @@ for _, s in sen_plot.iterrows():
                 textcoords="offset points", fontsize=6.8,
                 bbox=dict(boxstyle="round,pad=0.15", fc="white", alpha=0.75, lw=0))
 
-# Fuentes de humedad (esquema; ver explicación y bibliografía en el informe)
-ax.annotate("", xy=(0.80, 0.60), xytext=(0.995, 0.60), xycoords="axes fraction",
-            arrowprops=dict(arrowstyle="simple,head_width=2.2,head_length=1.6,tail_width=1.0",
-                            fc="#2166ac", ec="k", alpha=0.9), zorder=8)
-ax.text(0.985, 0.635, "Humedad amazónica / atlántica\nflujo del E en niveles medios-altos\n"
-        "(principal, dic–abr)", transform=ax.transAxes, ha="right", va="bottom", fontsize=8,
-        color="#08306b", fontweight="bold", bbox=dict(fc="white", alpha=0.75, lw=0), zorder=8)
-ax.annotate("", xy=(0.17, 0.78), xytext=(0.005, 0.78), xycoords="axes fraction",
-            arrowprops=dict(arrowstyle="simple,head_width=1.6,head_length=1.2,tail_width=0.6",
-                            fc="white", ec="#b2182b", ls="--", lw=1.5, alpha=0.9), zorder=8)
-ax.text(0.01, 0.80, "Humedad del Pacífico\n(secundaria; relevante en El Niño)",
-        transform=ax.transAxes, ha="left", va="bottom", fontsize=8, color="#b2182b",
-        fontweight="bold", bbox=dict(fc="white", alpha=0.75, lw=0), zorder=8)
 ax.set_xlim(xmin, xmax); ax.set_ylim(ymin, ymax)
 ax.set_aspect(1 / np.cos(lat0))                  # evita distorsión E-O en grados
 ax.xaxis.set_major_locator(MultipleLocator(0.1))
@@ -406,7 +395,10 @@ ax.set_title(f"Cuenca del río Chicama hasta la estación {GAUGE_NAME} ({GID})\n
 ax.text(0.5, -0.165, cats_txt + "\nCoordenadas geográficas WGS 84 (EPSG:4326)  ·  Delimitación "
         "y morfometría calculadas en WGS 84 / UTM 17S (EPSG:32717)\nFuente DEM: Copernicus "
         "GLO-30 DSM (ESA/Airbus)  ·  Red de drenaje derivada con D8 (pysheds)  ·  Estaciones: "
-        "CAMELS-PE v1.0.1 y red SENAMHI (mapa web, consulta 2026-10)  ·  Límites: Natural Earth",
+        "CAMELS-PE v1.0.1 y red SENAMHI (mapa web, consulta 2026-10)  ·  Límites: Natural Earth\n"
+        "Recuadro de Sudamérica: flujo de vapor de agua integrado en la vertical (IVT) de ERA5, media dic–abr "
+        "del periodo común 1998-01 a 2025-08; color = magnitud, flechas = dirección\n(una cada 4°, malla de 1°). "
+        "Estación seca y viento en 500 hPa: mapa_transporte_humedad_era5.png (scripts 24 y 25)",
         transform=ax.transAxes, ha="center", va="top", fontsize=7.5)
 
 # Mapas de ubicación: Sudamérica y Perú
@@ -418,14 +410,31 @@ countries[countries["CONTINENT"] == "South America"].plot(ax=ax_sa, color="#eeee
 peru.plot(ax=ax_sa, color="#d9c9a3", edgecolor="#555555", linewidth=0.5)
 ax_sa.add_patch(Rectangle(PERU_BOX[:2], PERU_BOX[2] - PERU_BOX[0], PERU_BOX[3] - PERU_BOX[1],
                           fill=False, edgecolor="red", linewidth=1))
-ax_sa.plot(out_ll.x, out_ll.y, "o", color="red", ms=4)
-ax_sa.annotate("", xy=(-77, -7.5), xytext=(-52, -3), arrowprops=dict(
-    arrowstyle="simple,head_width=0.9,head_length=0.8,tail_width=0.35", fc="#2166ac", ec="k"))
-ax_sa.annotate("", xy=(-79.5, -7.6), xytext=(-83, -6.5), arrowprops=dict(
-    arrowstyle="simple,head_width=0.6,head_length=0.6,tail_width=0.2", fc="white",
-    ec="#b2182b", ls="--"))
-ax_sa.set_xlim(-83, -33); ax_sa.set_ylim(-56, 14)
-ax_sa.set_title("Ubicación en Sudamérica", fontsize=9)
+# Transporte de humedad de ERA5 en la estación húmeda (IVT dic–abr, periodo común; script 24).
+# Si la climatología aún no existe (el script 24 corre después de 09 y 10), el recuadro queda sin vectores.
+if ERA5_CLIM.exists():
+    clim = xr.open_dataset(ERA5_CLIM).sel(estacion="dic-abr", lon=slice(-92, -32), lat=slice(-30, 14))
+    m_ivt = ax_sa.pcolormesh(clim.lon, clim.lat, clim["ivt"], cmap="YlGnBu", vmin=0, vmax=350,
+                             shading="nearest", alpha=0.85, zorder=1)
+    countries.cx[-95:-30, -35:15].boundary.plot(ax=ax_sa, color="#222222", linewidth=0.5, zorder=2)
+    s = slice(1, None, 4)
+    q = ax_sa.quiver(clim.lon[s], clim.lat[s], clim["ivt_e"][s, s], clim["ivt_n"][s, s], scale=2400,
+                     width=0.005, color="#1d1d1b", zorder=4)
+    # Fondo blanco para la barra de colores y la flecha de referencia (esquina inferior izquierda, océano)
+    ax_sa.add_patch(Rectangle((0.01, 0.01), 0.47, 0.25, transform=ax_sa.transAxes, fc="white", ec="#999999",
+                              lw=0.5, alpha=0.92, zorder=5))
+    ax_sa.quiverkey(q, 0.12, 0.05, 250, "250 kg m⁻¹ s⁻¹", labelpos="E", coordinates="axes",
+                    fontproperties={"size": 6.5}, zorder=6)
+    cax_sa = ax_sa.inset_axes([0.05, 0.15, 0.38, 0.035], zorder=6)
+    cb_sa = fig.colorbar(m_ivt, cax=cax_sa, orientation="horizontal")
+    cb_sa.set_ticks([0, 100, 200, 300]); cb_sa.ax.tick_params(labelsize=6, length=2, pad=1)
+    cb_sa.set_label("IVT (kg m⁻¹ s⁻¹)", fontsize=6.5, labelpad=1)
+    cax_sa.xaxis.set_label_position("top")
+else:
+    print(f"Aviso: falta {ERA5_CLIM.name}; correr el script 24 y luego este para el recuadro de humedad.")
+ax_sa.plot(out_ll.x, out_ll.y, "o", color="red", markeredgecolor="white", ms=6, zorder=6)
+ax_sa.set_xlim(-92, -32); ax_sa.set_ylim(-30, 14)
+ax_sa.set_title("Transporte de humedad, estación húmeda (dic–abr)", fontsize=9)
 
 ax_pe = fig.add_subplot(gs[1, 1])
 countries.cx[-83:-66, -20:2].plot(ax=ax_pe, color="#eeeeee", edgecolor="#999999", linewidth=0.4)

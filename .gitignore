@@ -18,6 +18,9 @@
 /Tarea 1/El_Tambo/datos/geologia/
 /Tarea 1/El_Tambo/datos/piscop_senamhi/**/*.nc
 !/Tarea 1/El_Tambo/datos/piscop_senamhi/v3p0/PISCOp_v3_d_El_Tambo_recorte.nc
+# ERA5 regional mensual (script 24): se versiona solo la climatología estacional
+/Tarea 1/El_Tambo/datos/era5/ERA5_*_mensual.nc
+/Tarea 1/El_Tambo/datos/era5/*.tmp
 
 # --- Nunca subir ---
 __pycache__/

@@ -60,6 +60,10 @@ acal = leer(CL / "anomalias_anio_calendario_1_5b.csv").sort_values("P_L_anom_tot
 humedos = ", ".join(str(int(a)) for a in acal.tail(4)["anio"][::-1])
 secos = ", ".join(str(int(a)) for a in acal.head(4)["anio"])
 reg = leer(CC / "registro_anomalias_1_4.csv")
+_fl = cam.loc[INI:FIN]
+RL = dict(interp=int((_fl.R_flag == "interpolado_diario").sum()), esc=int((_fl.R_flag == "escalado").sum()),
+          mod=int((_fl.R_flag == "modelo_mensual").sum()),
+          mes_mod=", ".join(f"{f:%Y-%m}" for f in _fl.index[_fl.R_flag == "modelo_mensual"]))
 pico = leer(CL / "mes_pico_por_anio_1_5b.csv")
 pct_mar = (pico["mes_max_P_L"] == "Mar").mean() * 100
 pct_fa = pico["mes_max_P_L"].isin(["Feb", "Mar", "Abr"]).mean() * 100
@@ -123,6 +127,8 @@ fuentes = pd.DataFrame([
     ["T – temperatura", "CAMELS-PE (`tmean`, PISCOt v1.2) hasta 2020; ERA5-Land T2m desde 2021 (estimación aparte)", "doi:10.24381/cds.68d2bb30", "diaria / mensual"],
     ["P_I – precipitación satelital", "GPM IMERG V07 Final (GPM_3IMERGM.07, NASA GES DISC)", "doi:10.5067/GPM/IMERG/3B-MONTH/07", "mensual, 0.1°"],
     ["Precipitación en malla (apoyo)", "PISCOp v3.0 (SENAMHI)", "doi:10.6084/m9.figshare.32411886.v1", "diaria, 0.1°"],
+    ["Mapa de precipitación media anual", "CHIRPS v2.0 (UCSB/CHC), recorte del IRI Data Library", "doi:10.15780/G2RP4Q", "mensual, 0.05°"],
+    ["Transporte de humedad y viento", "ERA5 (C3S/ECMWF), niveles de presión y nivel único", "doi:10.24381/cds.6860a573; 10.24381/cds.f17050d7", "mensual, 0.5°"],
     ["Relieve", "Copernicus GLO-30 DSM", "ESA / Airbus", "30 m"],
     ["Cobertura y geología", "ESA WorldCover 2021; INGEMMET 1:100 000 (GEOCATMIN)", "—", "10 m / vectorial"],
 ], columns=["Variable", "Fuente", "DOI / proveedor", "Resolución"])
@@ -135,6 +141,11 @@ t15 = ip.reset_index()[["variable", "mes_max", "mes_min", "SI", "PCI", "centroid
                         "meses_humedos", "meses_secos_gaussen", "pct_en_dic_abr", "regimen"]].round(2)
 t15.columns = ["Variable", "Mes máx.", "Mes mín.", "SI", "PCI", "Centroide", "Concentración", "Picos",
                "Meses húmedos", "Meses secos (Gaussen)", "% en dic–abr", "Régimen"]
+t15c = leer(CL / "criterios_clasificacion_1_5c.csv").drop(columns="fuente")
+t15c.columns = ["Rasgo", "Criterio", "Evidencia (P_L)", "Evidencia alternativa", "Lectura propuesta",
+                "Robustez / incertidumbre"]
+ari = leer(CL / "aridez_budyko_1_5c.csv")
+ari = ari[ari.fuente_PET.str.startswith("Penman")].set_index("fuente_P")
 t14 = reg[["id", "variable", "fecha_o_periodo", "anomalia", "decision", "estado"]]
 t14.columns = ["Id", "Variable", "Fecha / periodo", "Anomalía", "Decisión", "Estado"]
 
@@ -146,7 +157,10 @@ secciones = [
             figura(DL / "mapa_cuenca_el_tambo.png", "Mapa de la cuenca",
                    "Relieve (GLO-30), límite de la cuenca, río Chicama, red de drenaje, punto de cierre y estaciones de SENAMHI. "
                    "Área delimitada 2 170 km² (CAMELS-PE: 2 171.6 km²), con cotas entre unos 680 y 4 300 m s.n.m. "
-                   "Las flechas indican la <i>hipótesis</i> de fuentes de humedad que se contrastará en el punto 5.",
+                   "El recuadro de Sudamérica muestra el transporte de humedad de ERA5 en la estación húmeda (dic–abr): "
+                   "el color indica cuánta humedad se transporta y las flechas hacia dónde. La humedad entra desde el "
+                   "Atlántico, cruza la Amazonía hacia el oeste y llega a la cuenca desde el este; frente a la costa el "
+                   "flujo se aleja del continente.",
                    script="06_delimitacion_el_tambo_glo30.py")
             + figura(DL / "comparacion_camels.png", "Delimitación propia frente a CAMELS-PE",
                      "Los dos polígonos casi coinciden: índice de intersección sobre unión (IoU) = 0.994. Se usa la "
@@ -155,15 +169,37 @@ secciones = [
     seccion("contexto", "Contexto físico",
             "Rasgos del terreno que ayudan a explicar cómo la cuenca recibe, guarda y entrega el agua.",
             figura(CF / "panel_contexto_fisico.png", "Panel de contexto físico",
-                   "(a) pendiente, (b) orientación de laderas, (c) cobertura del suelo, (d) unidades hidrogeológicas "
-                   "agrupadas desde la geología de INGEMMET y (e) precipitación media anual en malla.",
-                   "La agrupación hidrogeológica es una propuesta del grupo (por porosidad y permeabilidad esperadas) "
-                   "que debe contrastarse con INGEMMET y ANA.", script="07b_mapas_contexto_fisico.py")
-            + figura(CF / "mapa_e_precipitacion.png", "Precipitación media anual (PISCOp v3.0, fuente de apoyo)",
-                     f"Media anual del periodo común en las celdas de 0.1° de PISCOp v3.0, sin interpolar. Aumenta desde la "
-                     f"salida hacia las cabeceras del norte y el sureste. CAMELS-PE, la fuente principal de P<sub>L</sub>, solo "
-                     f"entrega el promedio de cuenca y no tiene malla; por eso el mapa usa PISCOp v3.0, que da un promedio "
-                     f"menor que CAMELS-PE.", script="07b_mapas_contexto_fisico.py")
+                   "(a) orientación de laderas, (b) cobertura del suelo, (c) unidades geológicas de INGEMMET "
+                   "agrupadas por su comportamiento hídrico y (d) precipitación media anual de CHIRPS. En (c), los "
+                   "acuíferos fisurados (areniscas y cuarcitas, 40 %) y los acuitardos sedimentarios (lutitas, 37 %) "
+                   "alternan en franjas NO–SE; los acuíferos porosos se limitan a los fondos de valle (2.5 %).",
+                   "Colores de (c) según la convención de los mapas hidrogeológicos (IAH/UNESCO): azul = acuífero "
+                   "poroso, verdes = acuíferos fisurados y kársticos, marrones = acuitardos y acuífugos. La agrupación "
+                   "es una propuesta del grupo (por porosidad y permeabilidad esperadas) que debe contrastarse con "
+                   "INGEMMET y ANA.", script="07b_mapas_contexto_fisico.py")
+            + figura(CF / "mapa_geologia_unidades_ingemmet.png", "Unidades geológicas de INGEMMET (apoyo de la agrupación)",
+                     "Las 25 unidades del mapa geológico 1:100 000 con sus colores oficiales de INGEMMET, que indican "
+                     "la edad. La leyenda señala el grupo hidrogeológico (G1–G7) asignado a cada unidad.",
+                     "Las formaciones del Cretácico inferior (Carhuaz, Chimú, Farrat, Santa) comparten casi el mismo "
+                     "verde; se distinguen por los límites y los códigos rotulados.", script="07b_mapas_contexto_fisico.py")
+            + figura(CF / "mapa_d_precipitacion.png", "Precipitación media anual (CHIRPS v2.0, fuente de apoyo)",
+                     f"Media anual del periodo común de CHIRPS (celdas de 0.05°), interpolada para mostrarla como una "
+                     f"superficie continua, con isoyetas cada 100 mm. Aumenta desde unos 400 mm/año en la salida hasta "
+                     f"900 mm/año en las cabeceras del sureste. CAMELS-PE, la fuente principal de P<sub>L</sub>, solo "
+                     f"entrega el promedio de cuenca y no tiene malla. CHIRPS da un promedio menor, así que el mapa "
+                     f"sirve para ver el patrón espacial, no la magnitud.",
+                     "La interpolación suaviza la presentación pero no agrega detalle: la información sigue siendo de "
+                     "0.05° (unos 5.5 km).", script="26_chirps_cuenca.py, 07b_mapas_contexto_fisico.py")
+            + figura(CF / "mapa_transporte_humedad_era5.png", "Transporte de humedad y viento regional (ERA5)",
+                     "Climatología del periodo común. Arriba, el flujo de vapor de agua integrado en la vertical (IVT): "
+                     "el color indica cuánta humedad se transporta y las flechas hacia dónde. Abajo, el viento en 500 hPa, "
+                     "por encima de los Andes. En la estación húmeda la humedad entra desde el Atlántico, cruza la Amazonía "
+                     "hacia el oeste y gira al sur a lo largo de los Andes. Sobre la cuenca el transporte va hacia el oeste "
+                     "en ambas estaciones, mientras que frente a la costa se aleja del continente.",
+                     "La magnitud del transporte no equivale a lluvia: llueve donde el flujo converge y asciende. "
+                     "Por eso el IVT sobre la cuenca no es mayor en la estación húmeda. ERA5 (malla de 0.25°, aquí "
+                     "promediada a 1°) no resuelve la circulación dentro de los valles.",
+                     script="24_era5_vientos_humedad.py, 25_mapa_transporte_humedad.py")
             + figura(CF / "curva_hipsometrica.png", "Curva hipsométrica",
                      "Distribución del área por elevación. La integral hipsométrica (0.52) indica una cuenca de relieve "
                      "intermedio, con buena parte del área a media ladera.", script="07b_mapas_contexto_fisico.py")),
@@ -172,9 +208,11 @@ secciones = [
             f"R = caudal en lámina (mm/mes); T = media diaria. Todas las figuras usan el <b>periodo común {PER}</b> "
             f"({N_MESES} meses): los meses con precipitación de CAMELS-PE y de IMERG a la vez.",
             figura(SM / "fig_series_mensuales_1_1.png", "Series mensuales en paneles alineados",
-                   "Los cuatro paneles comparten el eje de tiempo. Los meses sin dato quedan como vacíos sin interpolar "
-                   "(sombreado gris). Los círculos naranjas marcan meses de caudal con hasta 10 % de días faltantes. "
-                   "Desde 2021 la temperatura es una estimación con ERA5-Land (línea discontinua morada), no PISCOt.",
+                   "Los cuatro paneles comparten el eje de tiempo. El caudal y la escorrentía tienen sus faltantes "
+                   "rellenados (ver control de calidad): los marcadores naranjas indican meses con días interpolados o "
+                   "escalados, el rombo rojo un mes reconstruido con un modelo, y el fondo naranja los meses que sin "
+                   "relleno quedaban excluidos. Desde 2021 la temperatura es una estimación con ERA5-Land (línea "
+                   "discontinua morada), no PISCOt.",
                    "Los máximos de 1998 y 2017 corresponden a eventos de El Niño; el caudal queda alto también en los "
                    "meses siguientes.", script="15_figura_series_1_1.py"), "Punto 1.1"),
     seccion("p12", "Precipitación satelital IMERG",
@@ -225,9 +263,21 @@ secciones = [
             "Comprobaciones sobre los datos diarios (fechas, códigos de faltante, negativos, secuencias constantes, "
             "tramos interpolados, picos aislados), revisiones manuales y registro de anomalías con la decisión tomada.",
             figura(CC / "fig_disponibilidad_1_4.png", "Disponibilidad año × mes",
-                   "Condición de cada mes y variable. Los faltantes de caudal se concentran en septiembre (y agosto–octubre) "
-                   "casi todos los años, un patrón sistemático, además de un periodo con más vacíos en 2019–2021.",
-                   script="19_control_calidad_1_4.py")
+                   "Condición de cada mes y variable según lo observado, antes del relleno. Los faltantes de caudal se "
+                   "concentran en septiembre (y agosto–octubre) casi todos los años, un patrón sistemático, además de "
+                   "un periodo con más vacíos en 2019–2021.", script="19_control_calidad_1_4.py")
+            + figura(SM / "fig_validacion_relleno_caudal.png", "Relleno de los faltantes de caudal y su validación",
+                     f"Decisión del grupo: rellenar los faltantes de caudal. Método, en orden: (1) huecos diarios de hasta "
+                     f"15 días, interpolando el logaritmo del caudal entre el día anterior y el posterior, lo que sigue la "
+                     f"forma de la recesión; (2) meses con datos en al menos la mitad de los días, media de los días "
+                     f"disponibles × días del mes; (3) meses con menos datos, modelo mensual con el caudal simulado de "
+                     f"CAMELS-PE y el caudal del mes anterior. En el periodo común: {RL['interp']} meses con días "
+                     f"interpolados, {RL['esc']} escalados y {RL['mod']} reconstruido(s) con el modelo ({RL['mes_mod']}).",
+                     "(a) Al borrar días de meses completos, la interpolación da errores 3–8 veces menores que el escalado "
+                     "usado antes (≤ 1.5 % de mediana hasta 7 días). (b) El modelo mensual, evaluado dejando un año "
+                     "fuera, tiene un error típico del 23 %; por eso solo se usa donde no hay suficientes días medidos. "
+                     "La bandera R_flag de series_mensuales_camels_pe.csv indica el origen de cada mes.",
+                     script="relleno_caudal.py, 09_datos_camels_pe_el_tambo.py, 28_validacion_relleno_caudal.py")
             + tabla(t14, "Registro de anomalías",
                     "Estado: «sin problema» = comprobado, nada que corregir; «incierto» = la duda se declara como "
                     "limitación. El detalle de cada comprobación está en registro_anomalias_1_4.csv."),
@@ -241,6 +291,15 @@ secciones = [
                    "Línea continua = media; discontinua = mediana; banda oscura = rango intercuartílico; banda clara = "
                    "percentiles 10–90. Las bandas describen cuánto cambian los años entre sí; no son intervalos de "
                    "confianza.", script="20_climatologia_1_5a.py")
+            + figura(CL / "mapas_precipitacion_mensual_chirps.png", "Precipitación media de cada mes sobre la cuenca",
+                     "Doce mapas con la precipitación media de cada mes calendario (CHIRPS, celdas de 0.05°), con una "
+                     "escala discreta de naranja (seco) a azul oscuro (húmedo). Cada fila es un trimestre: DEF y MAM "
+                     "aportan cada uno cerca del 42–43 % de la lluvia anual de P<sub>L</sub>, SON el 14 % y JJA el 2 %. "
+                     "La lluvia crece de dic a mar, cuando cubre toda la cuenca, y en jun–ago casi desaparece. En los "
+                     "meses húmedos llueve más en las cabeceras del sureste y menos cerca de la salida.",
+                     "El recuadro de cada mapa compara el promedio de cuenca de CHIRPS con el de P<sub>L</sub>. CHIRPS "
+                     "es menor en el total anual, así que los mapas muestran el patrón espacial, no la magnitud.",
+                     script="27_mapas_precipitacion_mensual.py")
             + figura(CL / "fig_anio_mes_1_5a.png", "Mapa año × mes",
                      "Cada celda es un mes de un año, de modo que se ven los años individuales. El caudal va en escala "
                      "logarítmica. En temperatura, la trama marca los valores estimados con ERA5-Land.",
@@ -262,11 +321,29 @@ secciones = [
                     "hay un solo pico y el armónico anual domina; bimodal si hay dos picos y el semianual es comparable; "
                     "estacionalidad débil si SI < 0.40."),
             "Punto 1.5"),
+    seccion("p15c", "Síntesis del ciclo anual",
+            f"Evidencia reunida para proponer la clasificación hidroclimática mensual. Para la aridez se usa un "
+            f"criterio climático (P/PET), no solo el total de lluvia. La clasificación final y su explicación física "
+            f"las decide y sustenta el grupo con bibliografía.",
+            figura(CL / "fig_sintesis_ciclo_1_5c.png", "Ciclo anual frente a la demanda de agua",
+                   f"Barras: lluvia media de cada mes (P<sub>L</sub> e IMERG). Líneas: evapotranspiración potencial (PET, "
+                   f"Penman–Monteith de CAMELS-PE, 1998–2016), la mitad de la PET y el caudal en lámina (R). Debajo, cada "
+                   f"mes clasificado por varios criterios. Con P<sub>L</sub>, la lluvia supera a la PET solo en feb–abr, y "
+                   f"de mayo a agosto el caudal medio supera a la lluvia del mismo mes.",
+                   f"Fila FAO: húmedo si P ≥ PET, intermedio si P ≥ 0.5·PET, seco si es menor; el porcentaje es la "
+                   f"fracción de años en que P<sub>L</sub> ≥ 0.5·PET. Aridez UNEP (P/PET): P<sub>L</sub> "
+                   f"{ari.loc['P_L (CAMELS-PE)', 'AI_P_PET']:.2f} ({ari.loc['P_L (CAMELS-PE)', 'clase_UNEP']}), "
+                   f"IMERG {ari.loc['P_I (IMERG)', 'AI_P_PET']:.2f} ({ari.loc['P_I (IMERG)', 'clase_UNEP']}): la clase "
+                   f"depende de la fuente de lluvia.", script="23_sintesis_ciclo_1_5c.py")
+            + tabla(t15c, "Criterios, evidencia e incertidumbre",
+                    "«Lectura propuesta» es un apoyo cuantitativo para la discusión del grupo, no la conclusión. "
+                    "Detalle en criterios_clasificacion_1_5c.csv, aridez_budyko_1_5c.csv y koppen_1_5c.csv."),
+            "Punto 1.5.c"),
 ]
 
 nav = [("cuenca", "Cuenca"), ("contexto", "Contexto"), ("p11", "1.1 Series"), ("p12", "1.2 IMERG"),
        ("temp", "Temperatura"), ("p13", "1.3 Distribución"), ("p14", "1.4 Calidad"), ("p15", "1.5 Ciclo anual"),
-       ("datos", "Datos")]
+       ("p15c", "1.5.c Síntesis"), ("datos", "Datos")]
 
 CSS = """
 :root{--bg:#f6f5f2;--card:#ffffff;--ink:#1d1d1b;--ink2:#55534e;--line:#e2e0da;--acc:#1b6ca8;--chip:#e7f0f8;--code:#f0efeb}
@@ -366,7 +443,7 @@ pagina = f"""<!doctype html>
 {tabla(fuentes, "Fuentes de datos")}
 <div class="tabla-cont"><h4>Cómo reproducir</h4>
 <p>Con Python 3 y las dependencias de <code>requirements.txt</code>, ejecute en <code>Hidrologiat1/Codigos/</code>, en este orden:
-<code>06 → 07a → 13 → 14 → 09 → 10 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 22</code>.
+<code>06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 27 → 22</code>.
 El periodo común se calcula en <code>periodo_comun.py</code>. Las descargas de IMERG y ERA5-Land requieren cuentas personales
 (NASA Earthdata y Copernicus CDS), cuyas credenciales no se incluyen en el repositorio.</p></div>
 </section>

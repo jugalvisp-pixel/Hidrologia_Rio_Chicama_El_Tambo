@@ -9,7 +9,8 @@ Tablas (estadísticos descriptivos):
       válidos dentro de ese periodo. P_L y P_I tienen exactamente los mismos meses.
 Figuras y meses extremos: siempre sobre el periodo común (B).
 Convenciones:
-  - Faltantes: meses sin dato o excluidos por completitud (script 09) se descartan; no se rellenan.
+  - Faltantes: Q y R usan la serie rellenada (script 09, relleno_caudal.py; validación en el script 28);
+    P_L no tiene faltantes; T sin dato desde 2021 se descarta.
     Un cero es un valor medido (P = 0 mm), distinto de un faltante (NaN).
   - Percentiles y cuartiles: interpolación lineal entre estadísticos de orden (Hyndman & Fan
     tipo 7, método por defecto de numpy). IQR = Q3 − Q1.
@@ -166,7 +167,7 @@ for ax in axs.flat:
 fig.suptitle("Cuenca del río Chicama hasta El Tambo – distribución de los valores mensuales en el periodo común "
              f"{INI:%Y-%m} a {FIN:%Y-%m}", fontsize=13, y=0.975)
 fig.text(0.5, 0.935, "Ancho de clase: regla de Freedman–Diaconis redondeada; P$_L$ y P$_I$ con los mismos meses y "
-         "límites de clase. Frecuencia relativa con clases de igual ancho. Faltantes excluidos, sin relleno; "
+         "límites de clase. Frecuencia relativa con clases de igual ancho. Q y R con faltantes rellenados (script 28); "
          "T solo PISCOt (sin la estimación desde 2021).", ha="center", fontsize=9)
 fig.savefig(OUT / "fig_histogramas_1_3.png", dpi=200)
 plt.close(fig)

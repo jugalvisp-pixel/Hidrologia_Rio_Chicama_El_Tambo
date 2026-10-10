@@ -1,0 +1,8 @@
+{
+  "producto": "CHIRPS v2.0 monthly 0.05°",
+  "doi_dataset": "10.15780/G2RP4Q",
+  "referencia": "Funk et al. 2015, Scientific Data, doi:10.1038/sdata.2015.66",
+  "url": "https://iridl.ldeo.columbia.edu/SOURCES/.UCSB/.CHIRPS/.v2p0/.monthly/.global/.precipitation/X/-79.0/-78.0/RANGEEDGES/Y/-8.2/-7.2/RANGEEDGES/T/(Jan%201998)/(Aug%202025)/RANGEEDGES/data.nc",
+  "correccion": "X del IRI = borde oeste de la celda; se suma 0.025° (verificado contra chirps-v2.0.2017.03.tif de UCSB)",
+  "descargado": "2026-10-10"
+}

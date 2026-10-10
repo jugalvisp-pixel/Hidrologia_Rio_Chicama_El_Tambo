@@ -5,18 +5,20 @@ Todos los mapas se presentan en coordenadas geográficas WGS 84 (EPSG:4326), con
 grados. Las capas se llevan a la malla del DEM GLO-30 geográfico (1", ~30 m); pendiente y
 orientación se calculan con el espaciamiento de la malla convertido a metros a la latitud media.
 
-  (a) Pendiente (GLO-30), escala continua
-  (b) Orientación de laderas (GLO-30)
-  (c) Cobertura del suelo (ESA WorldCover 2021, 10 m)
-  (d) Unidades geológicas (INGEMMET, Geología 1:100 000 integrada)
-  (e) Precipitación media anual del periodo común P_L–P_I, PISCOp v3.0 (SENAMHI, fuente de apoyo). CAMELS-PE
-      (fuente principal de P_L) solo da series promediadas por cuenca, sin malla; el campo
-      espacial se toma de PISCOp v3.0 diario, en sus celdas de 0.1° sin interpolar.
-Además: curva hipsométrica y ficha de fracciones por clase (ficha_contexto_fisico.csv).
+  (a) Orientación de laderas (GLO-30)
+  (b) Cobertura del suelo (ESA WorldCover 2021, 10 m)
+  (c) Unidades geológicas (INGEMMET, Geología 1:100 000 integrada)
+  (d) Precipitación media anual del periodo común P_L–P_I, CHIRPS v2.0 (0.05°, fuente de apoyo), interpolada
+      de forma bilineal a la malla del DEM para una representación continua, con isoyetas cada 100 mm.
+      La interpolación suaviza la presentación pero no agrega detalle: la información sigue siendo de 0.05°.
+      CAMELS-PE (fuente principal de P_L) solo da series promediadas por cuenca, sin malla.
+La pendiente se sigue calculando (orientación de zonas planas y ficha), pero ya no se dibuja (decisión del
+grupo, 2026-10-10). Además: curva hipsométrica y ficha de fracciones por clase (ficha_contexto_fisico.csv).
 
-Requiere haber ejecutado 06_delimitacion_el_tambo_glo30.py, 07a_descarga_contexto_fisico.py y
-14_piscop_v3_cuenca.py (recorte de PISCOp v3.0 y serie de cuenca).
+Requiere haber ejecutado 06_delimitacion_el_tambo_glo30.py, 07a_descarga_contexto_fisico.py,
+09_datos_camels_pe_el_tambo.py y 26_chirps_cuenca.py (recorte de CHIRPS y serie de cuenca).
 """
+from scipy.interpolate import RegularGridInterpolator
 from pathlib import Path
 
 import numpy as np
@@ -33,6 +35,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap, BoundaryNorm, LightSource
 from matplotlib.patches import Patch
 from matplotlib.lines import Line2D
+import matplotlib.patheffects as pe
 
 from utils_mapas import formato_grados, escala_y_norte, m_por_grado_lon, M_PER_DEG_Y
 from periodo_comun import periodo_comun, fin_diario
@@ -103,18 +106,22 @@ units["pct"] = 100 * units["km2"] / A_km2
 # se agrupan unidades por tipo de porosidad/permeabilidad esperada, no por edad.
 GEO_CLASSES = {
     1: ("Depósitos cuaternarios no consolidados (aluviales, fluviales, glaciares, lacustres)"
-        " – acuífero poroso", "#ffd400"),
+        " – acuífero poroso", "#2b7bba"),
     2: ("Areniscas cuarzosas y cuarcitas (Fm. Chimú, Fm. Farrat) – acuífero fisurado "
-        "sedimentario", "#ff6d00"),
+        "sedimentario", "#2e9e44"),
     3: ("Secuencias de lutitas, limolitas y areniscas (Fm. Chicama, Santa, Carhuaz, Inca) y "
-        "conglomerados (Fm. Huaylas) – acuitardo sedimentario", "#2ca02c"),
+        "conglomerados (Fm. Huaylas) – acuitardo sedimentario", "#e6cfa3"),
     4: ("Calizas y margas (Fm. Chúlec, Pariatambo, Pulluicana, Quilquiñán, Cajamarca) – "
-        "acuífero kárstico-fisurado / acuitardo", "#1f78ff"),
+        "acuífero kárstico-fisurado / acuitardo", "#8fd18a"),
     5: ("Rocas volcánicas (Gr. Calipuy, Fm. Llama, San Pablo, Chilete, Gr. Casma) – "
-        "acuitardo / acuífero fisurado volcánico", "#e7298a"),
-    6: ("Rocas intrusivas (granodiorita, granito, diorita) – acuífugo", "#d50000"),
-    7: ("Lagunas", "#0064c8"),
+        "acuitardo / acuífero fisurado volcánico", "#c49a6c"),
+    6: ("Rocas intrusivas (granodiorita, granito, diorita) – acuífugo", "#7a5c48"),
+    7: ("Lagunas", "#9fd3f0"),
 }
+# Colores según la convención de los mapas hidrogeológicos (IAH/UNESCO, usada por INGEMMET): azul =
+# acuífero poroso; verdes = acuíferos fisurados y kársticos; marrones = acuitardos y acuífugos.
+# Orden de la leyenda: de mayor a menor capacidad de almacenar y transmitir agua.
+ORDEN_HIDRO = [1, 2, 4, 5, 3, 6, 7]
 
 
 def hidro_grupo(name, unidad):
@@ -136,6 +143,7 @@ def hidro_grupo(name, unidad):
 
 
 units["grupo_hidrogeologico"] = [hidro_grupo(n, u) for n, u in zip(units.index, units["UNIDAD"])]
+geo_in["grupo"] = [hidro_grupo(n, u) for n, u in zip(geo_in["NAME"], geo_in["UNIDAD"])]
 units.round(3).to_csv(OUT / "unidades_geologicas_cuenca.csv")
 print("\nUnidades INGEMMET y grupo hidrogeológico asignado:")
 print(units[["UNIDAD", "pct", "grupo_hidrogeologico"]].round(2).to_string())
@@ -143,7 +151,29 @@ geo["cod"] = [hidro_grupo(n, u) for n, u in zip(geo["NAME"], geo["UNIDAD"])]
 geo_r = rasterize([(g, v) for g, v in zip(geo.geometry, geo["cod"])], out_shape=SHAPE,
                   transform=T, fill=0).astype("uint8")
 
-# ------------------------------------------------------------------ precipitación (PISCOp v3.0)
+# Colores oficiales de INGEMMET: simbología de la capa Geología 1:100 000 integrada de GEOCATMIN
+# (renderer de valores únicos por el código NAME). Se guarda una copia para reproducibilidad.
+SIMB = DATOS / "geologia" / "ingemmet_simbologia_geologia100k.json"
+if not SIMB.exists():
+    import json, urllib.request
+    url = ("https://geocatmin.ingemmet.gob.pe/arcgis/rest/services/SERV_GEOLOGIA_100K_INTEGRADA/MapServer/6"
+           "?f=json")
+    capa = json.loads(urllib.request.urlopen(url, timeout=60).read().decode("utf-8"))
+    SIMB.write_text(json.dumps({"fuente": url, "consulta": pd.Timestamp.today().strftime("%Y-%m-%d"),
+                                "renderer": capa["drawingInfo"]["renderer"]}, ensure_ascii=False), encoding="utf-8")
+import json
+_rend = json.loads(SIMB.read_text(encoding="utf-8"))["renderer"]
+COLOR_INGEMMET = {v["value"].strip(): tuple(c / 255 for c in v["symbol"]["color"][:3])
+                  for v in _rend["uniqueValueInfos"]}
+COLOR_INGEMMET["Laguna"] = COLOR_INGEMMET.get("", (0.81, 1.0, 1.0))   # en GEOCATMIN las lagunas no tienen código
+UID = {n: i + 1 for i, n in enumerate(sorted(geo["NAME"].unique()))}
+geo_u = rasterize([(g, UID[n]) for g, n in zip(geo.geometry, geo["NAME"])], out_shape=SHAPE,
+                  transform=T, fill=0).astype("int32")
+ROTULO_KM2 = 20                                     # área mínima de un polígono para rotular su código
+sin_color = [n for n in units.index if n not in COLOR_INGEMMET]
+assert not sin_color, f"Unidades sin color en la simbología de INGEMMET: {sin_color}"
+
+# ------------------------------------------------------------------ precipitación (CHIRPS v2.0)
 # Periodo común P_L–P_I. Como el último año está incompleto, la media anual se calcula como la suma de
 # las 12 medias mensuales del periodo (usa todos los meses sin sesgar hacia los meses del año parcial).
 INI, FIN = periodo_comun()
@@ -157,22 +187,23 @@ def media_anual_clim(x):
     return x.groupby("time.month").mean().sum("month")
 
 
-pv3 = xr.open_dataset(DATOS / "piscop_senamhi" / "v3p0" / "PISCOp_v3_d_El_Tambo_recorte.nc")["precipitation"]
-pv3 = pv3.sel(time=slice(INI, fin_diario(FIN)))
-assert pv3.notnull().all(), "PISCOp v3.0: faltantes en el recorte"
-P_CELDA = media_anual_clim(pv3.resample(time="MS").sum())          # mm/año por celda
-# Cada píxel del DEM toma el valor de la celda de 0.1° que lo contiene (sin interpolar)
+chirps = xr.open_dataset(DATOS / "chirps" / "CHIRPS_v2p0_mensual_El_Tambo.nc")["precipitation"]
+chirps = chirps.sel(time=slice(INI, FIN))
+assert chirps.notnull().all(), "CHIRPS: faltantes en el recorte"
+P_CELDA = media_anual_clim(chirps)                                  # mm/año por celda de 0.05°
+# Interpolación bilineal entre centros de celda a cada píxel del DEM (representación continua)
 px_lon = T.c + T.a * (np.arange(SHAPE[1]) + 0.5)
 px_lat = T.f + T.e * (np.arange(SHAPE[0]) + 0.5)
-celda = P_CELDA.sel(lon=xr.DataArray(px_lon, dims="x"), lat=xr.DataArray(px_lat, dims="y"),
-                    method="nearest", tolerance=0.05 + 1e-6)
-precip = np.where(mask, celda.transpose("y", "x").values, np.nan)
+interp = RegularGridInterpolator((P_CELDA.lat.values, P_CELDA.lon.values), P_CELDA.values, method="linear")
+LAT2, LON2 = np.meshgrid(px_lat, px_lon, indexing="ij")
+P_CONT = interp(np.column_stack([LAT2.ravel(), LON2.ravel()])).reshape(SHAPE)
+precip = np.where(mask, P_CONT, np.nan)
 SMES = ROOT / "resultados" / "series_mensuales"
-P_MEDIA = media_anual_clim(pd.read_csv(SMES / "piscop_v3_cuenca_mensual.csv", parse_dates=["fecha"],
-                                       index_col="fecha")["P_piscop_v3_mm_mes"].loc[INI:FIN])   # ponderado por área
+P_MEDIA = media_anual_clim(pd.read_csv(SMES / "chirps_cuenca_mensual.csv", parse_dates=["fecha"],
+                                       index_col="fecha")["P_chirps_mm_mes"].loc[INI:FIN])   # ponderado por área
 P_CAMELS = media_anual_clim(pd.read_csv(SMES / "series_mensuales_camels_pe.csv", parse_dates=["fecha"],
                                         index_col="fecha")["P_L_mm_mes"].loc[INI:FIN])
-print(f"\nP media anual {P_PER} (Σ medias mensuales): PISCOp v3.0 cuenca {P_MEDIA:.0f} mm/año (celdas "
+print(f"\nP media anual {P_PER} (Σ medias mensuales): CHIRPS cuenca {P_MEDIA:.0f} mm/año (píxeles "
       f"{np.nanmin(precip):.0f}–{np.nanmax(precip):.0f}) | CAMELS-PE prec {P_CAMELS:.0f} mm/año")
 
 # ------------------------------------------------------------------ utilidades de mapa
@@ -217,33 +248,96 @@ def cat_layer(ax, arr, classes, title, legend_title):
     return pct
 
 
-def slope_layer(ax):
-    base(ax, "(a) Pendiente – Copernicus GLO-30")
-    im = ax.imshow(np.where(mask, slope, np.nan), cmap="turbo", vmin=0, vmax=60,
-                   extent=EXT, alpha=0.9, interpolation="nearest")
+def contornos(ax, campo):
+    """Límites de los polígonos disueltos por `campo` (±25 m cierra las rendijas entre hojas 1:100 000)."""
+    pol = geo_in[[campo, "geometry"]].assign(geometry=geo_in.buffer(25)).dissolve(campo).reset_index()
+    pol = pol.assign(geometry=pol.buffer(-25)).explode(index_parts=False)
+    pol = pol[pol.area > 0]
+    pol.to_crs(4326).boundary.plot(ax=ax, color="#3a3a3a", linewidth=0.35, alpha=0.8, zorder=3)
+    return pol
+
+
+def hidro_layer(ax):
+    """Unidades de INGEMMET unificadas por comportamiento hídrico (grupos hidrogeológicos)."""
+    base(ax, "(c) Unidades hidrogeológicas – geología INGEMMET 1:100 000 agrupada")
+    idx = np.full(SHAPE, np.nan)
+    for i, c in enumerate(ORDEN_HIDRO):
+        idx[geo_r == c] = i
+    ax.imshow(np.where(mask, idx, np.nan), cmap=ListedColormap([GEO_CLASSES[c][1] for c in ORDEN_HIDRO]),
+              norm=BoundaryNorm(np.arange(len(ORDEN_HIDRO) + 1) - 0.5, len(ORDEN_HIDRO)), extent=EXT,
+              alpha=0.95, interpolation="nearest")
+    contornos(ax, "grupo")
     overlay(ax)
-    cb = plt.colorbar(im, ax=ax, orientation="horizontal", fraction=0.045, pad=0.08,
-                      extend="max")
-    s = slope[mask]
-    cb.set_label(f"Pendiente (°)  ·  media {s.mean():.1f}°, mediana {np.median(s):.1f}°, "
-                 f"P90 {np.percentile(s, 90):.1f}°", fontsize=8)
-    cb.ax.tick_params(labelsize=7.5)
-    return {}
+    pct_g = {c: 100 * np.sum(geo_r[mask] == c) / mask.sum() for c in sorted(GEO_CLASSES)}
+    miembros = {c: ", ".join(units.index[units["grupo_hidrogeologico"] == c].str.replace("Laguna", "—"))
+                for c in GEO_CLASSES}
+    handles = [Patch(facecolor=GEO_CLASSES[c][1], edgecolor="grey",
+                     label=f"{GEO_CLASSES[c][0]} ({pct_g[c]:.1f} %)\n      unidades: {miembros[c]}")
+               for c in ORDEN_HIDRO if pct_g[c] >= 0.005]
+    ax.legend(handles=handles, title="Comportamiento hidrogeológico (% del área; de más a menos permeable)",
+              fontsize=7, title_fontsize=8, loc="upper left", bbox_to_anchor=(0, -0.08), frameon=False,
+              labelspacing=0.9)
+    ax.text(0.0, -0.47, "Agrupación propia por porosidad y permeabilidad esperadas de cada unidad; a contrastar con "
+            "el mapa hidrogeológico de INGEMMET y la ANA.\nColores según la convención IAH/UNESCO de los mapas "
+            "hidrogeológicos. Unidades individuales: mapa_geologia_unidades_ingemmet.png.",
+            transform=ax.transAxes, fontsize=7, va="top", color="#444")
+    return pct_g
+
+
+def geo_layer(ax):
+    """Unidades geológicas con los colores oficiales de INGEMMET; el grupo hidrogeológico va en la leyenda."""
+    base(ax, "Geología – INGEMMET 1:100 000 (colores oficiales) y grupo hidrogeológico")
+    orden = list(units.index)                                          # de mayor a menor área
+    idx = np.full(SHAPE, np.nan)
+    for i, n in enumerate(orden):
+        idx[geo_u == UID[n]] = i
+    ax.imshow(np.where(mask, idx, np.nan), cmap=ListedColormap([COLOR_INGEMMET[n] for n in orden]),
+              norm=BoundaryNorm(np.arange(len(orden) + 1) - 0.5, len(orden)), extent=EXT, alpha=0.95,
+              interpolation="nearest")
+    # Como en los mapas de INGEMMET: límites de unidad y código rotulado (unidades de la misma edad
+    # comparten casi el mismo color, p. ej. las formaciones del Cretácico inferior)
+    # Se disuelve por unidad para que no aparezcan los bordes entre hojas 1:100 000 (no son contactos)
+    pol = contornos(ax, "NAME")
+    grandes = pol[pol.area / 1e6 >= ROTULO_KM2]
+    for _, r in grandes.to_crs(4326).iterrows():
+        p = r.geometry.representative_point()
+        ax.text(p.x, p.y, r["NAME"] if r["NAME"] != "Laguna" else "", fontsize=6.5, ha="center", va="center",
+                zorder=4, path_effects=[pe.withStroke(linewidth=2, foreground="white")])
+    overlay(ax)
+    h_u = [Patch(facecolor=COLOR_INGEMMET[n], edgecolor="grey",
+                 label=f"{n if n != 'Laguna' else '—'}  {r.UNIDAD} ({r.pct:.1f} %) · G{r.grupo_hidrogeologico}")
+           for n, r in units.iterrows()]
+    leg = ax.legend(handles=h_u, title="Unidad INGEMMET (% del área) · grupo hidrogeológico", ncol=2,
+                    fontsize=6.5, title_fontsize=8, loc="upper left", bbox_to_anchor=(0, -0.08), frameon=False,
+                    columnspacing=1.0, handlelength=1.4)
+    ax.add_artist(leg)
+    pct_g = {c: 100 * np.sum(geo_r[mask] == c) / mask.sum() for c in sorted(GEO_CLASSES)}
+    h_g = [Line2D([], [], lw=0, label=f"G{c}: {GEO_CLASSES[c][0]} ({pct_g[c]:.1f} %)")
+           for c in sorted(GEO_CLASSES) if pct_g[c] >= 0.005]
+    ax.legend(handles=h_g, title="Grupos hidrogeológicos (agrupación propia, a contrastar con INGEMMET y ANA)",
+              fontsize=6.5, title_fontsize=8, loc="upper left", bbox_to_anchor=(0, -0.36), frameon=False,
+              handlelength=0, handletextpad=0)
+    return pct_g
 
 
 def precip_layer(ax):
-    base(ax, f"(e) Precipitación media anual {P_PER} – PISCOp v3.0 (SENAMHI)")
-    im = ax.imshow(precip, cmap="Blues", vmin=0, vmax=np.ceil(np.nanmax(precip) / 100) * 100,
-                   extent=EXT, alpha=0.85, interpolation="nearest")
+    base(ax, f"(d) Precipitación media anual {P_PER} – CHIRPS v2.0")
+    vmin = np.floor(np.nanmin(precip) / 100) * 100
+    vmax = np.ceil(np.nanmax(precip) / 100) * 100
+    im = ax.imshow(precip, cmap="Blues", vmin=vmin, vmax=vmax, extent=EXT, alpha=0.85, interpolation="bilinear")
+    cs = ax.contour(px_lon, px_lat, precip, levels=np.arange(vmin, vmax + 1, 100), colors="#08306b",
+                    linewidths=0.6, alpha=0.8)
+    ax.clabel(cs, fmt="%d", fontsize=7, inline=True)
     overlay(ax)
     cb = plt.colorbar(im, ax=ax, orientation="horizontal", fraction=0.045, pad=0.08)
-    cb.set_label(f"P (mm/año) en celdas de 0.1° · promedio de cuenca ponderado por área "
+    cb.set_label(f"P (mm/año) · isoyetas cada 100 mm · promedio de cuenca ponderado por área "
                  f"{P_MEDIA:.0f} mm/año", fontsize=8)
     cb.ax.tick_params(labelsize=7.5)
-    ax.text(0.01, -0.2, "Fuente de apoyo: PISCOp v3.0 diario (doi:10.6084/m9.figshare.32411886.v1),\n"
-            "producto interpolado de pluviómetros y satélite; celdas sin interpolar.\n"
-            f"La P$_L$ del análisis es CAMELS-PE ({P_CAMELS:.0f} mm/año), sin malla espacial.\n"
-            "Periodo común P$_L$–P$_I$; media anual = Σ de las 12 medias mensuales.",
+    ax.text(0.01, -0.2, "Fuente de apoyo: CHIRPS v2.0 mensual, 0.05° (Funk et al. 2015; doi:10.15780/G2RP4Q),\n"
+            "interpolado de forma bilineal a la malla del DEM: la representación es continua, pero el\n"
+            "detalle real es de 0.05° (~5.5 km). CHIRPS subestima frente a la P$_L$ del análisis,\n"
+            f"CAMELS-PE ({P_CAMELS:.0f} mm/año, sin malla espacial): el mapa muestra el patrón espacial,\n"
+            "no la magnitud. Periodo común P$_L$–P$_I$; media anual = Σ de las 12 medias mensuales.",
             transform=ax.transAxes, fontsize=7.5, va="top")
     return {}
 
@@ -253,17 +347,13 @@ ASP = {i: (n, c) for i, (n, c) in enumerate(zip(
     ["#3288bd", "#66c2a5", "#abdda4", "#e6f598", "#fee08b", "#fdae61", "#f46d43", "#d53e4f",
      "#dddddd"]))}
 themes = {
-    "a_pendiente": slope_layer,
-    "b_orientacion": lambda ax: cat_layer(ax, asp_cls, ASP, "(b) Orientación de laderas – GLO-30",
+    "a_orientacion": lambda ax: cat_layer(ax, asp_cls, ASP, "(a) Orientación de laderas – GLO-30",
                                           "Ladera orientada hacia (% del área)"),
-    "c_cobertura": lambda ax: cat_layer(ax, lc, {k: v for k, v in WC.items() if (lc[mask] == k).any()},
-                                        "(c) Cobertura – ESA WorldCover 2021 (10 m)",
+    "b_cobertura": lambda ax: cat_layer(ax, lc, {k: v for k, v in WC.items() if (lc[mask] == k).any()},
+                                        "(b) Cobertura – ESA WorldCover 2021 (10 m)",
                                         "Cobertura (% del área)"),
-    "d_geologia": lambda ax: cat_layer(ax, geo_r, GEO_CLASSES,
-                                       "(d) Unidades hidrogeológicas – agrupación de "
-                                       "INGEMMET 1:100 000",
-                                       "Grupo hidrogeológico (% del área)"),
-    "e_precipitacion": precip_layer,
+    "c_hidrogeologia": hidro_layer,
+    "d_precipitacion": precip_layer,
 }
 COMMON = [Line2D([], [], color="black", lw=1.3, label="Límite de cuenca"),
           Line2D([], [], color="#08306b", lw=1.6, label="Río Chicama"),
@@ -273,7 +363,9 @@ COMMON = [Line2D([], [], color="black", lw=1.3, label="Límite de cuenca"),
 
 # Elimina mapas de versiones anteriores que ya no forman parte del producto
 for old in ["mapa_a_elevacion.png", "mapa_b_pendiente.png", "mapa_c_orientacion.png",
-            "mapa_d_cobertura.png", "mapa_e_geologia.png", "mapa_f_suelos.png"]:
+            "mapa_d_cobertura.png", "mapa_e_geologia.png", "mapa_f_suelos.png",
+            "mapa_a_pendiente.png", "mapa_b_orientacion.png", "mapa_c_cobertura.png",
+            "mapa_d_geologia.png", "mapa_e_precipitacion.png", "mapa_c_geologia.png"]:
     (OUT / old).unlink(missing_ok=True)
 
 pcts = {}
@@ -285,17 +377,23 @@ for name, fn in themes.items():
     fig.savefig(OUT / f"mapa_{name}.png", dpi=200, bbox_inches="tight")
     plt.close(fig)
 
-# Panel compuesto 3 x 2 (cinco mapas; la sexta casilla queda vacía)
-fig, axs = plt.subplots(3, 2, figsize=(17, 37))
-fig.subplots_adjust(left=0.05, right=0.98, top=0.955, bottom=0.05, hspace=0.36, wspace=0.12)
+# Mapa de apoyo (fuera del panel): unidades individuales con los colores oficiales de INGEMMET
+fig, ax = plt.subplots(figsize=(8.5, 10.5))
+geo_layer(ax)
+fig.legend(handles=COMMON, loc="lower right", fontsize=7, frameon=False, bbox_to_anchor=(0.98, 0.0))
+fig.savefig(OUT / "mapa_geologia_unidades_ingemmet.png", dpi=200, bbox_inches="tight")
+plt.close(fig)
+
+# Panel compuesto 2 x 2
+fig, axs = plt.subplots(2, 2, figsize=(17, 28.5))
+fig.subplots_adjust(left=0.05, right=0.98, top=0.94, bottom=0.17, hspace=0.36, wspace=0.12)
 for ax, fn in zip(axs.flat, themes.values()):
     fn(ax)
-axs.flat[-1].axis("off")
 fig.legend(handles=COMMON, loc="upper center", ncol=4, fontsize=10, frameon=False,
-           bbox_to_anchor=(0.5, 0.983))
+           bbox_to_anchor=(0.5, 0.975))
 fig.suptitle("Contexto físico de la cuenca del río Chicama hasta la estación El Tambo "
-             f"(CAMELS-PE PE_47E0A2A8, {A_km2:,.0f} km²)", fontsize=15, y=0.995)
-fig.text(0.5, 0.975, CRS_TXT + "  ·  Límite, red y río Chicama derivados de Copernicus GLO-30 (D8)",
+             f"(CAMELS-PE PE_47E0A2A8, {A_km2:,.0f} km²)", fontsize=15, y=0.993)
+fig.text(0.5, 0.963, CRS_TXT + "  ·  Límite, red y río Chicama derivados de Copernicus GLO-30 (D8)",
          ha="center", va="top", fontsize=9)
 fig.savefig(OUT / "panel_contexto_fisico.png", dpi=150)
 plt.close(fig)
@@ -321,10 +419,10 @@ s = slope[mask]
 rows = [("elevacion", f"Banda {b}-{b+500} m", p) for b, p in zip(bands[:-1], band_pct)]
 rows += [("pendiente", f"{a}-{b}°", 100 * np.mean((s >= a) & (s < b)))
          for a, b in [(0, 5), (5, 15), (15, 30), (30, 45), (45, 90)]]
-for key, cls in [("b_orientacion", ASP), ("c_cobertura", WC), ("d_geologia", GEO_CLASSES)]:
+for key, cls in [("a_orientacion", ASP), ("b_cobertura", WC), ("c_hidrogeologia", GEO_CLASSES)]:
     rows += [(key[2:], cls[c][0], p) for c, p in pcts[key].items()]
 p_in = precip[mask]
-rows += [("precipitacion_piscop_v3", f"{a}-{b} mm/año", 100 * np.mean((p_in >= a) & (p_in < b)))
+rows += [("precipitacion_chirps", f"{a}-{b} mm/año", 100 * np.mean((p_in >= a) & (p_in < b)))
          for a, b in [(0, 500), (500, 750), (750, 1000), (1000, 1500)]]
 ficha = pd.DataFrame(rows, columns=["tema", "clase", "pct_area"]).round(2)
 ficha.to_csv(OUT / "ficha_contexto_fisico.csv", index=False)

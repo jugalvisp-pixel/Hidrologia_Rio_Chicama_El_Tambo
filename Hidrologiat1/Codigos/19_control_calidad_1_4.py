@@ -54,13 +54,13 @@ t = d[["tmin", "tmean", "tmax"]].dropna()
 print(f"  tmin ≤ tmean ≤ tmax: {((t.tmin <= t.tmean) & (t.tmean <= t.tmax)).mean() * 100:.2f} % de los días | "
       f"|tmean − (tmin+tmax)/2| máx = {(t.tmean - (t.tmin + t.tmax) / 2).abs().max():.4f} °C")
 fs = d[["flow_obs", "flow_sim"]].dropna()
-print(f"  flow_sim (simulado, PISCO_ARNOVIC) NO se usa; r(obs, sim) diario = {fs.corr().iloc[0, 1]:.2f} en {len(fs)} días")
+print(f"  flow_sim (simulado, PISCO_ARNOVIC) solo como predictor del relleno (script 09); r(obs, sim) diario = {fs.corr().iloc[0, 1]:.2f} en {len(fs)} días")
 
 # ------------------------------------------------------------------ 1. disponibilidad año × mes
 cond = pd.DataFrame(index=m.index)
 cond["P_L"] = np.where(m["dias_validos_P"] == m["n_dias"], "completo",
                        np.where(m["dias_validos_P"] == 0, "sin_dato", "excluido"))
-cond["Q"] = m["R_flag"]
+cond["Q"] = m["R_flag_obs"]                     # disponibilidad de lo OBSERVADO (antes del relleno, script 09)
 falt_T = 1 - m["dias_validos_T"] / m["n_dias"]
 cond["T"] = np.select([falt_T == 0, falt_T <= MAX_FALT, m["dias_validos_T"] == 0],
                       ["completo", "escalado", "sin_dato"], "excluido")
@@ -179,8 +179,12 @@ print(f"\nRevisión manual IMERG {F} ({nc.name}): unidades '{ds['precipitation']
 cq = cond.loc[INI:FIN, "Q"]
 sep_falt = cq.isin(["escalado", "excluido"]).groupby(cq.index.month).sum()
 n_esc, n_exc = int((cq == "escalado").sum()), int((cq == "excluido").sum())
-rp = m.loc[INI:FIN, ["P_L_mm_mes", "R_mm_mes"]].dropna()
-n_rp = int((rp["R_mm_mes"] > rp["P_L_mm_mes"]).sum())
+rp = m.loc[INI:FIN, ["P_L_mm_mes", "R_obs_mm_mes"]].dropna()
+n_rp = int((rp["R_obs_mm_mes"] > rp["P_L_mm_mes"]).sum())
+fr = m.loc[INI:FIN, "R_flag"].value_counts()
+n_int, n_esc2, n_mod = int(fr.get("interpolado_diario", 0)), int(fr.get("escalado", 0)), int(fr.get("modelo_mensual", 0))
+mes_mod = ", ".join(f"{f:%Y-%m}" for f in m.loc[INI:FIN].index[m.loc[INI:FIN, "R_flag"] == "modelo_mensual"])
+r9802, r9803 = m.loc["1998-02-01", "R_mm_mes"], m.loc["1998-03-01", "R_mm_mes"]
 n_pl1 = int((m.loc[INI:FIN, "P_L_mm_mes"] < 1).sum())
 PER = f"periodo común {INI:%Y-%m} a {FIN:%Y-%m}"
 REG = [
@@ -190,29 +194,34 @@ REG = [
     ("CC-02", "P_L, Q, PET", "1981–2025", "Valores negativos", "Conteo de negativos = 0 en prec, flow_obs y pet",
      "Ninguna", "Ninguno", "sin problema"),
     ("CC-03", "Q (flow_sim)", "1981–2025", "La base incluye caudal simulado (PISCO_ARNOVIC) junto al observado",
-     f"Se verifica que solo se usa flow_obs; r(obs, sim) diario = {fs.corr().iloc[0, 1]:.2f}",
-     "flow_sim no se usa en ningún análisis", "Ninguno", "sin problema"),
+     f"Se verifica que el análisis usa flow_obs; r(obs, sim) diario = {fs.corr().iloc[0, 1]:.2f}",
+     f"flow_sim solo se usa como predictor del modelo de relleno en {n_mod} mes(es) sin datos suficientes ({mes_mod})",
+     "Esos meses quedan marcados (R_flag = modelo_mensual)", "sin problema"),
     ("CC-04", "Q", "1998–2025, sobre todo septiembre",
      f"Días faltantes concentrados en ago–oct casi todos los años (meses no completos por mes calendario: "
      f"{ {int(k): int(v) for k, v in sep_falt[sep_falt > 0].items()} })",
      "Mapa de disponibilidad año × mes; sin tramos lineales (interpolación) ni picos aislados en los días válidos",
-     "Criterio único: ≤ 10 % faltantes → mes retenido (Q̄ media de días válidos, R escalada); > 10 % → excluido; sin relleno",
-     f"{n_esc} meses escalados en el {PER} (casi todos de estiaje, caudal casi constante → error de escalado pequeño); "
-     "patrón sistemático, causa no documentada (¿mantenimiento anual?)",
-     "incierto"),
+     "Relleno (decisión del grupo, 2026-10-10; relleno_caudal.py, validación en el script 28): huecos ≤ 15 días "
+     "interpolados en ln(q); meses con ≥ 50 % de días tras interpolar → escalados; resto → modelo log-lineal con flow_sim y R del mes anterior",
+     f"En el {PER}: {n_int} meses completados por interpolación diaria, {n_esc2} escalados y {n_mod} reconstruido(s) con el "
+     f"modelo; los observados con faltantes eran {n_esc} retenidos y {n_exc} excluidos. Patrón sistemático, causa no "
+     "documentada (¿mantenimiento anual?)",
+     "corregido"),
     ("CC-05", "Q", "2019–2021",
      f"Cambio de cobertura: 61, 56 y 24 días faltantes por año; concentra la mayoría de los {n_exc} meses "
      f"excluidos del {PER}",
-     "Conteo anual de faltantes y mapa de disponibilidad", "Meses excluidos quedan vacíos; no se rellenan",
-     "Menos pares P–Q en 2019–2021; vacíos a tratar en Fourier (punto 4) y tendencias (punto 3)", "incierto"),
+     "Conteo anual de faltantes y mapa de disponibilidad", "Meses rellenados con el método de CC-04 (bandera R_flag)",
+     "Serie continua para tendencias (punto 3) y Fourier (punto 4); en 2019–2021 más meses rellenados, mayor "
+     "incertidumbre", "corregido"),
     ("CC-06", "Q / R", "1998-02",
      "Segundo mes más lluvioso de P_L (381 mm) sin caudal: 23/28 días válidos (faltan 10, 11, 23, 26 y 27) durante El Niño 1997–98",
-     "Revisión de los días faltantes en los datos diarios", "Excluido (17.9 % de días faltantes > 10 %)",
-     "El pico de El Niño 1998 queda subrepresentado en Q; posible pérdida de registro en la crecida", "excluido"),
+     "Revisión de los días faltantes en los datos diarios",
+     f"Huecos de 1–2 días interpolados en ln(q) → R = {r9802:.0f} mm (antes excluido por 17.9 % de días faltantes)",
+     "Huecos cortos en plena crecida: la interpolación puede omitir picos de un día; valor de R incierto", "incierto"),
     ("CC-07", "Q / R", "1998-03",
      "Máximo del registro (Q̄ 678 m³/s, R 837 mm) con 2 días faltantes (24 y 25) y R ≈ 2 × P_L (414 mm)",
-     "Revisión manual: Σq = 782.59 mm en 29/31 días → R = 836.56 mm (coincide con la tabla)",
-     "Retenido como escalado",
+     "Revisión manual: Σq = 782.59 mm en 29/31 días → R escalado = 836.56 mm (coincide con la tabla observada)",
+     f"Días 24 y 25 interpolados en ln(q) → R = {r9803:.0f} mm",
      "R > P puede reflejar almacenamiento de feb, subestimación de P_L en el evento o extrapolación de la curva de descarga en crecida",
      "incierto"),
     ("CC-08", "Q / R vs P_L", f"{n_rp} de {len(rp)} meses del {PER}, sobre todo may–ago",

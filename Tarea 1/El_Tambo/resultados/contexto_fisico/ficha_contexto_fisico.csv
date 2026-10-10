@@ -28,14 +28,14 @@ cobertura,Área urbana,0.21
 cobertura,Suelo desnudo / vegetación escasa,2.14
 cobertura,Cuerpos de agua,0.14
 cobertura,Humedal herbáceo (bofedal),0.0
-geologia,"Depósitos cuaternarios no consolidados (aluviales, fluviales, glaciares, lacustres) – acuífero poroso",2.55
-geologia,"Areniscas cuarzosas y cuarcitas (Fm. Chimú, Fm. Farrat) – acuífero fisurado sedimentario",40.07
-geologia,"Secuencias de lutitas, limolitas y areniscas (Fm. Chicama, Santa, Carhuaz, Inca) y conglomerados (Fm. Huaylas) – acuitardo sedimentario",36.88
-geologia,"Calizas y margas (Fm. Chúlec, Pariatambo, Pulluicana, Quilquiñán, Cajamarca) – acuífero kárstico-fisurado / acuitardo",9.62
-geologia,"Rocas volcánicas (Gr. Calipuy, Fm. Llama, San Pablo, Chilete, Gr. Casma) – acuitardo / acuífero fisurado volcánico",8.46
-geologia,"Rocas intrusivas (granodiorita, granito, diorita) – acuífugo",2.43
-geologia,Lagunas,0.01
-precipitacion_piscop_v3,0-500 mm/año,14.32
-precipitacion_piscop_v3,500-750 mm/año,39.8
-precipitacion_piscop_v3,750-1000 mm/año,36.47
-precipitacion_piscop_v3,1000-1500 mm/año,9.41
+hidrogeologia,"Depósitos cuaternarios no consolidados (aluviales, fluviales, glaciares, lacustres) – acuífero poroso",2.55
+hidrogeologia,"Areniscas cuarzosas y cuarcitas (Fm. Chimú, Fm. Farrat) – acuífero fisurado sedimentario",40.07
+hidrogeologia,"Secuencias de lutitas, limolitas y areniscas (Fm. Chicama, Santa, Carhuaz, Inca) y conglomerados (Fm. Huaylas) – acuitardo sedimentario",36.88
+hidrogeologia,"Calizas y margas (Fm. Chúlec, Pariatambo, Pulluicana, Quilquiñán, Cajamarca) – acuífero kárstico-fisurado / acuitardo",9.62
+hidrogeologia,"Rocas volcánicas (Gr. Calipuy, Fm. Llama, San Pablo, Chilete, Gr. Casma) – acuitardo / acuífero fisurado volcánico",8.46
+hidrogeologia,"Rocas intrusivas (granodiorita, granito, diorita) – acuífugo",2.43
+hidrogeologia,Lagunas,0.01
+precipitacion_chirps,0-500 mm/año,17.94
+precipitacion_chirps,500-750 mm/año,63.3
+precipitacion_chirps,750-1000 mm/año,18.76
+precipitacion_chirps,1000-1500 mm/año,0.0
