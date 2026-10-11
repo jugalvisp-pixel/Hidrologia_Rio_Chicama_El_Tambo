@@ -288,7 +288,16 @@ secciones = [
                    "relleno quedaban excluidos. Desde 2021 la temperatura es una estimación con ERA5-Land (línea "
                    "discontinua morada), no PISCOt.",
                    "Los máximos de 1998 y 2017 corresponden a eventos de El Niño; el caudal queda alto también en los "
-                   "meses siguientes.", script="15_figura_series_1_1.py"), "Punto 1.1"),
+                   "meses siguientes.", script="15_figura_series_1_1.py")
+            + figura(SM / "fig_T_camels_vs_era5land.png", "Temperatura: PISCOt frente a ERA5-Land",
+                     f"PISCOt (la temperatura de CAMELS-PE) termina en 2020. Se descargó ERA5-Land para compararlo y para "
+                     f"estimar 2021 en adelante. En los {TB['n']} meses con ambas fuentes varían igual (r = {TB['r']:.2f}), "
+                     f"pero ERA5-Land es {abs(TB['sesgo']):.1f} °C más fría de forma casi constante. La estimación desde "
+                     f"2021 (ERA5-Land + sesgo de cada mes) tuvo un error medio de {float(val['MAE_C']):.2f} °C al validarla "
+                     f"en {val['evaluacion']}. Las dos fuentes no se unen en una sola serie.",
+                     "(a) Series superpuestas; (b) ciclo anual medio. Solo unos 0.5 °C del desfase se explican por la "
+                     "altitud del relieve del modelo. Otra causa probable es la definición: PISCOt usa (Tmáx + Tmín)/2, "
+                     "y ERA5-Land promedia las 24 horas.", script="17_era5land_temperatura.py"), "Punto 1.1"),
     seccion("p12", "Precipitación satelital IMERG",
             f"IMERG V07 Final (0.1°) promediado sobre la cuenca, ponderando cada celda por su área dentro de la cuenca. "
             f"Frente a P<sub>L</sub>: media {IM['PI']:.1f} vs {IM['PL']:.1f} mm/mes, sesgo {IM['sesgo']:+.1f} mm/mes, "
@@ -309,16 +318,6 @@ secciones = [
             + figura(SM / f"fig_precipitacion_imerg_{INI:%Y}_{FIN:%Y}.png", "P<sub>I</sub> de IMERG",
                      "Mismo formato y mismos ejes que la figura anterior, para compararlas a simple vista.",
                      script="16_grafica_precipitacion_imerg.py"), "Punto 1.2"),
-    seccion("temp", "Temperatura: PISCOt frente a ERA5-Land",
-            f"PISCOt (la temperatura de CAMELS-PE) termina en 2020. Se descargó ERA5-Land para compararlo y para "
-            f"estimar 2021 en adelante. En los {TB['n']} meses con ambas fuentes varían igual (r = {TB['r']:.2f}), pero "
-            f"ERA5-Land es {abs(TB['sesgo']):.1f} °C más fría de forma casi constante. La estimación desde 2021 "
-            f"(ERA5-Land + sesgo de cada mes) tuvo un error medio de {float(val['MAE_C']):.2f} °C al validarla en "
-            f"{val['evaluacion']}. Las dos fuentes no se unen en una sola serie.",
-            figura(SM / "fig_T_camels_vs_era5land.png", "Temperatura media mensual: CAMELS-PE vs ERA5-Land",
-                   "(a) Series superpuestas; (b) ciclo anual medio. Solo unos 0.5 °C del desfase se explican por la "
-                   "altitud del relieve del modelo. Otra causa probable es la definición: PISCOt usa (Tmáx + Tmín)/2, "
-                   "y ERA5-Land promedia las 24 horas.", script="17_era5land_temperatura.py")),
     seccion("p13", "Distribución de los valores mensuales",
             "Histogramas, diagramas de caja y estadísticos descriptivos en el periodo común. P<sub>L</sub> y P<sub>I</sub> "
             "usan los mismos meses y los mismos límites de clase.",
@@ -356,11 +355,11 @@ secciones = [
                     "Estado: «sin problema» = comprobado, nada que corregir; «incierto» = la duda se declara como "
                     "limitación. El detalle de cada comprobación está en registro_anomalias_1_4.csv."),
             "Punto 1.4"),
-    seccion("p15", "Ciclo anual y su variabilidad",
-            f"Climatología de 12 meses en el periodo común y rasgos del ciclo. P<sub>L</sub> llega a su máximo en marzo "
+    seccion("p15a", "Climatología mensual",
+            f"Climatología de 12 meses en el periodo común: para cada mes, número de años, media, mediana, desviación "
+            f"estándar, cuartiles y percentiles 10 y 90. P<sub>L</sub> llega a su máximo en marzo "
             f"({cmes('P_L', 3)['media']:.0f} mm de media) y a su mínimo en julio–agosto; el caudal llega a su máximo en "
-            f"abril ({cmes('Q', 4)['media']:.0f} m³/s). Con los criterios propuestos, el régimen es "
-            f"<b>{ip.loc['P_L', 'regimen']}</b>.",
+            f"abril ({cmes('Q', 4)['media']:.0f} m³/s).",
             figura(CL / "fig_climatologia_1_5a.png", "Ciclo anual medio con bandas de dispersión",
                    "Línea continua = media; discontinua = mediana; banda oscura = rango intercuartílico; banda clara = "
                    "percentiles 10–90. Las bandas describen cuánto cambian los años entre sí; no son intervalos de "
@@ -377,8 +376,12 @@ secciones = [
             + figura(CL / "fig_anio_mes_1_5a.png", "Mapa año × mes",
                      "Cada celda es un mes de un año, de modo que se ven los años individuales. El caudal va en escala "
                      "logarítmica. En temperatura, la trama marca los valores estimados con ERA5-Land.",
-                     script="20_climatologia_1_5a.py")
-            + figura(CL / "fig_ciclo_1_5b.png", "Rasgos del ciclo anual",
+                     script="20_climatologia_1_5a.py"),
+            "Punto 1.5.a"),
+    seccion("p15b", "Rasgos del ciclo anual y su variabilidad",
+            f"Forma, fase, estacionalidad y variabilidad entre años del ciclo anual. Con los criterios propuestos, el "
+            f"régimen de P<sub>L</sub> es <b>{ip.loc['P_L', 'regimen']}</b>.",
+            figura(CL / "fig_ciclo_1_5b.png", "Rasgos del ciclo anual",
                      f"(a) Forma y fase: el caudal va {lag_centroide('P_L'):.1f} meses detrás de P<sub>L</sub> según el "
                      f"centroide. (b) El máximo anual de P<sub>L</sub> cae en marzo en el {pct_mar:.0f} % de los años "
                      f"(feb–abr en el {pct_fa:.0f} %), y el del caudal en abril en el {pct_qabr:.0f} %. (c) Los dos "
@@ -394,7 +397,7 @@ secciones = [
                     "R = caudal en lámina. Mes seco según Bagnouls–Gaussen (P < 2T). Criterios de régimen: unimodal si "
                     "hay un solo pico y el armónico anual domina; bimodal si hay dos picos y el semianual es comparable; "
                     "estacionalidad débil si SI < 0.40."),
-            "Punto 1.5"),
+            "Punto 1.5.b"),
     seccion("p15c", "Síntesis del ciclo anual",
             f"Evidencia reunida para proponer la clasificación hidroclimática mensual. Para la aridez se usa un "
             f"criterio climático (P/PET), no solo el total de lluvia. La clasificación final y su explicación física "
@@ -561,11 +564,17 @@ secciones = [
                     "oscilaciones completas en el registro. Todos los picos y transformaciones están en picos_4_2.csv; "
                     "N, Δf, ventana y normalización de cada espectro en metadatos_espectros_4_1.csv."),
             "Punto 4"),
+    seccion("p5", "Mapas de correlación con el clima global",
+            "Pendiente. Esta sección reunirá los mapas de correlación, mes a mes, entre la precipitación y el caudal de "
+            "la cuenca y los campos globales de temperatura superficial del mar y de dos variables atmosféricas.",
+            '<div class="tabla-cont"><h4>En construcción</h4><p>Aún no hay productos para este punto.</p></div>',
+            "Punto 5"),
 ]
 
-nav = [("cuenca", "Cuenca"), ("contexto", "Contexto"), ("p11", "1.1 Series"), ("p12", "1.2 IMERG"),
-       ("temp", "Temperatura"), ("p13", "1.3 Distribución"), ("p14", "1.4 Calidad"), ("p15", "1.5 Ciclo anual"),
-       ("p15c", "1.5.c Síntesis"), ("p2", "2 Relaciones y modelos"), ("p3", "3 Tendencias"), ("p4", "4 Espectros"), ("datos", "Datos")]
+nav = [("cuenca", "Cuenca"), ("contexto", "Contexto físico"), ("p11", "1.1 Series"), ("p12", "1.2 IMERG"),
+       ("p13", "1.3 Distribución"), ("p14", "1.4 Calidad"), ("p15a", "1.5a Climatología"),
+       ("p15b", "1.5b Ciclo anual"), ("p15c", "1.5c Síntesis"), ("p2", "2. Relaciones"), ("p3", "3. Tendencias"),
+       ("p4", "4. Fourier"), ("p5", "5. Clima global"), ("datos", "Datos")]
 
 CSS = """
 :root{--bg:#f6f5f2;--card:#ffffff;--ink:#1d1d1b;--ink2:#55534e;--line:#e2e0da;--acc:#1b6ca8;--chip:#e7f0f8;--code:#f0efeb}
@@ -585,8 +594,14 @@ nav{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px sol
 nav .wrap{display:flex;gap:4px;overflow-x:auto;padding-top:8px;padding-bottom:8px}
 nav a{white-space:nowrap;color:var(--ink2);text-decoration:none;padding:6px 10px;border-radius:6px;font-size:.92rem}
 nav a:hover,nav a:focus-visible{background:var(--chip);color:var(--ink)}
+nav a[aria-current="page"]{background:var(--chip);color:var(--acc);font-weight:600}
 main .wrap{padding-top:8px;padding-bottom:40px}
-section{padding-top:36px;scroll-margin-top:56px}
+section{padding-top:28px;display:none}
+section.activa{display:block}
+.pasos{display:flex;justify-content:space-between;gap:12px;margin:8px 0 0;flex-wrap:wrap}
+.pasos a{color:var(--acc);text-decoration:none;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:8px 14px;font-size:.92rem}
+.pasos a:hover,.pasos a:focus-visible{background:var(--chip)}
+.pasos .sig{margin-left:auto}
 h2{font-size:1.4rem;margin:0 0 8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .chip{font-size:.75rem;font-weight:600;background:var(--chip);color:var(--acc);padding:3px 9px;border-radius:999px}
 .intro{color:var(--ink2);max-width:880px;margin:0 0 18px}
@@ -621,6 +636,17 @@ footer code{font-family:ui-monospace,Consolas,monospace;background:var(--code);p
 """
 
 JS = """
+const secs=[...document.querySelectorAll('main section')],enl=[...document.querySelectorAll('nav a')];
+const titulos=Object.fromEntries(enl.map(a=>[a.getAttribute('href').slice(1),a.textContent]));
+secs.forEach((s,i)=>{const d=document.createElement('div');d.className='pasos';
+  if(i>0){const a=document.createElement('a');a.href='#'+secs[i-1].id;a.textContent='← '+titulos[secs[i-1].id];d.appendChild(a);}
+  if(i<secs.length-1){const a=document.createElement('a');a.className='sig';a.href='#'+secs[i+1].id;a.textContent=titulos[secs[i+1].id]+' →';d.appendChild(a);}
+  s.appendChild(d);});
+function mostrar(){const id=location.hash.slice(1);const s=secs.find(x=>x.id===id)||secs[0];
+  secs.forEach(x=>x.classList.toggle('activa',x===s));
+  enl.forEach(a=>{if(a.getAttribute('href')==='#'+s.id){a.setAttribute('aria-current','page');a.scrollIntoView({block:'nearest',inline:'nearest'});}else a.removeAttribute('aria-current');});
+  document.title=titulos[s.id]+' · Cuenca El Tambo';window.scrollTo(0,0);}
+window.addEventListener('hashchange',mostrar);mostrar();
 const visor=document.getElementById('visor'),vimg=visor.querySelector('img');
 document.querySelectorAll('.zoom').forEach(b=>b.addEventListener('click',()=>{const i=b.querySelector('img');vimg.src=i.src;vimg.alt=i.alt;visor.classList.add('abierto');visor.querySelector('button').focus();}));
 function cerrar(){visor.classList.remove('abierto');vimg.removeAttribute('src');}
