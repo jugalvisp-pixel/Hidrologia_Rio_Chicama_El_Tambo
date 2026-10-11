@@ -1,0 +1,15 @@
+par,serie,muestra,n,pearson_r,pearson_p,spearman_rho,spearman_p
+(a) P_I vs P_L,original,todos los meses,324,0.9045,0.0,0.9318,0.0
+(a) P_I vs P_L,anomalías,todos los meses,324,0.7361,0.0,0.6614,0.0
+(b) P_L vs Q̄,original,todos los meses,324,0.5742,0.0,0.5234,0.0
+(b) P_L vs Q̄,original,solo Q observado completo,244,0.4929,0.0,0.5385,0.0
+(b) P_L vs Q̄,anomalías,todos los meses,324,0.4961,0.0,0.3728,0.0
+(b) P_L vs Q̄,anomalías,solo Q observado completo,244,0.3842,0.0,0.401,0.0
+(b') P_L vs R,original,todos los meses,324,0.5711,0.0,0.5191,0.0
+(b') P_L vs R,original,solo Q observado completo,244,0.493,0.0,0.5323,0.0
+(b') P_L vs R,anomalías,todos los meses,324,0.492,0.0,0.3737,0.0
+(b') P_L vs R,anomalías,solo Q observado completo,244,0.3854,0.0,0.4018,0.0
+(c) P_I vs Q̄,original,todos los meses,324,0.504,0.0,0.4587,0.0
+(c) P_I vs Q̄,original,solo Q observado completo,244,0.4014,0.0,0.4561,0.0
+(c) P_I vs Q̄,anomalías,todos los meses,324,0.3912,0.0,0.2692,0.0
+(c) P_I vs Q̄,anomalías,solo Q observado completo,244,0.2821,0.0,0.278,0.0

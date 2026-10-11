@@ -174,8 +174,8 @@ sin_color = [n for n in units.index if n not in COLOR_INGEMMET]
 assert not sin_color, f"Unidades sin color en la simbología de INGEMMET: {sin_color}"
 
 # ------------------------------------------------------------------ precipitación (CHIRPS v2.0)
-# Periodo común P_L–P_I. Como el último año está incompleto, la media anual se calcula como la suma de
-# las 12 medias mensuales del periodo (usa todos los meses sin sesgar hacia los meses del año parcial).
+# Periodo común P_L–P_I en años completos. La media anual se calcula como la suma de las 12 medias mensuales
+# del periodo (con años completos equivale a la media de los totales anuales).
 INI, FIN = periodo_comun()
 P_PER = f"{INI:%Y-%m} a {FIN:%Y-%m}"
 

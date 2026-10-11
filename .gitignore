@@ -22,6 +22,9 @@
 # ERA5 regional mensual (script 24): se versiona solo la climatología estacional
 /Tarea 1/El_Tambo/datos/era5/ERA5_*_mensual.nc
 /Tarea 1/El_Tambo/datos/era5/*.tmp
+# ERA5 de la inversión térmica (script 29): se versiona solo la climatología del corte
+/Tarea 1/El_Tambo/datos/era5_inversion/ERA5_*.nc
+/Tarea 1/El_Tambo/datos/era5_inversion/*.tmp
 
 # --- Nunca subir ---
 __pycache__/

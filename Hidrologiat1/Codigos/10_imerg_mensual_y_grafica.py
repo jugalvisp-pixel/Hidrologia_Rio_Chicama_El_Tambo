@@ -221,11 +221,12 @@ imerg.index.name = "fecha"
 imerg.round(4).to_csv(OUT / "imerg_cuenca_mensual.csv")
 
 # ------------------------------------------------------------------ periodo común y gráfica
+from periodo_comun import periodo_comun                          # usa imerg_cuenca_mensual.csv recién escrito
 cam = pd.read_csv(SERIES, index_col="fecha", parse_dates=True)["P_L_mm_mes"]
 df = pd.concat([cam.rename("P_L"), P_I.rename("P_I")], axis=1)
-comun = df.dropna()
-ini, fin = comun.index.min(), comun.index.max()
+ini, fin = periodo_comun()                                       # años calendario completos con P_L y P_I
 df = df.loc[ini:fin]
+comun = df.dropna()
 n = len(comun)
 d = comun["P_I"] - comun["P_L"]
 print(f"\nPeriodo común: {ini:%Y-%m} a {fin:%Y-%m} | {n} pares mensuales")

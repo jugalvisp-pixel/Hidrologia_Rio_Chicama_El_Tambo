@@ -3,7 +3,7 @@
 Qué se descargó, qué tratamiento recibió cada conjunto y con qué versión final se trabaja.
 
 - **Cuenca:** río Chicama hasta la estación hidrométrica El Tambo. Es la estación CAMELS-PE `PE_47E0A2A8` (SENAMHI 211003). Está en −7.574°, −78.707°, a 684 m s.n.m., en la vertiente del Pacífico del norte del Perú, y drena 2 170 km².
-- **Periodo de análisis (periodo común):** 1998-01 a 2025-08, 332 meses. Son los meses que tienen a la vez la precipitación de CAMELS-PE y la de IMERG. Se calcula en un solo lugar, `Hidrologiat1/Codigos/periodo_comun.py`, y todas las figuras, mapas y tablas lo usan.
+- **Periodo de análisis (periodo común):** 1998-01 a 2024-12, 324 meses (27 años calendario completos). Son los meses que tienen a la vez la precipitación de CAMELS-PE y la de IMERG, recortados a años completos. Los meses 2025-01 a 2025-08 de IMERG quedan fuera. Se calcula en un solo lugar, `Hidrologiat1/Codigos/periodo_comun.py`, y todas las figuras, mapas y tablas lo usan.
 - **Rutas:** todas son relativas a la raíz del repositorio.
 
 ---
@@ -12,9 +12,9 @@ Qué se descargó, qué tratamiento recibió cada conjunto y con qué versión f
 
 | Variable | Fuente final | Resolución | Serie de trabajo | Archivo de trabajo |
 |---|---|---|---|---|
-| **P_L** – precipitación de referencia | CAMELS-PE v1.0.1 (`prec`, PISCOp v2.1 promediado sobre la cuenca) | diaria → mensual | 332/332 meses, sin faltantes | `resultados/series_mensuales/series_mensuales_camels_pe.csv` (`P_L_mm_mes`) |
-| **P_I** – precipitación satelital | IMERG V07 Final mensual | 0.1° → promedio de cuenca | 332/332 meses | `resultados/series_mensuales/imerg_cuenca_mensual.csv` |
-| **Q̄** – caudal medio mensual | CAMELS-PE (`flow_obs`, SENAMHI) | diario → mensual | 332/332 meses **con relleno** (305 observados) | `series_mensuales_camels_pe.csv` (`Q_m3_s`) |
+| **P_L** – precipitación de referencia | CAMELS-PE v1.0.1 (`prec`, PISCOp v2.1 promediado sobre la cuenca) | diaria → mensual | 324/324 meses, sin faltantes | `resultados/series_mensuales/series_mensuales_camels_pe.csv` (`P_L_mm_mes`) |
+| **P_I** – precipitación satelital | IMERG V07 Final mensual | 0.1° → promedio de cuenca | 324/324 meses | `resultados/series_mensuales/imerg_cuenca_mensual.csv` |
+| **Q̄** – caudal medio mensual | CAMELS-PE (`flow_obs`, SENAMHI) | diario → mensual | 324/324 meses **con relleno** (297 observados) | `series_mensuales_camels_pe.csv` (`Q_m3_s`) |
 | **R** – escorrentía en lámina | ídem | diario → mensual | ídem | `series_mensuales_camels_pe.csv` (`R_mm_mes`, bandera `R_flag`) |
 | **T** – temperatura media | CAMELS-PE (`tmean`, PISCOt v1.2) hasta 2020-12; desde 2021, estimación con ERA5-Land | diaria → mensual | 276 meses PISCOt + 56 estimados, **en columnas separadas** | `resultados/series_mensuales/temperatura_piscot_extendida_era5land.csv` |
 | PET (solo 1.5.c) | CAMELS-PE (`pet`, PISCOeo_pm, Penman–Monteith) | diaria → mensual | 1998-01 a 2016-12 | calculada en el script 23 |
@@ -61,7 +61,7 @@ Qué se descargó, qué tratamiento recibió cada conjunto y con qué versión f
 
    | Condición del mes | Meses |
    |---|---|
-   | Observados completos | 252 |
+   | Observados completos | 244 |
    | Con días interpolados | 76 |
    | Escalados | 3 (1998-09, 2019-01, 2019-02) |
    | Reconstruidos con el modelo | 1 (1998-08, sin ningún día medido) |
@@ -92,7 +92,7 @@ Además, `caudal_diario_interpolado.csv` tiene la serie diaria con los huecos co
 
 **Con qué se trabaja:** `resultados/series_mensuales/imerg_cuenca_mensual.csv`.
 
-**Resultado frente a P_L:** P_I acumula el 65 % de P_L (45.3 frente a 70.3 mm/mes), con r = 0.91.
+**Resultado frente a P_L:** P_I acumula el 65 % de P_L (539 frente a 833 mm/año), con r = 0.90.
 
 ### 2.3 PISCOp (SENAMHI) — verificación y apoyo espacial
 
@@ -141,7 +141,7 @@ Se usa solo como contraste de magnitud (aridez en 1.5.c). Los NetCDF nacionales 
 2. **Comparación con PISCOt en 1998–2020.** Las dos series varían igual (r 0.89), pero ERA5-Land es 2.84 °C más fría de forma casi constante. La diferencia de relieve del modelo explica solo ≈ 0.55 °C.
 3. **Estimación desde 2021:** T_est = ERA5-Land + sesgo medio del mes calendario frente a PISCOt (+2.62 a +2.99 °C). Validación fuera de muestra (ajuste en 1998–2010, evaluación en 2011–2020): MAE 0.19 °C.
 
-**Con qué se trabaja:** `temperatura_piscot_extendida_era5land.csv`. `T_piscot_C` (hasta 2020) y `T_estimada_era5land_C` (2021-01 a 2025-08) van **en columnas separadas**, sin unir las fuentes. En las figuras, el tramo estimado se dibuja discontinuo y morado. Las tendencias (punto 3) deben tratar ese tramo aparte.
+**Con qué se trabaja:** `temperatura_piscot_extendida_era5land.csv`. `T_piscot_C` (hasta 2020) y `T_estimada_era5land_C` (2021-01 a 2024-12 en el periodo común) van **en columnas separadas**, sin unir las fuentes. En las figuras, el tramo estimado se dibuja discontinuo y morado. Las tendencias (punto 3) deben tratar ese tramo aparte.
 
 ### 2.6 ERA5 — viento y transporte de humedad regional
 
@@ -163,6 +163,24 @@ Se usa solo como contraste de magnitud (aridez en 1.5.c). Los NetCDF nacionales 
 
 Para la cuenca se descartó ERA5-Land, porque no tiene viento en altura ni IVT.
 
+### 2.6 b ERA5 — temperatura y velocidad vertical (inversión térmica)
+
+| | |
+|---|---|
+| Referencia | ERA5 monthly averaged reanalysis, C3S/ECMWF (mismos DOI que 2.6) |
+| Descarga | CDS (script 29), 1998–2025, malla 0.25°, dominio 2°S–12°S × 88°O–72°O. Temperatura y velocidad vertical ω en 23 niveles (1000–200 hPa), en bloques de 7 años por el límite de tamaño del CDS; presión en superficie y temperatura a 2 m; geopotencial de superficie (relieve del modelo) |
+| Dónde está | `datos/era5_inversion/`. Los NetCDF (~77 MB) no se suben; sí la climatología del corte (0.1 MB) |
+
+**Tratamiento** (script 29):
+1. **Temperatura potencial**, θ = T·(1000/p)^0.286.
+2. **Capas de inversión:** las capas donde T aumenta con la altura.
+3. **Estabilidad de la baja troposfera**, LTS = θ(700 hPa) − θ(superficie), frente a la costa (83–80°O × 9–6.5°S).
+4. **ω en 500 hPa y convergencia del IVT** sobre las celdas de la cuenca.
+5. **Corte vertical promediado en 7–8°S** para dic–abr y may–sep.
+6. **Correlación de anomalías mensuales** con P_L en dic–abr.
+
+**Con qué se trabaja:** `fig_inversion_termica_era5.png`, `ciclo_inversion_convergencia.csv` y `correlaciones_inversion_lluvia.csv`, en `resultados/contexto_fisico/`.
+
 ### 2.7 Relieve, cobertura, geología y otros
 
 | Conjunto | Referencia / acceso | Tratamiento | Uso | ¿En el repositorio? |
@@ -178,7 +196,7 @@ Para la cuenca se descartó ERA5-Land, porque no tiene viento en altura ni IVT.
 
 ## 3. Criterios comunes a todo el análisis
 
-- **Periodo común:** 1998-01 a 2025-08. La media anual se calcula como la Σ de las 12 medias mensuales, porque 2025 está incompleto.
+- **Periodo común:** 1998-01 a 2024-12, solo años calendario completos. Cada mes calendario tiene 27 años; la media anual (Σ de las 12 medias mensuales) equivale a la media de los totales anuales.
 - **Promedios de cuenca de productos en malla** (IMERG, PISCOp, CHIRPS, ERA5-Land): media ponderada por el área de intersección celda–polígono, calculada en UTM 17S (EPSG:32717) con el polígono propio de GLO-30.
 - **Coordenadas:** los mapas van en WGS 84 (EPSG:4326); áreas y morfometría en UTM 17S.
 - **Comparaciones entre fuentes:** siempre con los mismos meses válidos (pares comunes).

@@ -60,6 +60,22 @@ acal = leer(CL / "anomalias_anio_calendario_1_5b.csv").sort_values("P_L_anom_tot
 humedos = ", ".join(str(int(a)) for a in acal.tail(4)["anio"][::-1])
 secos = ", ".join(str(int(a)) for a in acal.head(4)["anio"])
 reg = leer(CC / "registro_anomalias_1_4.csv")
+RE = PROY / "Tarea 1" / "El_Tambo" / "resultados" / "relaciones"
+MO = PROY / "Tarea 1" / "El_Tambo" / "resultados" / "modelos"
+_m21 = leer(RE / "metricas_2_1.csv")
+_m21 = _m21[(_m21.serie == "original") & (_m21.muestra == "todos los meses")].set_index("par")
+R21 = dict(a=_m21.loc["(a) P_I vs P_L", "pearson_r"], b=_m21.loc["(b) P_L vs Q̄", "spearman_rho"],
+           c=_m21.loc["(c) P_I vs Q̄", "spearman_rho"])
+E21 = leer(RE / "metricas_IMERG_por_estacion_2_1.csv", index_col=0).loc["todo el año"]
+_rz = leer(RE / "rezagos_2_1.csv").query("lluvia == 'P_L'")
+RZ = dict(k0=_rz.query("serie == 'original' and tipo == 'rezago P(t−k)' and k == 0").spearman_rho.iloc[0],
+          k1=_rz.query("serie == 'original' and tipo == 'rezago P(t−k)' and k == 1").spearman_rho.iloc[0],
+          acu=_rz.query("serie == 'original' and tipo == 'acumulada P(t−k..t)'").spearman_rho.max(),
+          an1=_rz.query("serie == 'anomalías' and tipo == 'rezago P(t−k)' and k == 1").spearman_rho.iloc[0])
+_ci = leer(CF / "ciclo_inversion_convergencia.csv", index_col="mes")
+_co = leer(CF / "correlaciones_inversion_lluvia.csv", index_col="predictor")["r_anomalias_dic_abr"]
+INV = dict(lts_min=_ci["LTS_costa_K"].min(), lts_max=_ci["LTS_costa_K"].max(), r_lts=_co["LTS_costa_K"],
+           r_w=_co["omega500_cuenca_Pa_s"])
 _fl = cam.loc[INI:FIN]
 RL = dict(interp=int((_fl.R_flag == "interpolado_diario").sum()), esc=int((_fl.R_flag == "escalado").sum()),
           mod=int((_fl.R_flag == "modelo_mensual").sum()),
@@ -200,6 +216,19 @@ secciones = [
                      "Por eso el IVT sobre la cuenca no es mayor en la estación húmeda. ERA5 (malla de 0.25°, aquí "
                      "promediada a 1°) no resuelve la circulación dentro de los valles.",
                      script="24_era5_vientos_humedad.py, 25_mapa_transporte_humedad.py")
+            + figura(CF / "fig_inversion_termica_era5.png", "Inversión térmica, subsidencia y convergencia de humedad",
+                     f"(a, b) Corte vertical oeste–este a la latitud de la cuenca. En la estación seca una inversión "
+                     f"(rayado) cubre el Pacífico hasta la costa a 1–1.5 km, y el aire desciende (rojo) sobre el océano y "
+                     f"la vertiente occidental; en la húmeda la inversión casi desaparece y el aire asciende (azul) sobre "
+                     f"los Andes, incluida la cuenca. (c, d) Ciclo anual: la intensidad de la inversión frente a la costa "
+                     f"(LTS) es mínima en feb–mar ({INV['lts_min']:.0f} K) y máxima en sep ({INV['lts_max']:.0f} K); sobre "
+                     f"la cuenca el aire desciende en jun–ago, cuando la humedad diverge. (e, f) En dic–abr, los meses con "
+                     f"inversión más débil y más ascenso que lo normal son más lluviosos (r = {INV['r_lts']:.2f} y "
+                     f"{INV['r_w']:.2f}); los extremos de 1998 y 2017 corresponden a El Niño costero.",
+                     "La inversión sigue fuerte en sep–nov, cuando sobre la cuenca ya hay ascenso y convergencia: la "
+                     "inversión costera explica la supresión de lluvia de la estación seca, pero el inicio de las lluvias "
+                     "depende del ascenso sobre los Andes. ERA5 suaviza el relieve (~30 km); la relación es evidencia de "
+                     "consistencia, no prueba de causalidad.", script="29_era5_inversion_termica.py")
             + figura(CF / "curva_hipsometrica.png", "Curva hipsométrica",
                      "Distribución del área por elevación. La integral hipsométrica (0.52) indica una cuenca de relieve "
                      "intermedio, con buena parte del área a media ladera.", script="07b_mapas_contexto_fisico.py")),
@@ -229,10 +258,10 @@ secciones = [
             + figura(SM / "fig_P_L_vs_IMERG_mensual.png", "P<sub>L</sub> frente a IMERG, mes a mes",
                      "IMERG sigue bien el ritmo de la lluvia, pero sus picos son mucho más bajos, sobre todo en los "
                      "meses más lluviosos.", script="10_imerg_mensual_y_grafica.py")
-            + figura(SM / "fig_precipitacion_camels_1998_2025.png", "P<sub>L</sub> de CAMELS-PE",
-                     "(a) Acumulado mensual y media móvil de 12 meses; (b) totales anuales (2025 queda fuera por estar "
-                     "incompleto).", script="11_grafica_precipitacion_camels.py")
-            + figura(SM / "fig_precipitacion_imerg_1998_2025.png", "P<sub>I</sub> de IMERG",
+            + figura(SM / f"fig_precipitacion_camels_{INI:%Y}_{FIN:%Y}.png", "P<sub>L</sub> de CAMELS-PE",
+                     "(a) Acumulado mensual y media móvil de 12 meses; (b) totales anuales.",
+                     script="11_grafica_precipitacion_camels.py")
+            + figura(SM / f"fig_precipitacion_imerg_{INI:%Y}_{FIN:%Y}.png", "P<sub>I</sub> de IMERG",
                      "Mismo formato y mismos ejes que la figura anterior, para compararlas a simple vista.",
                      script="16_grafica_precipitacion_imerg.py"), "Punto 1.2"),
     seccion("temp", "Temperatura: PISCOt frente a ERA5-Land",
@@ -339,11 +368,48 @@ secciones = [
                     "«Lectura propuesta» es un apoyo cuantitativo para la discusión del grupo, no la conclusión. "
                     "Detalle en criterios_clasificacion_1_5c.csv, aridez_budyko_1_5c.csv y koppen_1_5c.csv."),
             "Punto 1.5.c"),
+    seccion("p2", "Relaciones entre series y modelos estadísticos",
+            f"Comparaciones mensuales con los meses coincidentes del periodo común ({PER}). El caudal usa la serie "
+            f"rellenada; las métricas sin los meses rellenados están en los CSV como prueba de sensibilidad.",
+            figura(RE / "fig_dispersion_2_1.png", "Dispersión entre lluvia y caudal",
+                   f"(a) IMERG frente a P<sub>L</sub>: muy correlacionadas (r = {R21['a']:.2f}) pero no concordantes: "
+                   f"IMERG queda bajo la línea 1:1 en los meses húmedos (sesgo {E21['sesgo']:+.1f} mm/mes, "
+                   f"{E21['sesgo_pct']:+.0f} %) y algo por encima en jun–ago. (b, c) La relación de la lluvia del mismo "
+                   f"mes con el caudal es débil (Spearman ρ = {R21['b']:.2f} con P<sub>L</sub> y {R21['c']:.2f} con IMERG) "
+                   f"y muy dispersa: lluvias parecidas dan caudales que difieren hasta 100 veces según la época.",
+                   "Colores por estación. El caudal va en escala logarítmica porque varía tres órdenes de magnitud. "
+                   "(b') En lámina, casi todos los meses quedan bajo la línea R = P<sub>L</sub>; los que la superan "
+                   "son de may–ago (aporte de almacenamiento) y crecidas de El Niño.", script="30_relaciones_2_1.py")
+            + figura(RE / "fig_rezagos_2_1.png", "La lluvia de meses anteriores explica mejor el caudal",
+                     f"El caudal se relaciona mejor con la lluvia del mes anterior (ρ = {RZ['k1']:.2f}) que con la del "
+                     f"mismo mes ({RZ['k0']:.2f}), y aún mejor con la lluvia acumulada de los últimos 4 meses "
+                     f"(ρ = {RZ['acu']:.2f}): la cuenca almacena agua y la entrega con retraso. En anomalías la asociación "
+                     f"se debilita pero persiste (ρ = {RZ['an1']:.2f} con un mes de rezago).",
+                     "La lluvia siempre antecede al caudal; nunca se usa lluvia futura.", script="30_relaciones_2_1.py")
+            + figura(MO / "fig_evaluacion_resumen_2_3.png", "¿Mejoran los modelos a una referencia sencilla?",
+                     "Habilidad fuera del periodo de ajuste en dos particiones por bloques de años (A: ajuste 1998–2015, "
+                     "evaluación 2016–2024; B: ajuste 2007–2024, evaluación 1998–2006). Para P<sub>L</sub> a partir de "
+                     "IMERG, un factor de corrección por mes calendario reduce el error típico cerca de 40 %. Para el "
+                     "caudal, solo los modelos logarítmicos con término por mes y lluvia acumulada (2–3 meses de rezago) "
+                     "mejoran la climatología; la regresión lineal simple es peor que la climatología.",
+                     "★ = modelo elegido por validación cruzada dentro del ajuste. Habilidad = 1 − MAE/MAE de la referencia.",
+                     script="31_modelos_2_2_2_3.py")
+            + figura(MO / "fig_modelo_PL_2_3.png", "Modelo de lluvia local a partir de IMERG",
+                     "Evaluación 2016–2024 del modelo elegido (factor por mes calendario) frente a IMERG sin corregir y a la "
+                     "regresión lineal, con los residuos frente al tiempo, al valor estimado y al mes.",
+                     script="31_modelos_2_2_2_3.py")
+            + figura(MO / "fig_modelo_Q_2_3.png", "Modelo de caudal a partir de la lluvia local",
+                     "Evaluación 2016–2024 del modelo elegido (ln Q̄ con intercepto por mes y lluvia de los últimos 4 meses). "
+                     "Sigue bien la recesión y el estiaje, pero subestima la crecida de El Niño costero de 2017 (residuo de "
+                     "−310 m³/s en abril). La regresión lineal da 30 caudales negativos (las caídas al borde inferior).",
+                     "Una relación estadística lluvia–caudal no conserva masa ni sustituye el balance hídrico.",
+                     script="31_modelos_2_2_2_3.py"),
+            "Punto 2"),
 ]
 
 nav = [("cuenca", "Cuenca"), ("contexto", "Contexto"), ("p11", "1.1 Series"), ("p12", "1.2 IMERG"),
        ("temp", "Temperatura"), ("p13", "1.3 Distribución"), ("p14", "1.4 Calidad"), ("p15", "1.5 Ciclo anual"),
-       ("p15c", "1.5.c Síntesis"), ("datos", "Datos")]
+       ("p15c", "1.5.c Síntesis"), ("p2", "2 Relaciones y modelos"), ("datos", "Datos")]
 
 CSS = """
 :root{--bg:#f6f5f2;--card:#ffffff;--ink:#1d1d1b;--ink2:#55534e;--line:#e2e0da;--acc:#1b6ca8;--chip:#e7f0f8;--code:#f0efeb}
@@ -443,7 +509,7 @@ pagina = f"""<!doctype html>
 {tabla(fuentes, "Fuentes de datos")}
 <div class="tabla-cont"><h4>Cómo reproducir</h4>
 <p>Con Python 3 y las dependencias de <code>requirements.txt</code>, ejecute en <code>Hidrologiat1/Codigos/</code>, en este orden:
-<code>06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 27 → 22</code>.
+<code>06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 29 → 27 → 30 → 31 → 22</code>.
 El periodo común se calcula en <code>periodo_comun.py</code>. Las descargas de IMERG y ERA5-Land requieren cuentas personales
 (NASA Earthdata y Copernicus CDS), cuyas credenciales no se incluyen en el repositorio.</p></div>
 </section>

@@ -33,21 +33,26 @@ de CAMELS-PE; no se descargó ni se usa.
 **Descartado:** PISCOp del IRI Data Library (decisión del grupo, 2026-10-07). Datos borrados; queda solo
 `08_descarga_piscop.py`, fuera del flujo.
 
-### Periodo común de análisis: 1998-01 a 2025-08 (332 meses)
+### Periodo común de análisis: 1998-01 a 2024-12 (324 meses, 27 años completos)
 
-**Decisión del grupo (2026-10-08):** el periodo común es el de los meses con P_L (CAMELS-PE) **y** P_I (IMERG)
-a la vez. **Todas las figuras, mapas y diagramas** se construyen sobre él. Se calcula en un solo lugar,
-`Codigos/periodo_comun.py` (a partir de los datos, no fijado a mano), y todos los scripts lo importan.
-Las tablas del registro completo se conservan solo donde la guía pide distinguirlas (1.3 tabla A; 1.4
-resumen de disponibilidad) y para las tendencias de largo plazo (punto 3, si el grupo lo decide). Media anual
-en el periodo común = Σ de las 12 medias mensuales (2025 está incompleto).
+**Decisiones del grupo:**
+- **2026-10-08:** el periodo común es el de los meses con P_L (CAMELS-PE) **y** P_I (IMERG) a la vez. **Todas las figuras, mapas y diagramas** se construyen sobre él.
+- **2026-10-11:** solo **años calendario completos**. Antes era 1998-01 a 2025-08 (332 meses); ahora quedan fuera 2025-01..08.
+
+Se calcula en un solo lugar, `Codigos/periodo_comun.py`, a partir de los datos (primer enero a último diciembre comunes, no fijado a mano), y todos los scripts lo importan. Toda la cadena se regeneró el 2026-10-11 con el periodo nuevo.
+
+Las tablas del registro completo se conservan solo donde la guía pide distinguirlas (1.3 tabla A; 1.4 resumen de disponibilidad) y para las tendencias de largo plazo (punto 3, si el grupo lo decide). Con años completos, la media anual (Σ de las 12 medias mensuales) es la media de los totales anuales.
+
+**Cifras con el periodo nuevo:** P_L 833 mm/año, P_I 539 mm/año (65 % de P_L), R 391 mm/año.
 
 | Serie | Meses válidos en el periodo común | Observación |
 |---|---|---|
-| P_L (CAMELS-PE `prec`) | 332/332 (540/540 en 1981–2025) | **0 días faltantes** en todo el registro |
-| P_I (IMERG) | 332/332 | Registro 1998-01 a 2025-08; define el fin del periodo común |
-| Q / R (CAMELS-PE `flow_obs`) | **332/332 rellenada** (305/332 observada) | 3.11 % de días faltantes. Observado: 252 meses completos, 53 escalados, 26 excluidos y 1 sin dato. **Rellenado (2026-10-10):** 252 completos, 76 con días interpolados, 3 escalados y 1 reconstruido con modelo (1998-08). Ver sección 3, "Relleno del caudal" |
-| T (CAMELS-PE `tmean`) | 276/332 | Sin dato desde 2021-01 (estimación ERA5-Land aparte, 56 meses) |
+| P_L (CAMELS-PE `prec`) | 324/324 (540/540 en 1981–2025) | **0 días faltantes** en todo el registro |
+| P_I (IMERG) | 324/324 | Registro 1998-01 a 2025-08; 2025 queda fuera por incompleto |
+| Q / R (CAMELS-PE `flow_obs`) | **324/324 rellenada** (297/324 observada) | Observado: 244 meses completos, 53 escalados, 26 excluidos y 1 sin dato. **Rellenado (2026-10-10):** 244 completos, 76 con días interpolados, 3 escalados y 1 reconstruido con modelo (1998-08). Ver sección 3, "Relleno del caudal" |
+| T (CAMELS-PE `tmean`) | 276/324 | Sin dato desde 2021-01 (estimación ERA5-Land aparte, 48 meses en el periodo) |
+
+> Las notas de la sección 5 se escribieron con el periodo anterior (1998-01..2025-08). Las cifras cambian poco, pero **hay que tomar los valores definitivos de los CSV regenerados** al redactar.
 
 ---
 
@@ -72,6 +77,9 @@ en el periodo común = Σ de las 12 medias mensuales (2025 está incompleto).
 | `13_piscop_senamhi_verificacion.py` | Descarga PISCOp oficial (v2.1 update y v3.0, figshare) y compara su promedio de cuenca con `prec` de CAMELS-PE (2 polígonos × 2 métodos de pesos × 3 periodos) → `resultados/precipitacion/verificacion_piscop_senamhi_vs_camels.csv` | ✔ 2026-10-08 |
 | `22_visor_html.py` | Genera `visor_resultados.html` (raíz del proyecto): página autocontenida (~6 MB, figuras incrustadas en JPEG, sin dependencias externas) con las 18 figuras, 4 tablas y descripciones; cifras leídas de los CSV de resultados; tema claro/oscuro y ampliación al clic | ✔ 2026-10-08 |
 | `24_era5_vientos_humedad.py` | Descarga ERA5 mensual por CDS, 1998–2025, 0.5°, dominio 20°N–40°S × 110°O–20°O (Atlántico tropical, Amazonía, Andes, Pacífico oriental con Niño 1+2): u, v, q en 850/700/500/200 hPa; IVT este/norte y tcwv; presión en superficie para enmascarar los niveles bajo el terreno del modelo. Guarda una climatología estacional a 1° (`datos/era5/era5_viento_ivt_climatologia_estacional.nc`, 1.4 MB, versionada); los NetCDF mensuales (~400 MB) quedan fuera de Git | ✔ 2026-10-10 |
+| `30_relaciones_2_1.py` | Punto 2.1: dispersión P_I vs P_L (1:1), P_L vs Q̄ (log), P_I vs Q̄, P_L vs R (R = P), coloreada por estación; Pearson y Spearman (originales y anomalías; sensibilidad con solo Q observado completo); sesgo, MAE y RMSE de IMERG por estación; rezagos y lluvia acumulada k = 0..6 (`resultados/relaciones/`) | ✔ 2026-10-11 |
+| `31_modelos_2_2_2_3.py` | Puntos 2.2–2.3: modelos P_L ← P_I (lin, prop, factor mensual, potencial) y Q̄ ← P_L / P_I (lineal, lineal con rezagos, log con rezagos, log con intercepto mensual, climatología + anomalías; K = 1–4). Selección por validación cruzada dejando un año fuera **dentro** del ajuste. Evaluación por bloques: A ajuste 1998–2015 / evaluación 2016–2024; B ajuste 2007–2024 / evaluación 1998–2006. Referencias: IMERG sin corregir y climatología del caudal con los años de ajuste. Residuos vs tiempo, valor estimado y mes (`resultados/modelos/`) | ✔ 2026-10-11 |
+| `29_era5_inversion_termica.py` | Inversión térmica y subsidencia (ERA5 mensual, 2°S–12°S × 88°O–72°O, 0.25°): T y ω en 23 niveles (1000–200 hPa; descarga en bloques de 7 años por el límite del CDS), presión en superficie, T2m y relieve del modelo. Produce: corte oeste–este a 7–8°S (θ, ω, capas de inversión) en dic–abr y may–sep; ciclo anual de la LTS costera (θ700 − θsup, 83–80°O × 9–6.5°S), de ω500 sobre la cuenca, de la convergencia del IVT y de P_L; correlación de anomalías en dic–abr (`fig_inversion_termica_era5.png`, `ciclo_inversion_convergencia.csv`, `correlaciones_inversion_lluvia.csv`; `datos/era5_inversion/climatologia_inversion.nc` versionada, NetCDF de ~77 MB fuera de Git) | ✔ 2026-10-11 |
 | `25_mapa_transporte_humedad.py` | Mapa regional de IVT y viento en 500 hPa para dic–abr y may–sep (`resultados/contexto_fisico/mapa_transporte_humedad_era5.png`). Contrasta el esquema de rutas de humedad del recuadro del mapa de la cuenca (script 06) | ✔ 2026-10-10 |
 | `23_sintesis_ciclo_1_5c.py` | Punto 1.5.c (síntesis del ciclo anual; la explicación física con bibliografía queda en pausa): aridez UNEP P/PET con 3 fuentes de P × 2 de PET (Penman–Monteith de CAMELS-PE `pet`, solo hasta 2016-12; Hargreaves–Samani desde Tmin/Tmax de PISCOt hasta 2020-12) y contraste con Budyko; Köppen–Geiger (Peel et al. 2007); clasificación de cada mes (FAO P vs PET, Gaussen, aguas altas, R > P, frecuencia de picos); láminas por estación; tabla de criterios (`criterios_clasificacion_1_5c.csv`, `aridez_budyko_1_5c.csv`, `koppen_1_5c.csv`, `clasificacion_mensual_1_5c.csv`, `laminas_estacionales_1_5c.csv`, `fig_sintesis_ciclo_1_5c.png`) | ✔ 2026-10-10 |
 | `21_ciclo_anual_1_5b.py` | Punto 1.5.b: indicadores de estacionalidad (SI, PCI, centroide de Markham, picos, armónicos, meses húmedos y secos de Gaussen), desfases, variabilidad por mes (CV, G1, jackknife), mes del pico por año hidrológico, subperiodos y anomalías por año hidrológico y calendario (`resultados/climatologia/`) | ✔ 2026-10-08 |
@@ -85,7 +93,7 @@ en el periodo común = Σ de las 12 medias mensuales (2025 está incompleto).
 | `08_descarga_piscop.py` | Descarga de PISCOp desde IRI | ✗ descartado (no usar) |
 | `01_delimitacion.py`, `03.py` (vacíos), `02_Prueba.py` | Archivos previos (CAMELS-DE) | fuera del flujo |
 
-**Orden de ejecución:** 06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 27 → 22 (visor HTML, siempre al final). En una ejecución desde cero, volver a correr 06 después del 24 para que el recuadro de Sudamérica tenga el IVT; sin la climatología de ERA5, el 06 lo deja vacío y avisa. El periodo común
+**Orden de ejecución:** 06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 29 → 27 → 30 → 31 → 22 (visor HTML, siempre al final). En una ejecución desde cero, volver a correr 06 después del 24 para que el recuadro de Sudamérica tenga el IVT; sin la climatología de ERA5, el 06 lo deja vacío y avisa. El periodo común
 (`periodo_comun.py`) necesita 09 y 10, así que 07b, 11 y 15–19 van después; 15 requiere además la extensión de T del 17.
 
 **Productos principales:**
@@ -132,6 +140,19 @@ en el periodo común = Σ de las 12 medias mensuales (2025 está incompleto).
   - **Por qué dic–abr:** en esa estación cae el 81 % de la lluvia. En may–sep el IVT sobre la cuenca es mayor, pero no llueve, así que mostrarlo en el recuadro induciría a error. La estación seca y el viento en 500 hPa quedan en la figura del script 25.
   - Un esquema anterior de 4 rutas según bibliografía (Atlántico → Amazonía; cruce de los Andes desde el este por la depresión de Huancabamba; chorro de bajo nivel; Pacífico en El Niño costero) se reemplazó por los datos. Sigue siendo útil para la explicación física de 1.5.c.
   - Las referencias sugeridas para esa explicación, **sin verificar aún** (el grupo debe comprobarlas), son: Garreaud 2009 (Adv. Geosci.); Garreaud et al. 2009 (Palaeo3); Vera et al. 2006 y Marengo et al. 2004 (J. Climate); Espinoza et al. 2020 (Front. Earth Sci.); Segura et al. 2019 (Clim. Dyn.); Garreaud 2018 y Takahashi et al. 2018 (El Niño costero 2017); Sulca et al. 2018, Lavado-Casimiro et al. 2012 y Rau et al. 2017 (IJC); McPhaden 2006 (en `Bibliografia/`).
+- **Inversión térmica y subsidencia (script 29, 2026-10-11).** Hipótesis: el anticiclón del Pacífico Sur genera subsidencia; el aire que desciende se calienta por compresión y, sobre la capa marina fría (afloramiento), forma una inversión que actúa como tapa. Por continuidad de masa, la subsidencia implica divergencia en niveles bajos. Resultados con ERA5 en el periodo común:
+  - **Corte vertical a 7–8°S:** en may–sep, inversión extendida desde 88°O hasta la costa a ~850–925 hPa (~1–1.5 km) y descenso sobre el Pacífico y la vertiente occidental. En dic–abr, la inversión queda reducida a parches y hay ascenso sobre los Andes, incluida la cuenca.
+  - **Ciclo anual:**
+    - LTS costera mínima en feb (17.0 K) y máxima en sep (24.2 K).
+    - ω500 sobre la cuenca: descenso en jun–ago (+0.025 a +0.039 Pa/s), ascenso máximo en mar (−0.087).
+    - La convergencia del IVT sigue a ω500.
+  - **Matiz importante:** en sep–nov la LTS sigue alta (24.2 → 22.6 K) mientras sobre la cuenca ya hay ascenso y convergencia. La inversión costera explica la supresión de lluvia en la estación seca, pero el inicio de las lluvias lo controla el ascenso sobre los Andes (calentamiento continental, monzón, Alta de Bolivia).
+  - **Anomalías en dic–abr (n = 139):**
+    - r(LTS, P_L) = −0.47 (n efectivo ≈ 108): inversión más débil, más lluvia.
+    - r(ω500, P_L) = −0.78.
+    - r(convergencia, P_L) = +0.83.
+    - Feb–Mar 1998 y Mar 2017 (El Niño costero): LTS 1.2–2.7 K por debajo de lo normal y lluvia muy por encima. Feb 2017 tuvo la inversión débil sin exceso de lluvia, así que la inversión débil no basta por sí sola.
+  - **Limitaciones:** ERA5 suaviza los Andes (~30 km). ω y la convergencia vienen del mismo reanálisis, así que su relación con P_L es consistencia física, no prueba de causalidad; la LTS es el indicador más independiente. Referencias a verificar: Klein & Hartmann 1993 (LTS), Wood & Bretherton 2006 (EIS), Garreaud 2009.
 - **Contraste con ERA5 (scripts 24–25, climatología 1998-01..2025-08):**
   - **Estación húmeda:** el IVT entra desde el Atlántico, cruza la Amazonía hacia el oeste y gira al sur pegado a los Andes (chorro de bajo nivel).
   - **Sobre la cuenca** (celda de 1° en −7.5°, −78.8°): el IVT va hacia el oeste en ambas estaciones (270° en dic–abr; 264° en may–sep), con 33 y 50 kg m⁻¹ s⁻¹. El agua precipitable es mayor en dic–abr: 28 vs 22 kg/m².
@@ -145,6 +166,7 @@ en el periodo común = Σ de las 12 medias mensuales (2025 está incompleto).
 - **Decisión del grupo (2026-10-08): P_L principal = `prec` de CAMELS-PE; PISCOp v3.0 = fuente de apoyo** (mapa continuo (e) y contraste de incertidumbre). Razones: coherencia con la base elegida (Q, T, atributos), trazabilidad de la entrega y balance hídrico menos inverosímil con la P más alta (R/P 0.48 vs 0.56; ambas por debajo de lo esperado por Budyko). P v3.0 1998–2025 = 720 mm/año vs 841 CAMELS-PE (r mensual 0.983); cociente anual 0.8–0.9, menor en años muy lluviosos (1983: 0.62; 1998: 0.74). Scripts 09, 10 y 11 siguen con CAMELS-PE. No se agrega comparación de las tres lluvias (decisión del grupo). En el periodo común 1998-01 a 2025-08 (Σ medias mensuales): PISCOp v3.0 721 vs CAMELS-PE 841 mm/año.
 
 ## 4. Pendientes inmediatos
+0. **Figuras tentativas (aviso del grupo, 2026-10-11):** `fig_inversion_termica_era5.png` (script 29) y `fig_sintesis_ciclo_1_5c.png` (script 23) **no convencen al grupo**: son parciales, no finales. Revisarlas antes de la entrega; por ahora no se modifican.
 1. Interpretar el sesgo de IMERG (P_I/P_L = 0.645; subestima en dic–abr, sobreestima en jun–ago) y declarar que P_L no es una observación independiente.
 2. Temperatura: ERA5-Land ya descargado (1981–2025) y comparado (script 17). **Resultado en el periodo común (meses con PISCOt: 1998-01 a 2020-12, 276 meses):** misma variabilidad (r series 0.89, r anomalías 0.90; amplitud del ciclo anual 0.57 vs 0.60 °C, ambos con máximo ago–sep) pero ERA5-Land **2.84 °C más frío**, desfase casi constante en todos los meses. (Con 1981–2020 era −2.92 °C.) Relieve del modelo 2641 m vs 2557 m reales (+84 m) → explica solo ≈ −0.55 °C. Otras causas a evaluar: `tmean` de PISCOt = (Tmax+Tmin)/2 vs media de 24 h de ERA5-Land; sesgo del reanálisis en los Andes; interpolación de PISCOt. Verificar con normales de estaciones SENAMHI cercanas cuál nivel es más realista. Para anomalías, tendencias y correlaciones el desfase constante no pesa; para valores absolutos (PET, aridez) sí. **Extensión de T desde 2021 (2026-10-08, pedido del grupo):** T_est = ERA5-Land + sesgo medio del mes calendario frente a PISCOt en el periodo común 1998–2020 (+2.62 a +2.99 °C); 56 meses estimados, 2021-01 a 2025-08. Validación fuera de muestra (sesgo ajustado en 1998–2010, evaluado en 2011–2020): MAE 0.19 °C, sesgo −0.05, r 0.89; climatología como referencia: MAE 0.40 °C (`validacion_extension_T.csv`). Archivo `temperatura_piscot_extendida_era5land.csv` (columna aparte y bandera de fuente; `T_C` original intacta). Se muestra en la fig. 1.1 como tramo discontinuo morado. En las tendencias del punto 3, analizar PISCOt 1981–2020 por separado y tratar 2021–2025 como estimado (riesgo de salto por cambio de fuente). Enfoque acordado: **no unir fuentes**. PISCOt v1.2 (CAMELS-PE, 1981–2020; no existe versión posterior) para tendencias de largo plazo; ERA5-Land T2m mensual 1998–2025 como serie completa para el periodo común (1.5, 4, 5), evaluada contra PISCOt en 1998–2020 (sesgo por altitud: ERA5-Land ~9 km vs relieve 684–>4000 m). Requiere cuenta CDS y `~/.cdsapirc` (fuera del ZIP).
 3. Puntos 1.1 a 1.4, 1.5.a, 1.5.b y la evidencia de la síntesis de 1.5.c hechos (scripts 15, 10, 16, 18, 19, 20, 21 y 23). Sigue: el grupo elige y redacta la clasificación (notas 1.5.c en la sección 5); explicación física de 1.5.c con bibliografía (**en pausa por decisión del grupo, 2026-10-10**) e hipótesis inicial (punto 1.4).
@@ -280,6 +302,41 @@ La explicación física con bibliografía está **en pausa** (decisión del grup
 - **H2 (punto 2):** IMERG frente a Q̄ tiene una pendiente mayor que P_L frente a Q̄, porque IMERG subestima los picos de la estación húmeda; la dispersión es mayor en mar–abr.
 - **H3 (punto 3):** la fase del ciclo es estable (máximo en marzo, sin migración del mes del pico); los cambios entre años se concentran en el volumen de ene–abr. Una tendencia en P_I desde 2019 sin equivalente en P_L ni en R apuntaría a un cambio del producto IMERG, no del clima.
 - **H4 (punto 3):** el caudal de estiaje (jul–oct) tiene más persistencia entre años que la lluvia de esos meses (memoria del almacenamiento).
+
+### Punto 2 – Relaciones y modelos (scripts 30 y 31; periodo 1998-01..2024-12, 324 pares)
+
+**2.1 Relaciones:**
+- **(a) IMERG vs P_L:** r 0.90, ρ 0.93, pero no concordantes.
+  - Sesgo −24.5 mm/mes (−35 %), MAE 28.7, RMSE 48.0.
+  - Por estación: DEF −42 %, MAM −39 %, SON −18 %; en JJA IMERG sobreestima (+3.5 mm/mes, +70 % de casi nada).
+  - Ejemplo de "correlación alta ≠ concordancia".
+- **(b) P_L vs Q̄ del mismo mes:** débil (r 0.57, ρ 0.52), muy dispersa y heterocedástica.
+- **(c) P_I vs Q̄:** r 0.50, ρ 0.46.
+- **Pearson vs Spearman:** Pearson > Spearman en (b) y (c) por los meses extremos de El Niño (1998-03, 2017-03/04); Spearman > Pearson en (a) por la relación monótona no lineal.
+- **(b') En lámina:** R > P_L sobre todo en may–ago (almacenamiento) y en crecidas de El Niño.
+- **Rezagos (la lluvia antecede al caudal):**
+  - ρ(Q̄_t, P_L,t−1) = 0.81 frente a 0.52 sin rezago.
+  - Lluvia acumulada t−3..t: ρ 0.91. Es coherente con el desfase de ~1.4 meses del centroide (1.5.b) y con el almacenamiento.
+  - P_I: k = 1 ρ 0.75; acumulada k = 3 ρ 0.87.
+- **Anomalías:** la asociación se debilita pero persiste. P_L vs Q̄: ρ 0.37 sin rezago, 0.61 con k = 1, 0.62 acumulada; IMERG vs P_L: r 0.74. Parte de la relación original es el ciclo anual compartido, pero hay señal entre años.
+- **Sensibilidad sin meses rellenados** (244 pares): ρ(P_L, Q̄) 0.54 frente a 0.52; conclusiones iguales.
+
+**2.2–2.3 Modelos** (selección por validación cruzada dejando un año fuera dentro del ajuste; evaluación fuera del ajuste en dos particiones por bloques de años):
+- **(i) P_L ← P_I:** se elige el **factor por mes calendario** P̂_L = b_j·P_I en ambas particiones.
+  - Habilidad frente a IMERG sin corregir: +37 % (A, evaluación 2016–2024; MAE 19.2 vs 30.4, NSE 0.77 vs 0.49) y +40 % (B, evaluación 1998–2006).
+  - La regresión lineal mejora menos (+25 %) y da 2 valores negativos.
+  - **Relación aprovechable:** corrige sobre todo el sesgo estacional de IMERG.
+- **(ii) Q̄ ← P_L:** se elige ln Q̄ = a_mes + Σ b_k·ln(P_L,t−k + 1), con K = 3 (A) o 2 (B).
+  - Habilidad frente a la climatología: +41 % (A; MAE 9.5 vs 16.1, NSE 0.52 vs 0.21) y +26 % (B).
+  - Sensibilidad solo con meses observados: +44 % (A) y +30 % (B).
+  - La regresión lineal simple es **peor que la climatología** (−55 % en A) y da 30 caudales negativos en A.
+  - Funciona bien en recesión y estiaje; subestima mucho la crecida de El Niño costero de 2017 (abr-2017: −310 m³/s).
+- **(ii) Q̄ ← P_I:** mismo tipo de modelo, pero la habilidad es solo +8 % (A) y +12 % (B). IMERG casi no mejora la climatología del caudal.
+- **Estabilidad:** el tipo de modelo elegido es el mismo en ambas particiones; el rezago óptimo varía entre 2 y 3 meses.
+
+**Conclusión preliminar** (la interpretación final es del grupo): existe una relación aprovechable, no lineal (logarítmica), estacional y con memoria de 2–3 meses entre la lluvia local y el caudal. No reproduce las crecidas extremas de El Niño ni conserva masa.
+
+**Fuentes compartidas:** IMERG Final incorpora pluviómetros (GPCC) y P_L incluye información satelital (CHIRPS), así que su concordancia no es del todo independiente.
 
 ---
 

@@ -1,0 +1,210 @@
+{
+  "niveles": {
+    "dataset_cds": "reanalysis-era5-pressure-levels-monthly-means",
+    "doi": "10.24381/cds.6860a573",
+    "solicitud": {
+      "product_type": [
+        "monthly_averaged_reanalysis"
+      ],
+      "time": [
+        "00:00"
+      ],
+      "area": [
+        -2,
+        -88,
+        -12,
+        -72
+      ],
+      "grid": [
+        0.25,
+        0.25
+      ],
+      "data_format": "netcdf",
+      "download_format": "unarchived",
+      "variable": [
+        "temperature",
+        "vertical_velocity"
+      ],
+      "pressure_level": [
+        "1000",
+        "975",
+        "950",
+        "925",
+        "900",
+        "875",
+        "850",
+        "825",
+        "800",
+        "775",
+        "750",
+        "700",
+        "650",
+        "600",
+        "550",
+        "500",
+        "450",
+        "400",
+        "350",
+        "300",
+        "250",
+        "225",
+        "200"
+      ],
+      "year": [
+        "1998",
+        "1999",
+        "2000",
+        "2001",
+        "2002",
+        "2003",
+        "2004",
+        "2005",
+        "2006",
+        "2007",
+        "2008",
+        "2009",
+        "2010",
+        "2011",
+        "2012",
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2020",
+        "2021",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "month": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "06",
+        "07",
+        "08",
+        "09",
+        "10",
+        "11",
+        "12"
+      ]
+    },
+    "descargado": "2026-10-11",
+    "tamano_MB": 77.8
+  },
+  "superficie": {
+    "dataset_cds": "reanalysis-era5-single-levels-monthly-means",
+    "doi": "10.24381/cds.f17050d7",
+    "solicitud": {
+      "product_type": [
+        "monthly_averaged_reanalysis"
+      ],
+      "time": [
+        "00:00"
+      ],
+      "area": [
+        -2,
+        -88,
+        -12,
+        -72
+      ],
+      "grid": [
+        0.25,
+        0.25
+      ],
+      "data_format": "netcdf",
+      "download_format": "unarchived",
+      "variable": [
+        "surface_pressure",
+        "2m_temperature"
+      ],
+      "year": [
+        "1998",
+        "1999",
+        "2000",
+        "2001",
+        "2002",
+        "2003",
+        "2004",
+        "2005",
+        "2006",
+        "2007",
+        "2008",
+        "2009",
+        "2010",
+        "2011",
+        "2012",
+        "2013",
+        "2014",
+        "2015",
+        "2016",
+        "2017",
+        "2018",
+        "2019",
+        "2020",
+        "2021",
+        "2022",
+        "2023",
+        "2024",
+        "2025"
+      ],
+      "month": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "06",
+        "07",
+        "08",
+        "09",
+        "10",
+        "11",
+        "12"
+      ]
+    },
+    "descargado": "2026-10-11",
+    "tamano_MB": 2.7
+  },
+  "relieve": {
+    "dataset_cds": "reanalysis-era5-single-levels-monthly-means",
+    "doi": "10.24381/cds.f17050d7",
+    "solicitud": {
+      "product_type": [
+        "monthly_averaged_reanalysis"
+      ],
+      "time": [
+        "00:00"
+      ],
+      "area": [
+        -2,
+        -88,
+        -12,
+        -72
+      ],
+      "grid": [
+        0.25,
+        0.25
+      ],
+      "data_format": "netcdf",
+      "download_format": "unarchived",
+      "variable": [
+        "geopotential"
+      ],
+      "year": [
+        "2000"
+      ],
+      "month": [
+        "01"
+      ]
+    },
+    "descargado": "2026-10-11",
+    "tamano_MB": 0.0
+  }
+}
