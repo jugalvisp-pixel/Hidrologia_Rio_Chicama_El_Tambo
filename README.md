@@ -35,7 +35,7 @@ pip install -r requirements.txt
 cd Hidrologiat1/Codigos
 ```
 
-Orden de ejecución: `06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 29 → 27 → 30 → 31 → 32 → 22`.
+Orden de ejecución: `06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 29 → 27 → 30 → 31 → 32 → 33 → 22`.
 
 No se incluyen en el repositorio, por tamaño, el DEM Copernicus GLO-30, la geología INGEMMET,
 los NetCDF nacionales de PISCOp ni el CAMELS-PE completo. Los scripts 06, 07a y 13 los descargan,

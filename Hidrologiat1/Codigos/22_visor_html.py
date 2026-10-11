@@ -104,6 +104,27 @@ FDR = {v: ", ".join(sorted({["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "A
                             for m in g.mes}, key=lambda s: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep",
                                                              "Oct", "Nov", "Dic"].index(s)))
        for v, g in _fdr.groupby("variable")}
+ES = PROY / "Tarea 1" / "El_Tambo" / "resultados" / "espectros"
+_bd = leer(ES / "bandas_varianza_4_2.csv").set_index(["variable", "periodo", "transformacion", "banda"])["fraccion"]
+
+
+def banda(v, tr, b, per="completo"):
+    return 100 * _bd.loc[(v, per, tr, b)]
+
+
+_me = leer(ES / "metadatos_espectros_4_1.csv")
+RHO = _me[(_me.periodo == "completo") & (_me.transformacion == "anomalia")].set_index("variable")["rho1_AR1"]
+_pk = leer(ES / "picos_4_2.csv")
+_pk = _pk[(_pk.periodo == "completo") & (_pk.transformacion == "anomalia")]
+N_GLOBAL = int(_pk["supera_95_global"].astype(str).eq("True").sum())
+t4 = _pk[_pk.groupby("variable").cumcount() < 3][["variable", "N_meses", "periodo_meses", "periodo_min_meses",
+                                                   "periodo_max_meses", "k_ciclos_en_registro", "fraccion_varianza",
+                                                   "cociente_fondo_AR1", "supera_95_puntual", "supera_95_global"]].copy()
+t4["fraccion_varianza"] = (t4["fraccion_varianza"] * 100).round(1)
+t4 = t4.round({"periodo_meses": 1, "periodo_min_meses": 0, "periodo_max_meses": 0, "cociente_fondo_AR1": 1})
+t4.columns = ["Variable", "N", "Periodo (meses)", "Rango mín.", "Rango máx.", "Ciclos en el registro", "% varianza",
+              "Cociente con AR(1)", "> 95 % puntual", "> 95 % global"]
+_ls = leer(ES / "vacios_caudal_lombscargle_4_1.csv").set_index("banda")
 pico = leer(CL / "mes_pico_por_anio_1_5b.csv")
 pct_mar = (pico["mes_max_P_L"] == "Mar").mean() * 100
 pct_fa = pico["mes_max_P_L"].isin(["Feb", "Mar", "Abr"]).mean() * 100
@@ -479,11 +500,72 @@ secciones = [
                     "con la varianza corregida. La serie original y las doce subseries están en tendencias_todos_meses_3_4.csv "
                     "y tendencias_por_mes_3_4.csv."),
             "Punto 3"),
+    seccion("p4", "Escalas dominantes de variabilidad (Fourier)",
+            "Espectros de la secuencia mensual cronológica (Δt = 1 mes) de cada variable, en su registro completo y en el "
+            f"periodo común {PER}. Se comparan la serie centrada (conserva el ciclo anual) y las anomalías respecto a la "
+            "climatología 1998–2020, con y sin la tendencia del punto 3. El estimador principal es el periodograma de la "
+            "FFT sin relleno con ceros: f<sub>k</sub> = k/N, Δf = 1/N ciclos/mes, densidad unilateral normalizada para que "
+            "Σ S·Δf sea la varianza (comprobado). Se contrasta con ventana de Hann y con Welch (segmentos de 10 años). "
+            "Ninguna serie tiene vacíos internos; el caudal es continuo gracias al relleno documentado.",
+            figura(ES / "fig_espectros_4_2.png", "Espectros del registro completo",
+                   f"En las series centradas domina el ciclo anual en la lluvia (P<sub>L</sub> "
+                   f"{banda('P_L', 'centrada', 'anual 11–13 m'):.0f} % de la varianza; IMERG "
+                   f"{banda('P_I', 'centrada', 'anual 11–13 m'):.0f} %), con un armónico semianual que refleja la "
+                   f"estación húmeda concentrada en pocos meses. En el caudal el ciclo anual pesa menos "
+                   f"({banda('Q', 'centrada', 'anual 11–13 m'):.0f} %) porque las crecidas de El Niño (1998, 2017) reparten "
+                   f"mucha varianza en todas las frecuencias. En la temperatura el ciclo anual es pequeño (PISCOt "
+                   f"{banda('T_PISCOt', 'centrada', 'anual 11–13 m'):.0f} %) y dominan las escalas interanuales. Al retirar "
+                   f"la climatología, la lluvia se parece a ruido casi blanco (AR(1): ρ = {RHO['P_L']:.2f} P<sub>L</sub>, "
+                   f"{RHO['P_I']:.2f} IMERG); el caudal es más rojo (ρ = {RHO['Q']:.2f}) y la temperatura mucho más "
+                   f"(ρ = {RHO['T_PISCOt']:.2f}–{RHO['T_ERA5L']:.2f}).",
+                   f"Eje inferior en ciclos/mes y superior en periodos. Líneas rojas: fondo AR(1) al 95 % puntual (discontinua) "
+                   f"y global, con corrección por buscar entre todas las frecuencias (punteada). "
+                   + ("Ningún pico de las anomalías supera el umbral global" if N_GLOBAL == 0 else
+                      f"Solo {N_GLOBAL} picos de las anomalías superan el umbral global")
+                   + ": los picos interanuales no son periodicidades demostradas.",
+                   script="33_espectros_4.py")
+            + figura(ES / "fig_bandas_varianza_4_2.png", "¿En qué escalas está la varianza?",
+                     f"Al quitar la climatología, la banda anual cae casi a cero en la lluvia, pero el caudal conserva "
+                     f"{banda('Q', 'anomalia', 'anual 11–13 m'):.0f} % en esa banda: la amplitud del ciclo anual del caudal "
+                     f"cambia mucho de un año a otro (años de El Niño). La banda interanual de 2–7 años reúne "
+                     f"{banda('P_L', 'anomalia', 'interanual 2–7 años'):.0f} % de las anomalías de P<sub>L</sub> (1981–2025), "
+                     f"{banda('Q', 'anomalia', 'interanual 2–7 años'):.0f} % del caudal y "
+                     f"{banda('T_PISCOt', 'anomalia', 'interanual 2–7 años'):.0f} % de la temperatura PISCOt.",
+                     "Fracciones del periodograma por bandas de periodo; cada barra suma 100 %. Registros de distinta "
+                     "longitud tienen distinta resolución: compare las filas del mismo periodo.", script="33_espectros_4.py")
+            + figura(ES / "fig_comparacion_espectros_4_2.png", "Fuentes y respuesta de la cuenca",
+                     "Formas espectrales normalizadas por la varianza (las alturas no son variabilidad absoluta). CAMELS-PE e "
+                     "IMERG tienen la misma forma en las series centradas; en anomalías IMERG tiene más varianza relativa en "
+                     "escalas de 2–5 meses. PISCOt y ERA5-Land coinciden en casi todas las escalas. En las anomalías del "
+                     f"periodo común, la escala de 2–5 meses reúne {banda('Q', 'anomalia', 'intraestacional 2–5 m', 'comun'):.0f} % "
+                     f"de la varianza del caudal frente a {banda('P_L', 'anomalia', 'intraestacional 2–5 m', 'comun'):.0f} % de "
+                     f"la lluvia, y la de 13 meses a 7 años {banda('Q', 'anomalia', '13 m–2 años', 'comun') + banda('Q', 'anomalia', 'interanual 2–7 años', 'comun'):.0f} % "
+                     f"frente a {banda('P_L', 'anomalia', '13 m–2 años', 'comun') + banda('P_L', 'anomalia', 'interanual 2–7 años', 'comun'):.0f} %. "
+                     "Es coherente con un almacenamiento que suaviza las variaciones rápidas y da persistencia.",
+                     "Un espectro de potencia no contiene la fase: los desfases lluvia–caudal se estiman en el punto 2 "
+                     "(rezagos), no aquí.", script="33_espectros_4.py")
+            + figura(ES / "fig_estabilidad_4_2.png", "Estabilidad de los resultados",
+                     "La banda anual y la interanual cambian poco con la tendencia o al recortar extremos, pero el periodo "
+                     "del pico interanual cambia con la ventana y con la mitad del registro analizada (por ejemplo, P<sub>L</sub> "
+                     "pasa de unos 5 a unos 2.4 años). Con unos 8–13 ciclos en el registro, los periodos interanuales solo se "
+                     "pueden dar como bandas amplias.", script="33_espectros_4.py")
+            + figura(ES / "fig_vacios_caudal_4_1.png", "Efecto de los vacíos del caudal",
+                     f"Con solo los meses observados completos (Lomb–Scargle, estimador para muestreo irregular), la banda de "
+                     f"2–5 meses pasa de {100 * _ls.loc['intraestacional 2–5 m', 'relleno_FFT']:.0f} % a "
+                     f"{100 * _ls.loc['intraestacional 2–5 m', 'observado_LombScargle']:.0f} % de la varianza y bajan las bandas "
+                     "largas. En la malla regular, la FFT y Lomb–Scargle dan el mismo resultado, así que la diferencia la "
+                     "producen los vacíos, no el método: las conclusiones sobre escalas cortas del caudal son las más inciertas.",
+                     script="33_espectros_4.py")
+            + tabla(t4, "Picos principales de las anomalías (registro completo)",
+                    "Rango = periodos que caben en ±½ bin de frecuencia (resolución Δf = 1/N). Ciclos = k, número de "
+                    "oscilaciones completas en el registro. Todos los picos y transformaciones están en picos_4_2.csv; "
+                    "N, Δf, ventana y normalización de cada espectro en metadatos_espectros_4_1.csv."),
+            "Punto 4"),
 ]
 
 nav = [("cuenca", "Cuenca"), ("contexto", "Contexto"), ("p11", "1.1 Series"), ("p12", "1.2 IMERG"),
        ("temp", "Temperatura"), ("p13", "1.3 Distribución"), ("p14", "1.4 Calidad"), ("p15", "1.5 Ciclo anual"),
-       ("p15c", "1.5.c Síntesis"), ("p2", "2 Relaciones y modelos"), ("p3", "3 Tendencias"), ("datos", "Datos")]
+       ("p15c", "1.5.c Síntesis"), ("p2", "2 Relaciones y modelos"), ("p3", "3 Tendencias"), ("p4", "4 Espectros"), ("datos", "Datos")]
 
 CSS = """
 :root{--bg:#f6f5f2;--card:#ffffff;--ink:#1d1d1b;--ink2:#55534e;--line:#e2e0da;--acc:#1b6ca8;--chip:#e7f0f8;--code:#f0efeb}
@@ -583,7 +665,7 @@ pagina = f"""<!doctype html>
 {tabla(fuentes, "Fuentes de datos")}
 <div class="tabla-cont"><h4>Cómo reproducir</h4>
 <p>Con Python 3 y las dependencias de <code>requirements.txt</code>, ejecute en <code>Hidrologiat1/Codigos/</code>, en este orden:
-<code>06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 29 → 27 → 30 → 31 → 32 → 22</code>.
+<code>06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 29 → 27 → 30 → 31 → 32 → 33 → 22</code>.
 El periodo común se calcula en <code>periodo_comun.py</code>. Las descargas de IMERG y ERA5-Land requieren cuentas personales
 (NASA Earthdata y Copernicus CDS), cuyas credenciales no se incluyen en el repositorio.</p></div>
 </section>

@@ -80,6 +80,7 @@ Las tablas del registro completo se conservan solo donde la guía pide distingui
 | `30_relaciones_2_1.py` | Punto 2.1: dispersión P_I vs P_L (1:1), P_L vs Q̄ (log), P_I vs Q̄, P_L vs R (R = P), coloreada por estación; Pearson y Spearman (originales y anomalías; sensibilidad con solo Q observado completo); sesgo, MAE y RMSE de IMERG por estación; rezagos y lluvia acumulada k = 0..6 (`resultados/relaciones/`) | ✔ 2026-10-11 |
 | `31_modelos_2_2_2_3.py` | Puntos 2.2–2.3: modelos P_L ← P_I (lin, prop, factor mensual, potencial) y Q̄ ← P_L / P_I (lineal, lineal con rezagos, log con rezagos, log con intercepto mensual, climatología + anomalías; K = 1–4). Selección por validación cruzada dejando un año fuera **dentro** del ajuste. Evaluación por bloques: A ajuste 1998–2015 / evaluación 2016–2024; B ajuste 2007–2024 / evaluación 1998–2006. Referencias: IMERG sin corregir y climatología del caudal con los años de ajuste. Residuos vs tiempo, valor estimado y mes (`resultados/modelos/`) | ✔ 2026-10-11 |
 | `32_tendencias_3.py` | Punto 3 completo: registros y fuentes (3.1), anomalías a y z con climatología fija 1998–2020 (3.2), OLS-HAC (con y sin efectos de mes), MK estacional/Hirsch–Slack, MK Hamed–Rao + Sen con IC de Gilbert, LOWESS con banda por bloques y modelo aditivo, segmentada + Pettitt; todos los meses y 12 subseries; registro completo y periodo común; FDR (BH); sensibilidad (ventanas inicio/fin, sin 1998/2017/2023, ±5 años, fuente: PISCOp v3, CHIRPS, Q solo observado); Niño 1+2 y balance por año hidrológico (3.6) → `resultados/tendencias/` | ✔ 2026-10-11 |
+| `33_espectros_4.py` | Punto 4 completo: periodograma FFT (rect.), Hann y Welch (120 m, 50 %, ν calculado); densidad unilateral con Parseval verificado y contraste con `scipy.signal.periodogram`; series centradas, anomalías (ref. 1998–2020) y ambas sin tendencia; registro completo, periodo común y 1998–2020 (T); fondo AR(1) con umbral 95 % puntual y global (Bonferroni sobre ⌊N/2⌋ frecuencias); tabla de picos con resolución y ciclos; fracción de varianza por bandas; estabilidad (ventana, tendencia, extremos P1–P99, ln Q, mitades, periodo común); efecto de los vacíos de Q con Lomb–Scargle → `resultados/espectros/` | ✔ 2026-10-11 |
 | `29_era5_inversion_termica.py` | Inversión térmica y subsidencia (ERA5 mensual, 2°S–12°S × 88°O–72°O, 0.25°): T y ω en 23 niveles (1000–200 hPa; descarga en bloques de 7 años por el límite del CDS), presión en superficie, T2m y relieve del modelo. Produce: corte oeste–este a 7–8°S (θ, ω, capas de inversión) en dic–abr y may–sep; ciclo anual de la LTS costera (θ700 − θsup, 83–80°O × 9–6.5°S), de ω500 sobre la cuenca, de la convergencia del IVT y de P_L; correlación de anomalías en dic–abr (`fig_inversion_termica_era5.png`, `ciclo_inversion_convergencia.csv`, `correlaciones_inversion_lluvia.csv`; `datos/era5_inversion/climatologia_inversion.nc` versionada, NetCDF de ~77 MB fuera de Git) | ✔ 2026-10-11 |
 | `25_mapa_transporte_humedad.py` | Mapa regional de IVT y viento en 500 hPa para dic–abr y may–sep (`resultados/contexto_fisico/mapa_transporte_humedad_era5.png`). Contrasta el esquema de rutas de humedad del recuadro del mapa de la cuenca (script 06) | ✔ 2026-10-10 |
 | `23_sintesis_ciclo_1_5c.py` | Punto 1.5.c (síntesis del ciclo anual; la explicación física con bibliografía queda en pausa): aridez UNEP P/PET con 3 fuentes de P × 2 de PET (Penman–Monteith de CAMELS-PE `pet`, solo hasta 2016-12; Hargreaves–Samani desde Tmin/Tmax de PISCOt hasta 2020-12) y contraste con Budyko; Köppen–Geiger (Peel et al. 2007); clasificación de cada mes (FAO P vs PET, Gaussen, aguas altas, R > P, frecuencia de picos); láminas por estación; tabla de criterios (`criterios_clasificacion_1_5c.csv`, `aridez_budyko_1_5c.csv`, `koppen_1_5c.csv`, `clasificacion_mensual_1_5c.csv`, `laminas_estacionales_1_5c.csv`, `fig_sintesis_ciclo_1_5c.png`) | ✔ 2026-10-10 |
@@ -94,7 +95,7 @@ Las tablas del registro completo se conservan solo donde la guía pide distingui
 | `08_descarga_piscop.py` | Descarga de PISCOp desde IRI | ✗ descartado (no usar) |
 | `01_delimitacion.py`, `03.py` (vacíos), `02_Prueba.py` | Archivos previos (CAMELS-DE) | fuera del flujo |
 
-**Orden de ejecución:** 06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 29 → 27 → 30 → 31 → 32 → 22 (visor HTML, siempre al final). En una ejecución desde cero, volver a correr 06 después del 24 para que el recuadro de Sudamérica tenga el IVT; sin la climatología de ERA5, el 06 lo deja vacío y avisa. El periodo común
+**Orden de ejecución:** 06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 29 → 27 → 30 → 31 → 32 → 33 → 22 (visor HTML, siempre al final). En una ejecución desde cero, volver a correr 06 después del 24 para que el recuadro de Sudamérica tenga el IVT; sin la climatología de ERA5, el 06 lo deja vacío y avisa. El periodo común
 (`periodo_comun.py`) necesita 09 y 10, así que 07b, 11 y 15–19 van después; 15 requiere además la extensión de T del 17.
 
 **Productos principales:**
@@ -176,7 +177,7 @@ Las tablas del registro completo se conservan solo donde la guía pide distingui
 6. Armar el ZIP de entrega (`requirements.txt` regenerado con `pip freeze` el 2026-10-11, incluye statsmodels y pymannkendall).
 7. Completar los integrantes en `README.md`.
 8. Borrar las carpetas sobrantes `hidrologia-tarea1-el-tambo/` y `Hidrologia_Rio_Chicama_El_Tambo/` (repositorios vacíos creados por error con GitHub Desktop; el `.gitignore` ya las excluye).
-9. Puntos siguientes de la guía: 1.5.c e hipótesis inicial (interpretación del grupo), puntos 4 y 5. Punto 3 hecho (script 32): el grupo debe revisar las hipótesis de 3.6 y buscar bibliografía sobre usos del agua y cobertura en el Chicama.
+9. Puntos siguientes de la guía: 1.5.c e hipótesis inicial (interpretación del grupo), punto 5. Puntos 3 y 4 hechos (scripts 32 y 33): el grupo debe revisar las hipótesis de 3.6 y buscar bibliografía sobre usos del agua y cobertura en el Chicama.
 
 ---
 
@@ -385,6 +386,43 @@ La explicación física con bibliografía está **en pausa** (decisión del grup
 - **Referencias metodológicas** (citadas de memoria, verificar antes de usar):
   - Hirsch et al. 1982; Hirsch & Slack 1984; Hamed & Rao 1998; Sen 1968; Gilbert 1987; Cleveland 1979; Benjamini & Hochberg 1995; Pettitt 1979; Hussain & Mahmud 2019 (pymannkendall).
   - Para tendencias en caudales con persistencia: Khaliq et al. 2009; Yue et al. 2002.
+
+### Punto 4 – Espectros de Fourier (script 33; `resultados/espectros/`)
+
+**Cálculo (4.1):**
+- Secuencia mensual cronológica, Δt = 1 mes. Ninguna serie tiene vacíos internos (el script lo comprueba); Q es continuo por el relleno.
+- N: P_L 540, IMERG 332, Q 336, T PISCOt 480, T ERA5-Land 540; periodo común 324 (276 para T PISCOt).
+- IMERG con N = 332 no tiene la frecuencia anual en un bin exacto (332 no es múltiplo de 12) → algo de fuga. En el periodo común (N = 324) sí lo está.
+- Densidad unilateral S_k = 2|X_k|²/N, con Σ S·Δf = varianza (cociente 1.000000 en todos los casos). Igual a `scipy.signal.periodogram`.
+- Welch: Hann de 120 meses, 50 % de traslape; ν ≈ 15 (N 540) a ≈ 6 (N 276). Pierde periodos > 10 años. La ventana de Hann atenúa los bordes, así que en Q la crecida de 1998 (al inicio) pesa menos en Welch que en el periodograma.
+- **Vacíos de Q:** Lomb–Scargle con solo los 244 meses observados completos del periodo común. La banda de 2–5 meses sube de 30 % a 46 % y bajan las largas. El control (Lomb–Scargle en malla regular = FFT) muestra que la diferencia es del muestreo, no del estimador.
+
+**Resultados (4.2):**
+- **Series centradas:** domina la banda anual en la lluvia (P_L 52 %, IMERG 45 % de la varianza), con armónico semianual (11–12 %) por la estación húmeda concentrada.
+  - En el caudal la anual pesa solo 28 %, porque las crecidas de 1998 y 2017 reparten varianza en todas las frecuencias. Recortando P1–P99, la fracción anual de las anomalías sube de 10 % a 16 %. Con ln Q no cambia (10 %), pero sube la de > 7 años (8 % → 27 %): en escala logarítmica pesan más los años secos persistentes.
+  - En la temperatura el ciclo anual es pequeño (PISCOt 3 %, ERA5-Land 7 %) y dominan 2–7 años (36–47 %) y > 7 años (tendencia + baja frecuencia).
+- **Anomalías:**
+  - La lluvia es casi ruido blanco (ρ1: P_L 0.32, IMERG 0.06; 2–5 meses = 42–58 % de la varianza).
+  - El caudal es más rojo (ρ1 0.51).
+  - La temperatura es muy roja (ρ1 0.78–0.83; 40–51 % en 2–7 años).
+- **Almacenamiento (P_L vs Q, anomalías 1998–2024):** 2–5 meses: Q 30 % vs P 47 %; 13 m–7 años: Q 29 % vs P 19 %. El caudal filtra las variaciones rápidas y gana persistencia. Sin inferir desfases del espectro: estos vienen del punto 2.
+- **Picos interanuales de anomalías (pico [rango ±½ bin], ciclos en el registro):**
+  - P_L 60 m [57–64], 9 ciclos.
+  - IMERG 111 m (3 ciclos) y 41.5 m.
+  - Q 112 m (3 ciclos) y 26 m.
+  - T PISCOt 44 m [42–46], 11 ciclos.
+  - T ERA5-Land 45 m, 12 ciclos.
+  - Varios superan el 95 % puntual frente a AR(1); **ninguno (0 de 144 picos tabulados) supera el umbral global**. No son periodicidades demostradas: hay que hablar de bandas (2–7 años) con pocos ciclos.
+- **Estabilidad:** las fracciones por banda son estables frente a la tendencia y al recorte de extremos. El periodo del pico interanual no lo es: P_L pasa de 5.0 a 2.4 años con Hann o en la primera mitad, y T PISCOt de 3.6 a 5.7 años con Hann.
+- **Fuentes:** P_L e IMERG tienen la misma forma en las series centradas; en anomalías IMERG es más "blanca" (más varianza a 2–5 meses), coherente con su peor captura de la variabilidad interanual (punto 2). PISCOt y ERA5-Land coinciden.
+
+**Para la interpretación (grupo):** la banda de 2–7 años es compatible con ENSO, pero un pico interanual no basta para atribuirlo (guía 4.2). El punto 3 ya mostró correlación de las anomalías con Niño 1+2 (r ≈ 0.27 P_L y Q, 0.56 T PISCOt), y el punto 5 debe probarlo con mapas.
+
+- **Referencias metodológicas** (de memoria, verificar):
+  - Welch 1967; Percival & Walden 1993 (ν de Welch);
+  - Gilman, Fuglister & Mitchell 1963 y Torrence & Compo 1998 (fondo AR(1));
+  - Lomb 1976 / Scargle 1982;
+  - Wilks, *Statistical Methods in the Atmospheric Sciences* (periodograma y χ²).
 
 ---
 

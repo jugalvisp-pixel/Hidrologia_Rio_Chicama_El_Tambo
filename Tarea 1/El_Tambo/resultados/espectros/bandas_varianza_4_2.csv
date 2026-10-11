@@ -1,0 +1,337 @@
+variable,periodo,transformacion,banda,fraccion
+P_L,completo,centrada,intraestacional 2–5 m,0.1852
+P_L,completo,centrada,semianual 5.5–7 m,0.1143
+P_L,completo,centrada,7–11 m,0.0569
+P_L,completo,centrada,anual 11–13 m,0.5226
+P_L,completo,centrada,13 m–2 años,0.0457
+P_L,completo,centrada,interanual 2–7 años,0.0569
+P_L,completo,centrada,> 7 años,0.0184
+P_L,completo,anomalia,intraestacional 2–5 m,0.4172
+P_L,completo,anomalia,semianual 5.5–7 m,0.0582
+P_L,completo,anomalia,7–11 m,0.1520
+P_L,completo,anomalia,anual 11–13 m,0.0493
+P_L,completo,anomalia,13 m–2 años,0.1221
+P_L,completo,anomalia,interanual 2–7 años,0.1520
+P_L,completo,anomalia,> 7 años,0.0491
+P_L,completo,centrada_sin_tendencia,intraestacional 2–5 m,0.1855
+P_L,completo,centrada_sin_tendencia,semianual 5.5–7 m,0.1145
+P_L,completo,centrada_sin_tendencia,7–11 m,0.0568
+P_L,completo,centrada_sin_tendencia,anual 11–13 m,0.5237
+P_L,completo,centrada_sin_tendencia,13 m–2 años,0.0460
+P_L,completo,centrada_sin_tendencia,interanual 2–7 años,0.0561
+P_L,completo,centrada_sin_tendencia,> 7 años,0.0175
+P_L,completo,anomalia_sin_tendencia,intraestacional 2–5 m,0.4198
+P_L,completo,anomalia_sin_tendencia,semianual 5.5–7 m,0.0584
+P_L,completo,anomalia_sin_tendencia,7–11 m,0.1521
+P_L,completo,anomalia_sin_tendencia,anual 11–13 m,0.0495
+P_L,completo,anomalia_sin_tendencia,13 m–2 años,0.1234
+P_L,completo,anomalia_sin_tendencia,interanual 2–7 años,0.1496
+P_L,completo,anomalia_sin_tendencia,> 7 años,0.0472
+P_L,comun,centrada,intraestacional 2–5 m,0.1951
+P_L,comun,centrada,semianual 5.5–7 m,0.1225
+P_L,comun,centrada,7–11 m,0.0512
+P_L,comun,centrada,anual 11–13 m,0.5552
+P_L,comun,centrada,13 m–2 años,0.0360
+P_L,comun,centrada,interanual 2–7 años,0.0220
+P_L,comun,centrada,> 7 años,0.0181
+P_L,comun,anomalia,intraestacional 2–5 m,0.4658
+P_L,comun,anomalia,semianual 5.5–7 m,0.0726
+P_L,comun,anomalia,7–11 m,0.1688
+P_L,comun,anomalia,anual 11–13 m,0.0421
+P_L,comun,anomalia,13 m–2 años,0.1185
+P_L,comun,anomalia,interanual 2–7 años,0.0726
+P_L,comun,anomalia,> 7 años,0.0595
+P_L,comun,centrada_sin_tendencia,intraestacional 2–5 m,0.1957
+P_L,comun,centrada_sin_tendencia,semianual 5.5–7 m,0.1221
+P_L,comun,centrada_sin_tendencia,7–11 m,0.0501
+P_L,comun,centrada_sin_tendencia,anual 11–13 m,0.5549
+P_L,comun,centrada_sin_tendencia,13 m–2 años,0.0354
+P_L,comun,centrada_sin_tendencia,interanual 2–7 años,0.0211
+P_L,comun,centrada_sin_tendencia,> 7 años,0.0208
+P_L,comun,anomalia_sin_tendencia,intraestacional 2–5 m,0.4682
+P_L,comun,anomalia_sin_tendencia,semianual 5.5–7 m,0.0718
+P_L,comun,anomalia_sin_tendencia,7–11 m,0.1667
+P_L,comun,anomalia_sin_tendencia,anual 11–13 m,0.0411
+P_L,comun,anomalia_sin_tendencia,13 m–2 años,0.1176
+P_L,comun,anomalia_sin_tendencia,interanual 2–7 años,0.0703
+P_L,comun,anomalia_sin_tendencia,> 7 años,0.0642
+P_I,completo,centrada,intraestacional 2–5 m,0.2747
+P_I,completo,centrada,semianual 5.5–7 m,0.1185
+P_I,completo,centrada,7–11 m,0.0843
+P_I,completo,centrada,anual 11–13 m,0.4497
+P_I,completo,centrada,13 m–2 años,0.0255
+P_I,completo,centrada,interanual 2–7 años,0.0237
+P_I,completo,centrada,> 7 años,0.0237
+P_I,completo,anomalia,intraestacional 2–5 m,0.5842
+P_I,completo,anomalia,semianual 5.5–7 m,0.0661
+P_I,completo,anomalia,7–11 m,0.1172
+P_I,completo,anomalia,anual 11–13 m,0.0481
+P_I,completo,anomalia,13 m–2 años,0.0426
+P_I,completo,anomalia,interanual 2–7 años,0.0696
+P_I,completo,anomalia,> 7 años,0.0722
+P_I,completo,centrada_sin_tendencia,intraestacional 2–5 m,0.2773
+P_I,completo,centrada_sin_tendencia,semianual 5.5–7 m,0.1184
+P_I,completo,centrada_sin_tendencia,7–11 m,0.0811
+P_I,completo,centrada_sin_tendencia,anual 11–13 m,0.4516
+P_I,completo,centrada_sin_tendencia,13 m–2 años,0.0286
+P_I,completo,centrada_sin_tendencia,interanual 2–7 años,0.0235
+P_I,completo,centrada_sin_tendencia,> 7 años,0.0195
+P_I,completo,anomalia_sin_tendencia,intraestacional 2–5 m,0.5997
+P_I,completo,anomalia_sin_tendencia,semianual 5.5–7 m,0.0669
+P_I,completo,anomalia_sin_tendencia,7–11 m,0.1150
+P_I,completo,anomalia_sin_tendencia,anual 11–13 m,0.0464
+P_I,completo,anomalia_sin_tendencia,13 m–2 años,0.0466
+P_I,completo,anomalia_sin_tendencia,interanual 2–7 años,0.0676
+P_I,completo,anomalia_sin_tendencia,> 7 años,0.0579
+P_I,comun,centrada,intraestacional 2–5 m,0.2826
+P_I,comun,centrada,semianual 5.5–7 m,0.1170
+P_I,comun,centrada,7–11 m,0.0356
+P_I,comun,centrada,anual 11–13 m,0.4967
+P_I,comun,centrada,13 m–2 años,0.0256
+P_I,comun,centrada,interanual 2–7 años,0.0228
+P_I,comun,centrada,> 7 años,0.0197
+P_I,comun,anomalia,intraestacional 2–5 m,0.5839
+P_I,comun,anomalia,semianual 5.5–7 m,0.0673
+P_I,comun,anomalia,7–11 m,0.1119
+P_I,comun,anomalia,anual 11–13 m,0.0232
+P_I,comun,anomalia,13 m–2 años,0.0803
+P_I,comun,anomalia,interanual 2–7 años,0.0715
+P_I,comun,anomalia,> 7 años,0.0617
+P_I,comun,centrada_sin_tendencia,intraestacional 2–5 m,0.2876
+P_I,comun,centrada_sin_tendencia,semianual 5.5–7 m,0.1174
+P_I,comun,centrada_sin_tendencia,7–11 m,0.0340
+P_I,comun,centrada_sin_tendencia,anual 11–13 m,0.5006
+P_I,comun,centrada_sin_tendencia,13 m–2 años,0.0254
+P_I,comun,centrada_sin_tendencia,interanual 2–7 años,0.0187
+P_I,comun,centrada_sin_tendencia,> 7 años,0.0162
+P_I,comun,anomalia_sin_tendencia,intraestacional 2–5 m,0.6071
+P_I,comun,anomalia_sin_tendencia,semianual 5.5–7 m,0.0678
+P_I,comun,anomalia_sin_tendencia,7–11 m,0.1101
+P_I,comun,anomalia_sin_tendencia,anual 11–13 m,0.0233
+P_I,comun,anomalia_sin_tendencia,13 m–2 años,0.0818
+P_I,comun,anomalia_sin_tendencia,interanual 2–7 años,0.0612
+P_I,comun,anomalia_sin_tendencia,> 7 años,0.0486
+Q,completo,centrada,intraestacional 2–5 m,0.2320
+Q,completo,centrada,semianual 5.5–7 m,0.1265
+Q,completo,centrada,7–11 m,0.1234
+Q,completo,centrada,anual 11–13 m,0.2837
+Q,completo,centrada,13 m–2 años,0.0750
+Q,completo,centrada,interanual 2–7 años,0.0998
+Q,completo,centrada,> 7 años,0.0596
+Q,completo,anomalia,intraestacional 2–5 m,0.3006
+Q,completo,anomalia,semianual 5.5–7 m,0.0977
+Q,completo,anomalia,7–11 m,0.1738
+Q,completo,anomalia,anual 11–13 m,0.0977
+Q,completo,anomalia,13 m–2 años,0.1056
+Q,completo,anomalia,interanual 2–7 años,0.1406
+Q,completo,anomalia,> 7 años,0.0840
+Q,completo,centrada_sin_tendencia,intraestacional 2–5 m,0.2378
+Q,completo,centrada_sin_tendencia,semianual 5.5–7 m,0.1264
+Q,completo,centrada_sin_tendencia,7–11 m,0.1186
+Q,completo,centrada_sin_tendencia,anual 11–13 m,0.2819
+Q,completo,centrada_sin_tendencia,13 m–2 años,0.0698
+Q,completo,centrada_sin_tendencia,interanual 2–7 años,0.0972
+Q,completo,centrada_sin_tendencia,> 7 años,0.0685
+Q,completo,anomalia_sin_tendencia,intraestacional 2–5 m,0.3085
+Q,completo,anomalia_sin_tendencia,semianual 5.5–7 m,0.0967
+Q,completo,anomalia_sin_tendencia,7–11 m,0.1686
+Q,completo,anomalia_sin_tendencia,anual 11–13 m,0.0955
+Q,completo,anomalia_sin_tendencia,13 m–2 años,0.0994
+Q,completo,anomalia_sin_tendencia,interanual 2–7 años,0.1377
+Q,completo,anomalia_sin_tendencia,> 7 años,0.0936
+Q,comun,centrada,intraestacional 2–5 m,0.2310
+Q,comun,centrada,semianual 5.5–7 m,0.1277
+Q,comun,centrada,7–11 m,0.1216
+Q,comun,centrada,anual 11–13 m,0.2543
+Q,comun,centrada,13 m–2 años,0.1210
+Q,comun,centrada,interanual 2–7 años,0.0888
+Q,comun,centrada,> 7 años,0.0555
+Q,comun,anomalia,intraestacional 2–5 m,0.2971
+Q,comun,anomalia,semianual 5.5–7 m,0.0996
+Q,comun,anomalia,7–11 m,0.1705
+Q,comun,anomalia,anual 11–13 m,0.0610
+Q,comun,anomalia,13 m–2 años,0.1696
+Q,comun,anomalia,interanual 2–7 años,0.1245
+Q,comun,anomalia,> 7 años,0.0778
+Q,comun,centrada_sin_tendencia,intraestacional 2–5 m,0.2374
+Q,comun,centrada_sin_tendencia,semianual 5.5–7 m,0.1275
+Q,comun,centrada_sin_tendencia,7–11 m,0.1168
+Q,comun,centrada_sin_tendencia,anual 11–13 m,0.2531
+Q,comun,centrada_sin_tendencia,13 m–2 años,0.1155
+Q,comun,centrada_sin_tendencia,interanual 2–7 años,0.0849
+Q,comun,centrada_sin_tendencia,> 7 años,0.0649
+Q,comun,anomalia_sin_tendencia,intraestacional 2–5 m,0.3058
+Q,comun,anomalia_sin_tendencia,semianual 5.5–7 m,0.0985
+Q,comun,anomalia_sin_tendencia,7–11 m,0.1652
+Q,comun,anomalia_sin_tendencia,anual 11–13 m,0.0593
+Q,comun,anomalia_sin_tendencia,13 m–2 años,0.1635
+Q,comun,anomalia_sin_tendencia,interanual 2–7 años,0.1198
+Q,comun,anomalia_sin_tendencia,> 7 años,0.0880
+T_PISCOt,completo,centrada,intraestacional 2–5 m,0.1265
+T_PISCOt,completo,centrada,semianual 5.5–7 m,0.0494
+T_PISCOt,completo,centrada,7–11 m,0.0406
+T_PISCOt,completo,centrada,anual 11–13 m,0.0307
+T_PISCOt,completo,centrada,13 m–2 años,0.0856
+T_PISCOt,completo,centrada,interanual 2–7 años,0.4683
+T_PISCOt,completo,centrada,> 7 años,0.1989
+T_PISCOt,completo,anomalia,intraestacional 2–5 m,0.1042
+T_PISCOt,completo,anomalia,semianual 5.5–7 m,0.0170
+T_PISCOt,completo,anomalia,7–11 m,0.0442
+T_PISCOt,completo,anomalia,anual 11–13 m,0.0145
+T_PISCOt,completo,anomalia,13 m–2 años,0.0933
+T_PISCOt,completo,anomalia,interanual 2–7 años,0.5101
+T_PISCOt,completo,anomalia,> 7 años,0.2167
+T_PISCOt,completo,centrada_sin_tendencia,intraestacional 2–5 m,0.1464
+T_PISCOt,completo,centrada_sin_tendencia,semianual 5.5–7 m,0.0574
+T_PISCOt,completo,centrada_sin_tendencia,7–11 m,0.0461
+T_PISCOt,completo,centrada_sin_tendencia,anual 11–13 m,0.0364
+T_PISCOt,completo,centrada_sin_tendencia,13 m–2 años,0.0991
+T_PISCOt,completo,centrada_sin_tendencia,interanual 2–7 años,0.5327
+T_PISCOt,completo,centrada_sin_tendencia,> 7 años,0.0818
+T_PISCOt,completo,anomalia_sin_tendencia,intraestacional 2–5 m,0.1218
+T_PISCOt,completo,anomalia_sin_tendencia,semianual 5.5–7 m,0.0189
+T_PISCOt,completo,anomalia_sin_tendencia,7–11 m,0.0509
+T_PISCOt,completo,anomalia_sin_tendencia,anual 11–13 m,0.0205
+T_PISCOt,completo,anomalia_sin_tendencia,13 m–2 años,0.1094
+T_PISCOt,completo,anomalia_sin_tendencia,interanual 2–7 años,0.5882
+T_PISCOt,completo,anomalia_sin_tendencia,> 7 años,0.0903
+T_PISCOt,comun,centrada,intraestacional 2–5 m,0.1335
+T_PISCOt,comun,centrada,semianual 5.5–7 m,0.0610
+T_PISCOt,comun,centrada,7–11 m,0.0438
+T_PISCOt,comun,centrada,anual 11–13 m,0.0400
+T_PISCOt,comun,centrada,13 m–2 años,0.1309
+T_PISCOt,comun,centrada,interanual 2–7 años,0.3728
+T_PISCOt,comun,centrada,> 7 años,0.2181
+T_PISCOt,comun,anomalia,intraestacional 2–5 m,0.1141
+T_PISCOt,comun,anomalia,semianual 5.5–7 m,0.0208
+T_PISCOt,comun,anomalia,7–11 m,0.0483
+T_PISCOt,comun,anomalia,anual 11–13 m,0.0211
+T_PISCOt,comun,anomalia,13 m–2 años,0.1443
+T_PISCOt,comun,anomalia,interanual 2–7 años,0.4109
+T_PISCOt,comun,anomalia,> 7 años,0.2405
+T_PISCOt,comun,centrada_sin_tendencia,intraestacional 2–5 m,0.1593
+T_PISCOt,comun,centrada_sin_tendencia,semianual 5.5–7 m,0.0729
+T_PISCOt,comun,centrada_sin_tendencia,7–11 m,0.0588
+T_PISCOt,comun,centrada_sin_tendencia,anual 11–13 m,0.0458
+T_PISCOt,comun,centrada_sin_tendencia,13 m–2 años,0.1710
+T_PISCOt,comun,centrada_sin_tendencia,interanual 2–7 años,0.4168
+T_PISCOt,comun,centrada_sin_tendencia,> 7 años,0.0754
+T_PISCOt,comun,anomalia_sin_tendencia,intraestacional 2–5 m,0.1393
+T_PISCOt,comun,anomalia_sin_tendencia,semianual 5.5–7 m,0.0262
+T_PISCOt,comun,anomalia_sin_tendencia,7–11 m,0.0655
+T_PISCOt,comun,anomalia_sin_tendencia,anual 11–13 m,0.0289
+T_PISCOt,comun,anomalia_sin_tendencia,13 m–2 años,0.1905
+T_PISCOt,comun,anomalia_sin_tendencia,interanual 2–7 años,0.4649
+T_PISCOt,comun,anomalia_sin_tendencia,> 7 años,0.0846
+T_PISCOt,1998-2020,centrada,intraestacional 2–5 m,0.1335
+T_PISCOt,1998-2020,centrada,semianual 5.5–7 m,0.0610
+T_PISCOt,1998-2020,centrada,7–11 m,0.0438
+T_PISCOt,1998-2020,centrada,anual 11–13 m,0.0400
+T_PISCOt,1998-2020,centrada,13 m–2 años,0.1309
+T_PISCOt,1998-2020,centrada,interanual 2–7 años,0.3728
+T_PISCOt,1998-2020,centrada,> 7 años,0.2181
+T_PISCOt,1998-2020,anomalia,intraestacional 2–5 m,0.1141
+T_PISCOt,1998-2020,anomalia,semianual 5.5–7 m,0.0208
+T_PISCOt,1998-2020,anomalia,7–11 m,0.0483
+T_PISCOt,1998-2020,anomalia,anual 11–13 m,0.0211
+T_PISCOt,1998-2020,anomalia,13 m–2 años,0.1443
+T_PISCOt,1998-2020,anomalia,interanual 2–7 años,0.4109
+T_PISCOt,1998-2020,anomalia,> 7 años,0.2405
+T_PISCOt,1998-2020,centrada_sin_tendencia,intraestacional 2–5 m,0.1593
+T_PISCOt,1998-2020,centrada_sin_tendencia,semianual 5.5–7 m,0.0729
+T_PISCOt,1998-2020,centrada_sin_tendencia,7–11 m,0.0588
+T_PISCOt,1998-2020,centrada_sin_tendencia,anual 11–13 m,0.0458
+T_PISCOt,1998-2020,centrada_sin_tendencia,13 m–2 años,0.1710
+T_PISCOt,1998-2020,centrada_sin_tendencia,interanual 2–7 años,0.4168
+T_PISCOt,1998-2020,centrada_sin_tendencia,> 7 años,0.0754
+T_PISCOt,1998-2020,anomalia_sin_tendencia,intraestacional 2–5 m,0.1393
+T_PISCOt,1998-2020,anomalia_sin_tendencia,semianual 5.5–7 m,0.0262
+T_PISCOt,1998-2020,anomalia_sin_tendencia,7–11 m,0.0655
+T_PISCOt,1998-2020,anomalia_sin_tendencia,anual 11–13 m,0.0289
+T_PISCOt,1998-2020,anomalia_sin_tendencia,13 m–2 años,0.1905
+T_PISCOt,1998-2020,anomalia_sin_tendencia,interanual 2–7 años,0.4649
+T_PISCOt,1998-2020,anomalia_sin_tendencia,> 7 años,0.0846
+T_ERA5L,completo,centrada,intraestacional 2–5 m,0.1414
+T_ERA5L,completo,centrada,semianual 5.5–7 m,0.0501
+T_ERA5L,completo,centrada,7–11 m,0.0340
+T_ERA5L,completo,centrada,anual 11–13 m,0.0715
+T_ERA5L,completo,centrada,13 m–2 años,0.0689
+T_ERA5L,completo,centrada,interanual 2–7 años,0.3566
+T_ERA5L,completo,centrada,> 7 años,0.2776
+T_ERA5L,completo,anomalia,intraestacional 2–5 m,0.1308
+T_ERA5L,completo,anomalia,semianual 5.5–7 m,0.0267
+T_ERA5L,completo,anomalia,7–11 m,0.0378
+T_ERA5L,completo,anomalia,anual 11–13 m,0.0214
+T_ERA5L,completo,anomalia,13 m–2 años,0.0768
+T_ERA5L,completo,anomalia,interanual 2–7 años,0.3972
+T_ERA5L,completo,anomalia,> 7 años,0.3093
+T_ERA5L,completo,centrada_sin_tendencia,intraestacional 2–5 m,0.1855
+T_ERA5L,completo,centrada_sin_tendencia,semianual 5.5–7 m,0.0665
+T_ERA5L,completo,centrada_sin_tendencia,7–11 m,0.0482
+T_ERA5L,completo,centrada_sin_tendencia,anual 11–13 m,0.0884
+T_ERA5L,completo,centrada_sin_tendencia,13 m–2 años,0.0802
+T_ERA5L,completo,centrada_sin_tendencia,interanual 2–7 años,0.4484
+T_ERA5L,completo,centrada_sin_tendencia,> 7 años,0.0829
+T_ERA5L,completo,anomalia_sin_tendencia,intraestacional 2–5 m,0.1769
+T_ERA5L,completo,anomalia_sin_tendencia,semianual 5.5–7 m,0.0356
+T_ERA5L,completo,anomalia_sin_tendencia,7–11 m,0.0555
+T_ERA5L,completo,anomalia_sin_tendencia,anual 11–13 m,0.0274
+T_ERA5L,completo,anomalia_sin_tendencia,13 m–2 años,0.0925
+T_ERA5L,completo,anomalia_sin_tendencia,interanual 2–7 años,0.5166
+T_ERA5L,completo,anomalia_sin_tendencia,> 7 años,0.0955
+T_ERA5L,comun,centrada,intraestacional 2–5 m,0.1579
+T_ERA5L,comun,centrada,semianual 5.5–7 m,0.0615
+T_ERA5L,comun,centrada,7–11 m,0.0338
+T_ERA5L,comun,centrada,anual 11–13 m,0.0872
+T_ERA5L,comun,centrada,13 m–2 años,0.0929
+T_ERA5L,comun,centrada,interanual 2–7 años,0.4259
+T_ERA5L,comun,centrada,> 7 años,0.1408
+T_ERA5L,comun,anomalia,intraestacional 2–5 m,0.1503
+T_ERA5L,comun,anomalia,semianual 5.5–7 m,0.0307
+T_ERA5L,comun,anomalia,7–11 m,0.0394
+T_ERA5L,comun,anomalia,anual 11–13 m,0.0107
+T_ERA5L,comun,anomalia,13 m–2 años,0.1083
+T_ERA5L,comun,anomalia,interanual 2–7 años,0.4965
+T_ERA5L,comun,anomalia,> 7 años,0.1641
+T_ERA5L,comun,centrada_sin_tendencia,intraestacional 2–5 m,0.1781
+T_ERA5L,comun,centrada_sin_tendencia,semianual 5.5–7 m,0.0710
+T_ERA5L,comun,centrada_sin_tendencia,7–11 m,0.0393
+T_ERA5L,comun,centrada_sin_tendencia,anual 11–13 m,0.0903
+T_ERA5L,comun,centrada_sin_tendencia,13 m–2 años,0.1180
+T_ERA5L,comun,centrada_sin_tendencia,interanual 2–7 años,0.4280
+T_ERA5L,comun,centrada_sin_tendencia,> 7 años,0.0752
+T_ERA5L,comun,anomalia_sin_tendencia,intraestacional 2–5 m,0.1726
+T_ERA5L,comun,anomalia_sin_tendencia,semianual 5.5–7 m,0.0374
+T_ERA5L,comun,anomalia_sin_tendencia,7–11 m,0.0463
+T_ERA5L,comun,anomalia_sin_tendencia,anual 11–13 m,0.0109
+T_ERA5L,comun,anomalia_sin_tendencia,13 m–2 años,0.1388
+T_ERA5L,comun,anomalia_sin_tendencia,interanual 2–7 años,0.5052
+T_ERA5L,comun,anomalia_sin_tendencia,> 7 años,0.0887
+T_ERA5L,1998-2020,centrada,intraestacional 2–5 m,0.1726
+T_ERA5L,1998-2020,centrada,semianual 5.5–7 m,0.0588
+T_ERA5L,1998-2020,centrada,7–11 m,0.0390
+T_ERA5L,1998-2020,centrada,anual 11–13 m,0.0749
+T_ERA5L,1998-2020,centrada,13 m–2 años,0.1182
+T_ERA5L,1998-2020,centrada,interanual 2–7 años,0.3726
+T_ERA5L,1998-2020,centrada,> 7 años,0.1640
+T_ERA5L,1998-2020,anomalia,intraestacional 2–5 m,0.1622
+T_ERA5L,1998-2020,anomalia,semianual 5.5–7 m,0.0250
+T_ERA5L,1998-2020,anomalia,7–11 m,0.0451
+T_ERA5L,1998-2020,anomalia,anual 11–13 m,0.0115
+T_ERA5L,1998-2020,anomalia,13 m–2 años,0.1365
+T_ERA5L,1998-2020,anomalia,interanual 2–7 años,0.4303
+T_ERA5L,1998-2020,anomalia,> 7 años,0.1894
+T_ERA5L,1998-2020,centrada_sin_tendencia,intraestacional 2–5 m,0.1910
+T_ERA5L,1998-2020,centrada_sin_tendencia,semianual 5.5–7 m,0.0655
+T_ERA5L,1998-2020,centrada_sin_tendencia,7–11 m,0.0439
+T_ERA5L,1998-2020,centrada_sin_tendencia,anual 11–13 m,0.0779
+T_ERA5L,1998-2020,centrada_sin_tendencia,13 m–2 años,0.1420
+T_ERA5L,1998-2020,centrada_sin_tendencia,interanual 2–7 años,0.4040
+T_ERA5L,1998-2020,centrada_sin_tendencia,> 7 años,0.0758
+T_ERA5L,1998-2020,anomalia_sin_tendencia,intraestacional 2–5 m,0.1820
+T_ERA5L,1998-2020,anomalia_sin_tendencia,semianual 5.5–7 m,0.0292
+T_ERA5L,1998-2020,anomalia_sin_tendencia,7–11 m,0.0509
+T_ERA5L,1998-2020,anomalia_sin_tendencia,anual 11–13 m,0.0149
+T_ERA5L,1998-2020,anomalia_sin_tendencia,13 m–2 años,0.1645
+T_ERA5L,1998-2020,anomalia_sin_tendencia,interanual 2–7 años,0.4691
+T_ERA5L,1998-2020,anomalia_sin_tendencia,> 7 años,0.0894
