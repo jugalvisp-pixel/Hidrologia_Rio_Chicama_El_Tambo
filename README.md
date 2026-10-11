@@ -21,6 +21,7 @@ incrustadas: funciona sin internet y sin instalar nada.
 | `Hidrologiat1/Codigos/` | Scripts de Python numerados en orden de trabajo |
 | `Tarea 1/El_Tambo/datos/` | Datos ya recortados a la cuenca (CAMELS-PE, IMERG, PISCOp v3, ERA5-Land, cobertura, suelos) |
 | `Tarea 1/El_Tambo/resultados/` | Figuras (PNG) y tablas (CSV) generadas por los scripts |
+| `DATOS.md` | **Qué datos se descargaron, qué tratamiento recibieron y con cuáles se trabaja** |
 | `ESTADO_PROYECTO.md` | Bitácora: fuentes, decisiones metodológicas y notas para el informe |
 
 Periodo común de análisis: **1998-01 a 2025-08** (meses con precipitación de CAMELS-PE e IMERG).

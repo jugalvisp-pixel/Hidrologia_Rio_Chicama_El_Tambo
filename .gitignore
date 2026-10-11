@@ -3,6 +3,7 @@
 !/.gitignore
 !/.nojekyll
 !/README.md
+!/DATOS.md
 !/ESTADO_PROYECTO.md
 !/requirements.txt
 !/visor_resultados.html
