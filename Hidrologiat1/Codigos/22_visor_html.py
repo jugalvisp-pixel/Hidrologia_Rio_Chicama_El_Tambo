@@ -80,6 +80,30 @@ _fl = cam.loc[INI:FIN]
 RL = dict(interp=int((_fl.R_flag == "interpolado_diario").sum()), esc=int((_fl.R_flag == "escalado").sum()),
           mod=int((_fl.R_flag == "modelo_mensual").sum()),
           mes_mod=", ".join(f"{f:%Y-%m}" for f in _fl.index[_fl.R_flag == "modelo_mensual"]))
+TE = PROY / "Tarea 1" / "El_Tambo" / "resultados" / "tendencias"
+_td = leer(TE / "tendencias_todos_meses_3_4.csv")
+_ta = _td[(_td.representacion == "anomalia") & _td.variable.isin(["P_L", "P_I", "Q", "T_PISCOt", "T_ERA5L"])]
+t3 = _ta[["variable", "periodo", "inicio", "fin", "n", "metodo", "pend", "lo", "hi", "p", "unidad"]].copy()
+t3["periodo"] = t3["periodo"].replace({"comun": "común"})
+t3 = t3.round({"pend": 3, "lo": 3, "hi": 3, "p": 3})
+t3.columns = ["Variable", "Periodo", "Inicio", "Fin", "n", "Método", "Pendiente", "IC inf.", "IC sup.", "p", "Unidad"]
+TD = _ta.set_index(["variable", "periodo", "metodo"])
+
+
+def pend3(v, per="completo", met="MK Hamed-Rao + Sen"):
+    r = TD.loc[(v, per, met)]
+    return f"{r.pend:+.2f} [{r.lo:+.2f}, {r.hi:+.2f}] (p = {r.p:.3f})"
+
+
+_enso = leer(TE / "enso_3_6.csv").set_index("variable")
+_esc = leer(TE / "escorrentia_anual_3_6.csv").set_index("serie_anual")
+_seg = leer(TE / "segmentada_pettitt_3_5.csv").set_index("variable")
+_mes = leer(TE / "tendencias_por_mes_3_4.csv")
+_fdr = _mes[(_mes.representacion == "original") & (_mes.periodo == "completo") & (_mes.q_fdr < 0.05)]
+FDR = {v: ", ".join(sorted({["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"][m - 1]
+                            for m in g.mes}, key=lambda s: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep",
+                                                             "Oct", "Nov", "Dic"].index(s)))
+       for v, g in _fdr.groupby("variable")}
 pico = leer(CL / "mes_pico_por_anio_1_5b.csv")
 pct_mar = (pico["mes_max_P_L"] == "Mar").mean() * 100
 pct_fa = pico["mes_max_P_L"].isin(["Feb", "Mar", "Abr"]).mean() * 100
@@ -405,11 +429,61 @@ secciones = [
                      "Una relación estadística lluvia–caudal no conserva masa ni sustituye el balance hídrico.",
                      script="31_modelos_2_2_2_3.py"),
             "Punto 2"),
+    seccion("p3", "Tendencias hidroclimáticas",
+            "Cada variable se analiza con su registro mensual completo (cambio de largo plazo) y, aparte, en el periodo "
+            f"común {PER} (comparación entre fuentes). Las anomalías usan una climatología fija 1998–2020, el periodo más "
+            "largo en que las cinco series tienen datos. Métodos: OLS con errores robustos a autocorrelación (HAC), "
+            "Mann–Kendall con pendiente de Sen (estacional en la serie original; con corrección por autocorrelación de "
+            "Hamed–Rao en las anomalías y en cada mes) y LOWESS como curva exploratoria. Pendientes por década; en "
+            "precipitación son cambios del acumulado mensual, no del anual.",
+            figura(TE / "fig_series_tendencias_3_4.png", "Series originales, anomalías y anomalías estandarizadas",
+                   f"La temperatura sube en las dos fuentes (anomalías, Sen: PISCOt {pend3('T_PISCOt')} °C/década; "
+                   f"ERA5-Land {pend3('T_ERA5L')} °C/década) de forma casi lineal. P<sub>L</sub> no muestra tendencia "
+                   f"({pend3('P_L')} mm/mes/década) y el caudal tampoco ({pend3('Q')} m³/s/década). IMERG sí baja "
+                   f"({pend3('P_I')} mm/mes/década), aunque la lluvia de referencia en el mismo periodo no lo hace.",
+                   "Columna izquierda: serie original con un modelo aditivo (efecto de cada mes + curva suave) y OLS con "
+                   "efectos de mes. Centro: anomalía a = X − μ<sub>mes</sub> con banda de remuestreo por bloques. Derecha: "
+                   "z = a/s<sub>mes</sub>. El panel de caudal tiene el eje recortado por la crecida de 1998.",
+                   script="32_tendencias_3.py")
+            + figura(TE / "fig_pendientes_mensuales_3_5.png", "Tendencia de cada mes calendario",
+                     "Doce subseries por variable (todos los eneros, todos los febreros…). Tras controlar la tasa de falsos "
+                     "descubrimientos (FDR) sobre 60 pruebas, las tendencias que se sostienen son de temperatura "
+                     f"(ERA5-Land: {FDR.get('T_ERA5L', 'ninguno')}; PISCOt: {FDR.get('T_PISCOt', 'ninguno')}), con el "
+                     "mayor calentamiento estandarizado al final de la estación seca y en la transición a la húmeda (ago–nov). En lluvia y caudal solo "
+                     f"quedan casos aislados (P<sub>L</sub>: {FDR.get('P_L', 'ninguno')}; P<sub>I</sub>: "
+                     f"{FDR.get('P_I', 'ninguno')}; Q̄: {FDR.get('Q', 'ninguno')}) que no son consistentes entre métodos.",
+                     "Verificado: restar μ<sub>mes</sub> no cambia la pendiente OLS ni la de Sen, y dividir por s<sub>mes</sub> "
+                     "solo cambia la escala; X, a y z no son evidencias independientes.", script="32_tendencias_3.py")
+            + figura(TE / "fig_robustez_3_5.png", "Robustez frente a método, periodo y fuente",
+                     "Las tendencias de temperatura persisten al cambiar el método, recortar los extremos del registro o "
+                     "retirar los años de El Niño costero. En precipitación el signo depende de la fuente y del periodo: "
+                     "P<sub>L</sub> y PISCOp v3 son ligeramente positivas en 1981–2025 y negativas, sin significancia, en "
+                     "1998–2024, mientras IMERG y CHIRPS son negativas. La tendencia de IMERG desaparece si se empieza en 2003.",
+                     "● Sen con MK Hamed–Rao; ■ OLS-HAC. Relleno = p < 0.05.", script="32_tendencias_3.py")
+            + figura(TE / "fig_ventanas_inicio_fin_3_5.png", "Sensibilidad a la fecha inicial y final",
+                     "Pendiente de Sen de las anomalías anuales para todas las ventanas de 15 años o más. En lluvia y caudal "
+                     "el signo cambia según el año inicial, sobre todo si la ventana empieza o termina en un año de El Niño "
+                     "(1983, 1998, 2017); en temperatura es positivo en casi todas las ventanas.",
+                     script="32_tendencias_3.py")
+            + figura(TE / "fig_causas_3_6.png", "¿A qué podrían deberse los cambios?",
+                     f"Los años húmedos y de caudal alto coinciden con El Niño 1+2 cálido (r mensual con P<sub>L</sub> "
+                     f"{_enso.loc['P_L', 'r_Nino12']:.2f}, con T PISCOt {_enso.loc['T_PISCOt', 'r_Nino12']:.2f}); retirar la "
+                     f"señal ENSO no elimina el calentamiento. En años hidrológicos, el caudal dada la lluvia baja "
+                     f"{_esc.loc['resid_R_dado_P', 'sen_dec']:+.0f} mm/año por década (p = {_esc.loc['resid_R_dado_P', 'p_mk']:.2f}), "
+                     "algo compatible con más evapotranspiración o con usos del agua, pero que también depende de la crecida "
+                     "de 1998 al inicio del registro. Es una hipótesis por contrastar, no una atribución.",
+                     "Para atribuir faltan datos de uso del agua, de cambios de cobertura y metadatos de la estación.",
+                     script="32_tendencias_3.py")
+            + tabla(t3, "Tendencia de las anomalías, todos los meses",
+                    "Pendiente por década con IC 95 %. OLS-HAC: Newey–West con 12 rezagos. MK Hamed–Rao + Sen: IC de Gilbert "
+                    "con la varianza corregida. La serie original y las doce subseries están en tendencias_todos_meses_3_4.csv "
+                    "y tendencias_por_mes_3_4.csv."),
+            "Punto 3"),
 ]
 
 nav = [("cuenca", "Cuenca"), ("contexto", "Contexto"), ("p11", "1.1 Series"), ("p12", "1.2 IMERG"),
        ("temp", "Temperatura"), ("p13", "1.3 Distribución"), ("p14", "1.4 Calidad"), ("p15", "1.5 Ciclo anual"),
-       ("p15c", "1.5.c Síntesis"), ("p2", "2 Relaciones y modelos"), ("datos", "Datos")]
+       ("p15c", "1.5.c Síntesis"), ("p2", "2 Relaciones y modelos"), ("p3", "3 Tendencias"), ("datos", "Datos")]
 
 CSS = """
 :root{--bg:#f6f5f2;--card:#ffffff;--ink:#1d1d1b;--ink2:#55534e;--line:#e2e0da;--acc:#1b6ca8;--chip:#e7f0f8;--code:#f0efeb}
@@ -509,7 +583,7 @@ pagina = f"""<!doctype html>
 {tabla(fuentes, "Fuentes de datos")}
 <div class="tabla-cont"><h4>Cómo reproducir</h4>
 <p>Con Python 3 y las dependencias de <code>requirements.txt</code>, ejecute en <code>Hidrologiat1/Codigos/</code>, en este orden:
-<code>06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 29 → 27 → 30 → 31 → 22</code>.
+<code>06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 29 → 27 → 30 → 31 → 32 → 22</code>.
 El periodo común se calcula en <code>periodo_comun.py</code>. Las descargas de IMERG y ERA5-Land requieren cuentas personales
 (NASA Earthdata y Copernicus CDS), cuyas credenciales no se incluyen en el repositorio.</p></div>
 </section>

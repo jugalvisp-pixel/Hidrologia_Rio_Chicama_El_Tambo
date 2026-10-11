@@ -191,6 +191,7 @@ Para la cuenca se descartó ERA5-Land, porque no tiene viento en altura ni IVT.
 | SoilGrids WRB (250 m) | ISRIC, WCS (script 07a) | Recorte | **No se usa** (retirado a pedido del grupo) | Sí |
 | Estaciones SENAMHI | Mapa web de estaciones de SENAMHI, copia fechada 2026-10-06 | Filtrado a la zona del mapa | Mapa de la cuenca | Sí |
 | Límites de países | Natural Earth 1:50m | — | Mapas de ubicación | Sí |
+| **Índice Niño 1+2** (ERSST v5, mensual 1950→) | CPC/NOAA, `https://www.cpc.ncep.noaa.gov/data/indices/ersst5.nino.mth.91-20.ascii` (descarga 2026-10-11; script 32 la repite si falta) | Se usa la columna ANOM de NINO1+2 (anomalías respecto a 1991–2020) | Punto 3.6: ¿la variabilidad ENSO produce tendencias aparentes? | Sí (`datos/indices_clima/`) |
 
 ---
 
@@ -204,6 +205,7 @@ Para la cuenca se descartó ERA5-Land, porque no tiene viento en altura ni IVT.
   - P_L no se rellena con IMERG.
   - PISCOt y ERA5-Land no se unen en una sola serie.
 - **Lo que sí se rellena:** solo el caudal, con el método de 2.1 y la bandera `R_flag`. En el punto 2 conviene repetir el análisis solo con los meses `R_flag = completo` como prueba de sensibilidad.
+- **Excepción en el punto 3 (tendencias):** cada variable usa además su **registro completo** (P_L 1981–2025, IMERG 1998-01..2025-08, Q 1998–2025, T PISCOt 1981–2020, T ERA5-Land 1981–2025), como pide la guía (3.1). Las anomalías usan una climatología fija 1998–2020, el periodo más largo con las cinco series. Q_obs (solo meses completos) no tiene ningún septiembre completo en 1998–2020, así que sus anomalías de septiembre no se definen.
 
 ---
 

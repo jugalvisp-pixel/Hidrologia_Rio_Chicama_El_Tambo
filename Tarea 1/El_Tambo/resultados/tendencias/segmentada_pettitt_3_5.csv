@@ -1,0 +1,6 @@
+variable,anios,n_anios,anio_ruptura,pend_antes,pend_despues,BIC_lineal,BIC_segmentada,prefiere,pettitt_anio_cambio,pettitt_p,media_antes,media_despues,dif_lowess_vs_ols_max,dif_aditivo_vs_lowess_anom_max,amplitud_lowess
+P_L,1981–2025,45,1998,7.351,-0.2791,271.5,278.4,lineal,1993,0.1861,-12.55,1.15,5.46,1.678,11.47
+P_I,1998–2024,27,2003,-39.97,-2.088,116.5,115.1,lineal,2019,0.1489,0.8814,-10.32,3.959,0.3499,12.3
+Q,1998–2025,28,2003,-137.6,5.584,176.6,164.6,segmentada,2003,0.2473,23.95,-6.326,13.18,0.1935,6.929
+T_PISCOt,1981–2020,40,2011,0.1157,0.5281,-76.24,-70.65,lineal,2002,0.04614,-0.288,0.06111,0.1735,0.001911,0.8715
+T_ERA5L,1981–2025,45,1997,0.3007,0.2019,-86.74,-79.43,lineal,2002,0.0008956,-0.4326,0.09084,0.1502,0.003663,1.158
