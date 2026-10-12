@@ -18,6 +18,7 @@ import io
 
 import numpy as np
 import pandas as pd
+import xarray as xr
 from PIL import Image
 
 from periodo_comun import periodo_comun
@@ -72,10 +73,28 @@ RZ = dict(k0=_rz.query("serie == 'original' and tipo == 'rezago P(t−k)' and k 
           k1=_rz.query("serie == 'original' and tipo == 'rezago P(t−k)' and k == 1").spearman_rho.iloc[0],
           acu=_rz.query("serie == 'original' and tipo == 'acumulada P(t−k..t)'").spearman_rho.max(),
           an1=_rz.query("serie == 'anomalías' and tipo == 'rezago P(t−k)' and k == 1").spearman_rho.iloc[0])
-_ci = leer(CF / "ciclo_inversion_convergencia.csv", index_col="mes")
-_co = leer(CF / "correlaciones_inversion_lluvia.csv", index_col="predictor")["r_anomalias_dic_abr"]
-INV = dict(lts_min=_ci["LTS_costa_K"].min(), lts_max=_ci["LTS_costa_K"].max(), r_lts=_co["LTS_costa_K"],
-           r_w=_co["omega500_cuenca_Pa_s"])
+# Inversión térmica: radiosondeos de Trujillo (scripts 34a–34b) y transporte de humedad sobre la cuenca (script 24)
+IV = R / "inversion"
+_snd = leer(IV / "inversion_por_sondeo.csv", parse_dates=["fecha"])
+
+
+def _temporada(t):
+    s = _snd[_snd.temporada == t]
+    si = s[s.inversion]
+    return dict(n=len(s), frec=100 * s.inversion.mean(), base=si.base_m.median(), tope=si.tope_m.median(),
+                dT=si.intensidad_C.median())
+
+
+SND = dict(seca=_temporada("may–sep (seca)"), hum=_temporada("dic–abr (húmeda)"), n=len(_snd),
+           frec=100 * _snd.inversion.mean(), ini=_snd.fecha.min(), fin=_snd.fecha.max())
+_ct = leer(IV / "contraste_sondeos_era5.csv")
+_ct["clave"] = (_ct.temporada.str[:3].map({"may": "seca", "dic": "hum"}) + "_"
+                + np.select([_ct.fuente.str.startswith("Trujillo"), _ct.fuente.str.contains("periodo común")],
+                            ["snd", "e5c"], "e5s"))
+CT = _ct.set_index("clave")["estabilidad_T1500_menos_T500_C"].to_dict()     # T(1 500 m) − T(500 m), script 34c
+_cl = xr.open_dataset(PROY / "Tarea 1" / "El_Tambo" / "datos" / "era5" / "era5_viento_ivt_climatologia_estacional.nc")
+_cu = _cl.sel(lat=-7.574, lon=-78.707, method="nearest")      # celda de 1° que contiene el cierre
+IVT = {e: (float(_cu["ivt"].sel(estacion=e)), float(_cu["tcwv"].sel(estacion=e))) for e in ("dic-abr", "may-sep")}
 _fl = cam.loc[INI:FIN]
 RL = dict(interp=int((_fl.R_flag == "interpolado_diario").sum()), esc=int((_fl.R_flag == "escalado").sum()),
           mod=int((_fl.R_flag == "modelo_mensual").sum()),
@@ -166,19 +185,29 @@ COMO = {
         "WorldCover 2021 (10 m) remuestreado por moda. (c) Geología 1:100 000 de INGEMMET (GEOCATMIN), unidades "
         "agrupadas en grupos hidrogeológicos según su litología. (d) CHIRPS v2.0 (0.05°): media anual del periodo "
         "común, interpolada de forma bilineal solo para dibujarla continua, con isoyetas cada 100 mm.",
-    "mapa_transporte_humedad_era5.png":
-        "ERA5 mensual 0.5° (CDS): IVT a partir de los flujos verticalmente integrados de vapor este y norte, y viento "
-        "en 500 hPa. Climatología estacional del periodo común promediada a 1°; se enmascaran las celdas donde el "
-        "nivel de presión queda bajo la superficie del modelo.",
-    "fig_inversion_termica_era5.png":
-        "ERA5 mensual 0.25° (CDS): temperatura y velocidad vertical ω en 23 niveles, presión en superficie y T2m. "
-        "Corte oeste–este promediado en 7–8°S; estabilidad LTS = θ700 − θsuperficie sobre el océano costero; ω en "
-        "500 hPa sobre la cuenca; convergencia del IVT del script 24; correlación de anomalías en dic–abr. "
-        "Figura tentativa según el grupo.",
-    "curva_hipsometrica.png":
-        "Elevaciones GLO-30 de las celdas dentro de la cuenca ordenadas de mayor a menor: fracción del área por "
-        "encima de cada cota (eje x) frente a la cota relativa (eje y). La integral hipsométrica es el área bajo "
-        "esa curva normalizada.",
+    "fig_sondeo_tipico_inversion.png":
+        "Sondeo observado de Trujillo (IGRA2 84516, NOAA NCEI; 12 UTC). Las alturas de los niveles significativos "
+        "se calcularon con la ecuación hipsométrica desde la superficie y se ajustaron a la altura geopotencial de "
+        "los niveles estándar; HR desde la depresión del punto de rocío (Magnus–Bolton). La inversión es el primer "
+        "aumento continuo de T con la altura (≥ 1 °C, por debajo de 3 500 m); la capa de nubes, el tramo con "
+        "HR ≥ 95 %. La parcela sube por la adiabática seca hasta el NCA y luego por la pseudoadiabática. Se eligió "
+        "el sondeo de may–sep más cercano a las medianas de base, tope e intensidad de esa estación.",
+    "fig_temporadas_humedad_inversion.png":
+        "Izquierda: IVT de ERA5 mensual (0.5°, promediado a 1°), media de cada temporada en el periodo común; "
+        "color = magnitud, flechas = dirección (una cada 3°). Derecha: radiosondeos de Trujillo interpolados a una "
+        "malla vertical de 25 m sin extrapolar; mediana y rango intercuartílico de la temporada, adiabática seca de "
+        "referencia desde la superficie y capa de inversión entre las medianas de base y tope de los sondeos con "
+        "inversión. Mismas escalas en las dos filas.",
+    "fig_contraste_1_trujillo_vs_era5.png":
+        "Sondeos de Trujillo (IGRA2 84516, 12 UTC) de 2024-10 a 2026-09 interpolados a una malla de 25 m: media "
+        "por nivel y rango intercuartílico de cada temporada. ERA5 mensual por niveles de presión, promedio de las "
+        "12 UTC de los mismos meses, en la celda de 0.25° más cercana a Trujillo (−8.0°, −79.0°), con cada nivel en "
+        "su altura geopotencial media. Se usa la media de los sondeos (no la mediana) porque ERA5 es un promedio. "
+        "(c) ERA5 interpolado a la malla de 25 m menos la media de los sondeos.",
+    "fig_contraste_2_era5_periodos.png":
+        "ERA5 mensual por niveles de presión, promedio de las 12 UTC, misma celda que la comparación 1: media de "
+        "cada temporada en el periodo común frente a la media en los meses con sondeos (2024-10 a 2026-09). "
+        "(c) Diferencia entre ambos periodos en la malla de 25 m.",
     "fig_series_mensuales_1_1.png":
         "Desde los registros diarios de CAMELS-PE: P_L = suma diaria (solo meses completos); Q̄ = media diaria en "
         "m³/s; R = suma del caudal diario en lámina (mm); T = media diaria de PISCOt. Caudal rellenado: interpolación "
@@ -353,6 +382,8 @@ fuentes = pd.DataFrame([
     ["Precipitación en malla (apoyo)", "PISCOp v3.0 (SENAMHI)", "doi:10.6084/m9.figshare.32411886.v1", "diaria, 0.1°"],
     ["Mapa de precipitación media anual", "CHIRPS v2.0 (UCSB/CHC), recorte del IRI Data Library", "doi:10.15780/G2RP4Q", "mensual, 0.05°"],
     ["Transporte de humedad y viento", "ERA5 (C3S/ECMWF), niveles de presión y nivel único", "doi:10.24381/cds.6860a573; 10.24381/cds.f17050d7", "mensual, 0.5°"],
+    ["Perfiles verticales (inversión térmica)", "Radiosondeos IGRA2 84516 Trujillo (NOAA NCEI); ERA5 por niveles de presión, 12 UTC",
+     "doi:10.1175/JTECH-D-17-0223.1; 10.24381/cds.6860a573", "diaria 12 UTC / mensual, 0.25°"],
     ["Relieve", "Copernicus GLO-30 DSM", "ESA / Airbus", "30 m"],
     ["Cobertura y geología", "ESA WorldCover 2021; INGEMMET 1:100 000 (GEOCATMIN)", "—", "10 m / vectorial"],
 ], columns=["Variable", "Fuente", "DOI / proveedor", "Resolución"])
@@ -386,7 +417,8 @@ secciones = [
                    script="06_delimitacion_el_tambo_glo30.py")
             + lista_morfometria()),
     seccion("contexto", "Contexto físico",
-            "Rasgos del terreno que ayudan a explicar cómo la cuenca recibe, guarda y entrega el agua.",
+            "Rasgos del terreno, de la cobertura y de la atmósfera que ayudan a explicar cómo la cuenca recibe, "
+            "guarda y entrega el agua. Haga clic en una figura para ampliarla.",
             figura(CF / "panel_contexto_fisico.png", "Panel de contexto físico",
                    "(a) orientación de laderas, (b) cobertura del suelo, (c) unidades geológicas de INGEMMET "
                    "agrupadas por su comportamiento hídrico y (d) precipitación media anual de CHIRPS. En (c), los "
@@ -396,32 +428,69 @@ secciones = [
                    "poroso, verdes = acuíferos fisurados y kársticos, marrones = acuitardos y acuífugos. La agrupación "
                    "es una propuesta del grupo (por porosidad y permeabilidad esperadas) que debe contrastarse con "
                    "INGEMMET y ANA.", script="07b_mapas_contexto_fisico.py", ancha=True)
-            + figura(CF / "mapa_transporte_humedad_era5.png", "Transporte de humedad y viento regional (ERA5)",
-                     "Climatología del periodo común. Arriba, el flujo de vapor de agua integrado en la vertical (IVT): "
-                     "el color indica cuánta humedad se transporta y las flechas hacia dónde. Abajo, el viento en 500 hPa, "
-                     "por encima de los Andes. En la estación húmeda la humedad entra desde el Atlántico, cruza la Amazonía "
-                     "hacia el oeste y gira al sur a lo largo de los Andes. Sobre la cuenca el transporte va hacia el oeste "
-                     "en ambas estaciones, mientras que frente a la costa se aleja del continente.",
-                     "La magnitud del transporte no equivale a lluvia: llueve donde el flujo converge y asciende. "
-                     "Por eso el IVT sobre la cuenca no es mayor en la estación húmeda. ERA5 (malla de 0.25°, aquí "
-                     "promediada a 1°) no resuelve la circulación dentro de los valles.",
-                     script="24_era5_vientos_humedad.py, 25_mapa_transporte_humedad.py")
-            + figura(CF / "fig_inversion_termica_era5.png", "Inversión térmica, subsidencia y convergencia de humedad",
-                     f"(a, b) Corte vertical oeste–este a la latitud de la cuenca. En la estación seca una inversión "
-                     f"(rayado) cubre el Pacífico hasta la costa a 1–1.5 km, y el aire desciende (rojo) sobre el océano y "
-                     f"la vertiente occidental; en la húmeda la inversión casi desaparece y el aire asciende (azul) sobre "
-                     f"los Andes, incluida la cuenca. (c, d) Ciclo anual: la intensidad de la inversión frente a la costa "
-                     f"(LTS) es mínima en feb–mar ({INV['lts_min']:.0f} K) y máxima en sep ({INV['lts_max']:.0f} K); sobre "
-                     f"la cuenca el aire desciende en jun–ago, cuando la humedad diverge. (e, f) En dic–abr, los meses con "
-                     f"inversión más débil y más ascenso que lo normal son más lluviosos (r = {INV['r_lts']:.2f} y "
-                     f"{INV['r_w']:.2f}); los extremos de 1998 y 2017 corresponden a El Niño costero.",
-                     "La inversión sigue fuerte en sep–nov, cuando sobre la cuenca ya hay ascenso y convergencia: la "
-                     "inversión costera explica la supresión de lluvia de la estación seca, pero el inicio de las lluvias "
-                     "depende del ascenso sobre los Andes. ERA5 suaviza el relieve (~30 km); la relación es evidencia de "
-                     "consistencia, no prueba de causalidad.", script="29_era5_inversion_termica.py")
-            + figura(CF / "curva_hipsometrica.png", "Curva hipsométrica",
-                     "Distribución del área por elevación. La integral hipsométrica (0.52) indica una cuenca de relieve "
-                     "intermedio, con buena parte del área a media ladera.", script="07b_mapas_contexto_fisico.py")),
+            + f'<h3 class="sub2">Fuentes de humedad e inversión térmica</h3><p class="intro">Radiosondeos observados '
+              f'de Trujillo (IGRA2 84516, a ~40 km de la salida de la cuenca): {SND["n"]} sondeos de las 7 a.m. entre '
+              f'{SND["ini"]:%Y-%m} y {SND["fin"]:%Y-%m}, con inversión en el {SND["frec"]:.0f} % de ellos; y transporte '
+              f'de humedad de ERA5 en el periodo común. Los sondeos solo existen desde {SND["ini"]:%Y-%m}, fuera del '
+              f'periodo común ({PER}); al final de la sección se comprueba con ERA5 si representan ese periodo.</p>'
+            + figura(IV / "fig_sondeo_tipico_inversion.png", "Sondeo típico de la estación seca",
+                     "La temperatura baja con la altura cerca de la adiabática seca hasta el nivel de condensación (NCA), "
+                     "donde se forman los estratocúmulos (HR ≈ 100 %). En la base de la inversión el aire se calienta de "
+                     "golpe, unos 5 °C, y por encima la humedad cae a menos del 50 %. Debajo queda el aire marino frío y "
+                     "húmedo; encima, aire de la troposfera libre que desciende y se calienta. La capa de nubes queda "
+                     "atrapada a la altura del cierre de la cuenca y no llega a la cuenca alta.",
+                     script="34a_descarga_perfiles.py, 34b_perfiles_inversion.py", ancha=True)
+            + figura(IV / "fig_temporadas_humedad_inversion.png",
+                     "De dónde llega la humedad y qué la frena: estación seca frente a estación húmeda",
+                     f"<b>La diferencia entre temporadas no está en cuánto vapor pasa sobre la cuenca, sino en si puede "
+                     f"subir.</b> En ERA5 el transporte sobre la cuenca va hacia el oeste en las dos temporadas y no es "
+                     f"menor en la seca (≈ {IVT['may-sep'][0]:.0f} frente a {IVT['dic-abr'][0]:.0f} kg m⁻¹ s⁻¹), aunque "
+                     f"la columna lleva menos agua precipitable (≈ {IVT['may-sep'][1]:.0f} frente a "
+                     f"{IVT['dic-abr'][1]:.0f} mm). <b>Estación seca (may–sep):</b> la inversión es fuerte "
+                     f"(+{SND['seca']['dT']:.1f} °C) y está casi siempre ({SND['seca']['frec']:.0f} % de los días), con "
+                     f"base a {SND['seca']['base']:.0f} m y tope a {SND['seca']['tope']:.0f} m, justo sobre el cierre: "
+                     f"casi toda la cuenca queda en aire cálido y seco que desciende, y el vapor pasa sin condensar. "
+                     f"Frente a la costa, el flujo del anticiclón del Pacífico corre paralelo a ella, de sureste a "
+                     f"noroeste. <b>Estación húmeda (dic–abr):</b> el flujo del Atlántico cruza la Amazonía y al este de "
+                     f"los Andes gira hacia el sur junto a la cordillera; la columna es más húmeda y la inversión es más "
+                     f"baja y débil (+{SND['hum']['dT']:.1f} °C, {SND['hum']['base']:.0f}–{SND['hum']['tope']:.0f} m, "
+                     f"por debajo del cierre) y falta algunos días ({SND['hum']['frec']:.0f} % con inversión). Sobre la "
+                     f"cuenca el perfil se enfría con la altura sin tapa, lo que permite la convección.",
+                     "El transporte de humedad no equivale a lluvia: llueve donde el flujo converge y asciende. Los "
+                     "sondeos cubren dos años y son de las 7 a.m. La explicación física (anticiclón del Pacífico sur, "
+                     "corriente de Humboldt, convección andina) debe sustentarse con bibliografía.",
+                     script="24_era5_vientos_humedad.py, 34b_perfiles_inversion.py, 35_temporadas_humedad_inversion.py",
+                     ancha=True)
+            + f'<h3 class="sub2">¿Representan los sondeos el periodo común?</h3><p class="intro">Los sondeos de '
+              f'Trujillo cubren {SND["ini"]:%Y-%m} a {SND["fin"]:%Y-%m}, casi todo fuera del periodo común ({PER}). '
+              f'Se separan dos preguntas: (1) si ERA5 reproduce los sondeos cuando se comparan los mismos meses, y '
+              f'(2) si esos meses fueron típicos del periodo común según ERA5. Estabilidad de la capa baja = '
+              f'T(1 500 m) − T(500 m); positiva indica inversión neta en esa capa.</p>'
+            + figura(IV / "fig_contraste_1_trujillo_vs_era5.png",
+                     "Comparación 1 · Trujillo (sondeos) frente a ERA5 en los mismos meses (2024-10 a 2026-09)",
+                     f"Misma hora y mismos meses, así que la diferencia es error del reanálisis. Por encima de unos "
+                     f"1 500 m ERA5 sigue de cerca a los sondeos en las dos temporadas (diferencias menores de 1 °C). "
+                     f"Por debajo, ERA5 es más cálido, hasta unos 2 °C cerca de la superficie, y no forma la inversión: "
+                     f"en may–sep la estabilidad de la capa baja es {CT['seca_snd']:+.1f} °C en los sondeos y "
+                     f"{CT['seca_e5s']:+.1f} °C en ERA5; en dic–abr, {CT['hum_snd']:+.1f} y {CT['hum_e5s']:+.1f} °C. "
+                     f"La caída de la humedad por encima de la capa en may–sep sí aparece en ERA5, aunque más gradual.",
+                     "ERA5 es un promedio mensual en niveles de presión (cada ~25–50 hPa) y una celda de 0.25° que mezcla "
+                     "mar y tierra: suaviza la inversión y no sirve para medir su intensidad. Sí distingue las dos "
+                     "temporadas por la forma del perfil: capa casi isoterma en may–sep, enfriamiento continuo en dic–abr.",
+                     script="34a_descarga_perfiles.py, 34b_perfiles_inversion.py, 34c_contraste_sondeos_era5.py",
+                     ancha=True)
+            + figura(IV / "fig_contraste_2_era5_periodos.png",
+                     f"Comparación 2 · ERA5: meses de los sondeos (2024-10 a 2026-09) frente al periodo común ({PER})",
+                     f"Una sola fuente, así que la diferencia es del periodo. En dic–abr los meses con sondeos son casi "
+                     f"iguales al periodo común (diferencias de unas décimas de grado). En may–sep fueron más cálidos, unos "
+                     f"0.5–1 °C cerca de la superficie y por encima de 1 500 m (casi sin diferencia hacia los 1 000 m), "
+                     f"pero con la misma forma del perfil: estabilidad de la capa baja "
+                     f"{CT['seca_e5s']:+.1f} °C frente a {CT['seca_e5c']:+.1f} °C en el periodo común.",
+                     "Si la forma del perfil en los meses con sondeos es la del periodo común, la inversión que miden los "
+                     "sondeos puede tomarse como representativa de 1998–2024 en su estructura (posición respecto a la "
+                     "cuenca, contraste entre temporadas), no en sus valores exactos. Dos años son pocos; el grupo debe "
+                     "decidir cuánto peso darle a esta comprobación.",
+                     script="34a_descarga_perfiles.py, 34c_contraste_sondeos_era5.py", ancha=True)),
     seccion("p11", "Series mensuales de precipitación, caudal y temperatura",
             f"Series construidas desde los registros diarios: P<sub>L</sub> = suma diaria; Q̄ = media diaria (m³/s); "
             f"R = caudal en lámina (mm/mes); T = media diaria. Todas las figuras usan el <b>periodo común {PER}</b> "
@@ -753,7 +822,7 @@ h2{font-size:1.4rem;margin:0 0 8px;display:flex;align-items:center;gap:10px;flex
 .chip{font-size:.75rem;font-weight:600;background:var(--chip);color:var(--acc);padding:3px 9px;border-radius:999px}
 .intro{color:var(--ink2);max-width:880px;margin:0 0 18px}
 .fig{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:0 0 22px;overflow:hidden}
-.zoom{all:unset;display:block;cursor:zoom-in;background:#fff;padding:10px}
+.zoom{all:unset;display:block;width:100%;box-sizing:border-box;cursor:zoom-in;background:#fff;padding:10px}
 .zoom:focus-visible{outline:3px solid var(--acc);outline-offset:-3px}
 .fig img{display:block;max-width:100%;max-height:82vh;width:auto;height:auto;margin:0 auto}
 figcaption{padding:14px 18px 16px;border-top:1px solid var(--line)}
@@ -777,6 +846,7 @@ figcaption p{margin:0 0 8px;max-width:900px}
 }
 .ficha p{margin:0 0 6px}
 .leer{color:var(--ink2)}
+.sub2{margin:34px 0 6px;font-size:1.2rem}
 @media (min-width:1200px){
   .fig{display:grid;grid-template-columns:minmax(0,1fr) 400px;align-items:start}
   .fig .zoom{align-self:center}

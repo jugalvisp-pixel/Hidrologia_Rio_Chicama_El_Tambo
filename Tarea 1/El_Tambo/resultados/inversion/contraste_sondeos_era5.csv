@@ -1,0 +1,7 @@
+temporada,fuente,n,T_500m_C,T_1500m_C,estabilidad_T1500_menos_T500_C,HR_500m,HR_2000m
+may–sep (seca),"Trujillo, sondeos IGRA2 (media) 2024-10 a 2026-09",269,16.89,18.42,1.53,94.65,43.42
+may–sep (seca),ERA5 12 UTC 2024-10 a 2026-09,10,18.72,18.53,-0.19,85.42,43.78
+may–sep (seca),ERA5 12 UTC 1998-01 a 2024-12 (periodo común),135,18.08,18.12,0.04,81.18,43.25
+dic–abr (húmeda),"Trujillo, sondeos IGRA2 (media) 2024-10 a 2026-09",281,20.01,17.5,-2.5,81.07,78.31
+dic–abr (húmeda),ERA5 12 UTC 2024-10 a 2026-09,10,21.23,17.59,-3.65,78.59,69.11
+dic–abr (húmeda),ERA5 12 UTC 1998-01 a 2024-12 (periodo común),135,21.02,17.59,-3.43,81.43,67.23

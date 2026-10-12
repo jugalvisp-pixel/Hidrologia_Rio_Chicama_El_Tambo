@@ -1,0 +1,12 @@
+{
+  "producto": "Integrated Global Radiosonde Archive v2 (IGRA2), NOAA NCEI",
+  "estacion": "PEM00084516",
+  "nombre": "RS TRUJILLO (WMO 84516)",
+  "lat": -8.0439,
+  "lon": -79.0593,
+  "elevacion_m": 127,
+  "url": "https://www.ncei.noaa.gov/data/integrated-global-radiosonde-archive/access/data-por/PEM00084516-data.txt.zip",
+  "referencia": "doi:10.1175/JTECH-D-17-0223.1",
+  "sondeos": 704,
+  "descargado": "2026-10-12"
+}
