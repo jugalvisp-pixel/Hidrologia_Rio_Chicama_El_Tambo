@@ -18,12 +18,12 @@ Salidas  : Tarea 1/El_Tambo/resultados/delimitacion/
 from pathlib import Path
 import json
 import re
+import textwrap
 import urllib.request
 
 import numpy as np
 import pandas as pd
 import geopandas as gpd
-import xarray as xr
 import rasterio
 from rasterio.merge import merge
 from rasterio.warp import calculate_default_transform, reproject, Resampling
@@ -67,7 +67,6 @@ NE_URL = ("https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master
           "geojson/ne_50m_admin_0_countries.geojson")
 NE_FILE = ROOT / "El_Tambo" / "datos" / "ne_50m_admin_0_countries.geojson"
 SENAMHI_URL = "https://www.senamhi.gob.pe/mapas/mapa-estaciones-2/"
-ERA5_CLIM = ROOT / "El_Tambo" / "datos" / "era5" / "era5_viento_ivt_climatologia_estacional.nc"
 
 # ------------------------------------------------------------------ 1. mosaico y recorte
 tiles = sorted(TILES.glob("Copernicus_DSM_COG_10_*_DEM.tif"))
@@ -318,9 +317,11 @@ sen_plot = gpd.GeoDataFrame(sen_plot, crs=4326)
 print("\n=== Estaciones SENAMHI en el rectángulo del mapa (sin duplicar aforos CAMELS) ===")
 print(sen_plot.drop(columns="geometry").to_string(index=False))
 
-fig = plt.figure(figsize=(15, 11))
-gs = GridSpec(3, 2, figure=fig, width_ratios=[3.6, 1.7], height_ratios=[1.2, 1, 1.0],
-              wspace=0.06, hspace=0.12)
+# Disposición horizontal: mapa principal a la izquierda; a la derecha, arriba los dos mapas de ubicación
+# (Sudamérica y Perú) y abajo la leyenda, la barra de elevación y las notas.
+fig = plt.figure(figsize=(18, 10.5))
+gs = GridSpec(2, 3, figure=fig, width_ratios=[3.2, 1.4, 1.4], height_ratios=[1, 1.05],
+              wspace=0.08, hspace=0.08)
 ax = fig.add_subplot(gs[:, 0])
 im = ax.imshow(zg, cmap="terrain", extent=ext_g, alpha=0.9, interpolation="nearest",
                vmin=np.nanmin(zg), vmax=np.nanmax(zg))
@@ -388,81 +389,52 @@ CATE_TXT = {"CO": "climática ordinaria", "CP": "climática principal", "PLU": "
             "EAMA": "agrometeorológica automática", "MAP": "meteorológica agrícola principal"}
 cats = sorted({c for v in sen_plot["cate"] for c in v.split(" + ")})
 cats_txt = "Categorías SENAMHI: " + "; ".join(f"{c} = {CATE_TXT.get(c, c)}" for c in cats)
-ax.legend(handles=handles, loc="upper center", bbox_to_anchor=(0.5, -0.075), ncol=3,
-          fontsize=8.5, frameon=False)
 ax.set_title(f"Cuenca del río Chicama hasta la estación {GAUGE_NAME} ({GID})\n"
              f"Área = {A:,.0f} km²  ·  DEM Copernicus GLO-30 (30 m)", fontsize=12)
-ax.text(0.5, -0.165, cats_txt + "\nCoordenadas geográficas WGS 84 (EPSG:4326)  ·  Delimitación "
-        "y morfometría calculadas en WGS 84 / UTM 17S (EPSG:32717)\nFuente DEM: Copernicus "
-        "GLO-30 DSM (ESA/Airbus)  ·  Red de drenaje derivada con D8 (pysheds)  ·  Estaciones: "
-        "CAMELS-PE v1.0.1 y red SENAMHI (mapa web, consulta 2026-10)  ·  Límites: Natural Earth\n"
-        "Recuadro de Sudamérica: flujo de vapor de agua integrado en la vertical (IVT) de ERA5, media dic–abr "
-        "del periodo común 1998-01 a 2025-08; color = magnitud, flechas = dirección\n(una cada 4°, malla de 1°). "
-        "Estación seca y viento en 500 hPa: mapa_transporte_humedad_era5.png (scripts 24 y 25)",
-        transform=ax.transAxes, ha="center", va="top", fontsize=7.5)
 
-# Mapas de ubicación: Sudamérica y Perú
+# Mapas de ubicación: Sudamérica y Perú (arriba a la derecha, lado a lado)
 peru = countries[countries["ADMIN"] == "Peru"]
 PERU_BOX = (-82, -18.6, -68, 0.5)
+LIMA = (-77.04, -12.05)
 ax_sa = fig.add_subplot(gs[0, 1])
 countries[countries["CONTINENT"] == "South America"].plot(ax=ax_sa, color="#eeeeee",
                                                           edgecolor="#999999", linewidth=0.3)
 peru.plot(ax=ax_sa, color="#d9c9a3", edgecolor="#555555", linewidth=0.5)
 ax_sa.add_patch(Rectangle(PERU_BOX[:2], PERU_BOX[2] - PERU_BOX[0], PERU_BOX[3] - PERU_BOX[1],
                           fill=False, edgecolor="red", linewidth=1))
-# Transporte de humedad de ERA5 en la estación húmeda (IVT dic–abr, periodo común; script 24).
-# Si la climatología aún no existe (el script 24 corre después de 09 y 10), el recuadro queda sin vectores.
-if ERA5_CLIM.exists():
-    clim = xr.open_dataset(ERA5_CLIM).sel(estacion="dic-abr", lon=slice(-92, -32), lat=slice(-30, 14))
-    m_ivt = ax_sa.pcolormesh(clim.lon, clim.lat, clim["ivt"], cmap="YlGnBu", vmin=0, vmax=350,
-                             shading="nearest", alpha=0.85, zorder=1)
-    countries.cx[-95:-30, -35:15].boundary.plot(ax=ax_sa, color="#222222", linewidth=0.5, zorder=2)
-    s = slice(1, None, 4)
-    q = ax_sa.quiver(clim.lon[s], clim.lat[s], clim["ivt_e"][s, s], clim["ivt_n"][s, s], scale=2400,
-                     width=0.005, color="#1d1d1b", zorder=4)
-    # Fondo blanco para la barra de colores y la flecha de referencia (esquina inferior izquierda, océano)
-    ax_sa.add_patch(Rectangle((0.01, 0.01), 0.47, 0.25, transform=ax_sa.transAxes, fc="white", ec="#999999",
-                              lw=0.5, alpha=0.92, zorder=5))
-    ax_sa.quiverkey(q, 0.12, 0.05, 250, "250 kg m⁻¹ s⁻¹", labelpos="E", coordinates="axes",
-                    fontproperties={"size": 6.5}, zorder=6)
-    cax_sa = ax_sa.inset_axes([0.05, 0.15, 0.38, 0.035], zorder=6)
-    cb_sa = fig.colorbar(m_ivt, cax=cax_sa, orientation="horizontal")
-    cb_sa.set_ticks([0, 100, 200, 300]); cb_sa.ax.tick_params(labelsize=6, length=2, pad=1)
-    cb_sa.set_label("IVT (kg m⁻¹ s⁻¹)", fontsize=6.5, labelpad=1)
-    cax_sa.xaxis.set_label_position("top")
-else:
-    print(f"Aviso: falta {ERA5_CLIM.name}; correr el script 24 y luego este para el recuadro de humedad.")
-ax_sa.plot(out_ll.x, out_ll.y, "o", color="red", markeredgecolor="white", ms=6, zorder=6)
-ax_sa.set_xlim(-92, -32); ax_sa.set_ylim(-30, 14)
-ax_sa.set_title("Transporte de humedad, estación húmeda (dic–abr)", fontsize=9)
+ax_sa.plot(out_ll.x, out_ll.y, "o", color="red", markeredgecolor="k", ms=5, zorder=6)
+ax_sa.set_xlim(-84, -32); ax_sa.set_ylim(-56, 14)
+ax_sa.set_title("Ubicación en Sudamérica", fontsize=10)
 
-ax_pe = fig.add_subplot(gs[1, 1])
+ax_pe = fig.add_subplot(gs[0, 2])
 countries.cx[-83:-66, -20:2].plot(ax=ax_pe, color="#eeeeee", edgecolor="#999999", linewidth=0.4)
 peru.plot(ax=ax_pe, color="#d9c9a3", edgecolor="#555555", linewidth=0.6)
 basin_ll.plot(ax=ax_pe, color="red")
 ax_pe.add_patch(Rectangle((xmin, ymin), xmax - xmin, ymax - ymin, fill=False,
                           edgecolor="red", linewidth=0.8))
+ax_pe.plot(*LIMA, "*", color="k", ms=11, zorder=6)
+ax_pe.annotate("Lima", LIMA, xytext=(-8, -4), textcoords="offset points", ha="right", va="top",
+               fontsize=8.5, fontweight="bold")
+ax_pe.annotate("Cuenca\nEl Tambo", (out_ll.x, out_ll.y), xytext=(-10, 4), textcoords="offset points",
+               ha="right", va="bottom", fontsize=8, color="#b30000", fontweight="bold")
 ax_pe.set_xlim(PERU_BOX[0], PERU_BOX[2]); ax_pe.set_ylim(PERU_BOX[1], PERU_BOX[3])
-ax_pe.set_title("Ubicación en Perú", fontsize=9)
+ax_pe.set_title("Ubicación en Perú", fontsize=10)
 for a in (ax_sa, ax_pe):
     a.set_xticks([]); a.set_yticks([]); a.set_xlabel(""); a.set_ylabel("")
     a.set_facecolor("#cfe3f3"); a.set_aspect("equal")
 
-# Barra de colores en la celda inferior derecha
-cell = fig.add_subplot(gs[2, 1]); cell.axis("off")
-cax = cell.inset_axes([0.30, 0.04, 0.12, 0.92])
-cb = fig.colorbar(im, cax=cax)
-cb.set_label("Elevación (m s.n.m.)\nCopernicus GLO-30", fontsize=9)
+# Celda inferior derecha: leyenda, barra de elevación horizontal y notas
+info = fig.add_subplot(gs[1, 1:]); info.axis("off")
+info.legend(handles=handles, loc="upper left", bbox_to_anchor=(0.0, 1.0), ncol=2, fontsize=9,
+            frameon=False, title="Leyenda", title_fontsize=10, alignment="left")
+cax = info.inset_axes([0.03, 0.50, 0.90, 0.045])
+cb = fig.colorbar(im, cax=cax, orientation="horizontal")
+cb.set_label("Elevación (m s.n.m.) · Copernicus GLO-30", fontsize=9)
+info.text(0.0, 0.33, textwrap.fill(cats_txt, 118) + "\nCoordenadas geográficas WGS 84 (EPSG:4326). Delimitación "
+          "y morfometría en WGS 84 / UTM 17S (EPSG:32717).\nFuente DEM: Copernicus GLO-30 DSM (ESA/Airbus). Red de "
+          "drenaje derivada con D8 (pysheds).\nEstaciones: CAMELS-PE v1.0.1 y red SENAMHI (mapa web, consulta "
+          "2026-10). Límites: Natural Earth.\nEstrella = Lima; recuadro rojo en Sudamérica = área del mapa de Perú.",
+          transform=info.transAxes, ha="left", va="top", fontsize=8, linespacing=1.45)
 fig.savefig(OUT / "mapa_cuenca_el_tambo.png", dpi=200, bbox_inches="tight")
-plt.close(fig)
-
-# Comparación con CAMELS-PE
-fig, ax = plt.subplots(figsize=(6, 6))
-gpd.GeoSeries([camels], crs=CRS_UTM).boundary.plot(ax=ax, color="tab:orange", lw=1.5,
-                                                   label="CAMELS-PE")
-basin_gdf.boundary.plot(ax=ax, color="k", lw=1, label="GLO-30 (este trabajo)")
-ax.legend(); ax.set_title(f"Comparación de delimitaciones · IoU = {iou:.3f}")
-ax.ticklabel_format(style="plain"); ax.tick_params(axis="y", labelrotation=90)
-fig.savefig(OUT / "comparacion_camels.png", dpi=150, bbox_inches="tight")
 plt.close(fig)
 print(f"\nSalidas en {OUT}")

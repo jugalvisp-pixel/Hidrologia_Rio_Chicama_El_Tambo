@@ -95,7 +95,7 @@ Las tablas del registro completo se conservan solo donde la guía pide distingui
 | `08_descarga_piscop.py` | Descarga de PISCOp desde IRI | ✗ descartado (no usar) |
 | `01_delimitacion.py`, `03.py` (vacíos), `02_Prueba.py` | Archivos previos (CAMELS-DE) | fuera del flujo |
 
-**Orden de ejecución:** 06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 29 → 27 → 30 → 31 → 32 → 33 → 22 (visor HTML, siempre al final). En una ejecución desde cero, volver a correr 06 después del 24 para que el recuadro de Sudamérica tenga el IVT; sin la climatología de ERA5, el 06 lo deja vacío y avisa. El periodo común
+**Orden de ejecución:** 06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 29 → 27 → 30 → 31 → 32 → 33 → 22 (visor HTML, siempre al final). El periodo común
 (`periodo_comun.py`) necesita 09 y 10, así que 07b, 11 y 15–19 van después; 15 requiere además la extensión de T del 17.
 
 **Productos principales:**
@@ -138,7 +138,7 @@ Las tablas del registro completo se conservan solo donde la guía pide distingui
 - Hipótesis de humedad: fuente principal amazónica/atlántica por flujo del este en niveles medios y altos (dic–abr); Pacífico secundario, relevante en El Niño. Es una hipótesis a contrastar en el punto 5 (flujo de humedad de ERA5, SST Niño 1+2).
 - **Mapa de la cuenca (2026-10-10, pedido del grupo):**
   - Se quitaron las flechas de humedad del mapa principal.
-  - **Recuadro de Sudamérica (decisión del grupo, 2026-10-10):** muestra el **IVT de ERA5 de la estación húmeda dic–abr** (color = magnitud, flechas = dirección, una cada 4°). Requiere el script 24, así que el mapa del 06 se regenera después del 24.
+  - **Recuadro de Sudamérica:** el 2026-10-10 se le agregó el IVT de ERA5 de dic–abr; **el 2026-10-11 el grupo decidió quitarlo**. El mapa de la cuenca vuelve a tener solo ubicación (Sudamérica y Perú con Lima), en disposición horizontal. El transporte de humedad queda en mapa_transporte_humedad_era5.png (script 25). También se eliminó la figura comparacion_camels.png (el IoU 0.994 sigue en los parámetros morfométricos).
   - **Por qué dic–abr:** en esa estación cae el 81 % de la lluvia. En may–sep el IVT sobre la cuenca es mayor, pero no llueve, así que mostrarlo en el recuadro induciría a error. La estación seca y el viento en 500 hPa quedan en la figura del script 25.
   - Un esquema anterior de 4 rutas según bibliografía (Atlántico → Amazonía; cruce de los Andes desde el este por la depresión de Huancabamba; chorro de bajo nivel; Pacífico en El Niño costero) se reemplazó por los datos. Sigue siendo útil para la explicación física de 1.5.c.
   - Las referencias sugeridas para esa explicación, **sin verificar aún** (el grupo debe comprobarlas), son: Garreaud 2009 (Adv. Geosci.); Garreaud et al. 2009 (Palaeo3); Vera et al. 2006 y Marengo et al. 2004 (J. Climate); Espinoza et al. 2020 (Front. Earth Sci.); Segura et al. 2019 (Clim. Dyn.); Garreaud 2018 y Takahashi et al. 2018 (El Niño costero 2017); Sulca et al. 2018, Lavado-Casimiro et al. 2012 y Rau et al. 2017 (IJC); McPhaden 2006 (en `Bibliografia/`).

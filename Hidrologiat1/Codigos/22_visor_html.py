@@ -153,9 +153,146 @@ def rel(p):
     return Path(p).relative_to(PROY).as_posix().replace(" ", "%20")
 
 
+# «Cómo se construyó» de cada figura del visor (obligatorio: si falta una entrada, el script se detiene).
+COMO = {
+    "mapa_cuenca_el_tambo.png":
+        "Delimitación con el DEM Copernicus GLO-30 (30 m) reproyectado a UTM 17S, acondicionado (relleno de "
+        "de pozos y depresiones, resolución de planos) y direcciones de flujo D8 con pysheds; punto de cierre reubicado, "
+        "dentro de 1.5 km de la estación, sobre una celda cuya área drenada difiere menos de 15 % de la de CAMELS-PE. Red de drenaje = celdas con área aportante > 5 km², ordenada por Strahler. "
+        "Relieve sombreado del mismo DEM. Estaciones de CAMELS-PE v1.0.1 y del mapa web de SENAMHI. Recuadros con "
+        "límites de Natural Earth 1:50m.",
+    "panel_contexto_fisico.png":
+        "Capas llevadas a la malla del DEM GLO-30 geográfico (~30 m). (a) Orientación calculada del DEM. (b) ESA "
+        "WorldCover 2021 (10 m) remuestreado por moda. (c) Geología 1:100 000 de INGEMMET (GEOCATMIN), unidades "
+        "agrupadas en grupos hidrogeológicos según su litología. (d) CHIRPS v2.0 (0.05°): media anual del periodo "
+        "común, interpolada de forma bilineal solo para dibujarla continua, con isoyetas cada 100 mm.",
+    "mapa_geologia_unidades_ingemmet.png":
+        "Polígonos de la Geología 1:100 000 integrada de INGEMMET descargados del servicio ArcGIS REST de GEOCATMIN, "
+        "recortados a la cuenca y disueltos por unidad (con un margen de ±25 m para borrar los bordes entre hojas). "
+        "Colores tomados de la simbología oficial de la capa; rótulos solo en polígonos de 20 km² o más.",
+    "mapa_d_precipitacion.png":
+        "CHIRPS v2.0 mensual (0.05°, IRI Data Library, con la corrección de +0.025° en longitud verificada contra "
+        "el archivo de UCSB). Suma de las 12 medias mensuales del periodo común en cada celda; interpolación bilineal "
+        "a la malla del DEM solo para la representación; isoyetas cada 100 mm.",
+    "mapa_transporte_humedad_era5.png":
+        "ERA5 mensual 0.5° (CDS): IVT a partir de los flujos verticalmente integrados de vapor este y norte, y viento "
+        "en 500 hPa. Climatología estacional del periodo común promediada a 1°; se enmascaran las celdas donde el "
+        "nivel de presión queda bajo la superficie del modelo.",
+    "fig_inversion_termica_era5.png":
+        "ERA5 mensual 0.25° (CDS): temperatura y velocidad vertical ω en 23 niveles, presión en superficie y T2m. "
+        "Corte oeste–este promediado en 7–8°S; estabilidad LTS = θ700 − θsuperficie sobre el océano costero; ω en "
+        "500 hPa sobre la cuenca; convergencia del IVT del script 24; correlación de anomalías en dic–abr. "
+        "Figura tentativa según el grupo.",
+    "curva_hipsometrica.png":
+        "Elevaciones GLO-30 de las celdas dentro de la cuenca ordenadas de mayor a menor: fracción del área por "
+        "encima de cada cota (eje x) frente a la cota relativa (eje y). La integral hipsométrica es el área bajo "
+        "esa curva normalizada.",
+    "fig_series_mensuales_1_1.png":
+        "Desde los registros diarios de CAMELS-PE: P_L = suma diaria (solo meses completos); Q̄ = media diaria en "
+        "m³/s; R = suma del caudal diario en lámina (mm); T = media diaria de PISCOt. Caudal rellenado: interpolación "
+        "logarítmica de huecos ≤ 15 días, escalado si hay ≥ 50 % de días y modelo mensual en el resto. T desde 2021 "
+        "= ERA5-Land + sesgo de cada mes (script 17).",
+    "fig_T_camels_vs_era5land.png":
+        "ERA5-Land T2m mensual (0.1°, CDS) promediado sobre la cuenca con pesos por área de intersección y "
+        "convertido de K a °C, frente a `tmean` de CAMELS-PE (PISCOt v1.2). Comparación en los meses comunes; "
+        "relieve del modelo calculado del geopotencial de ERA5-Land.",
+    "mapa_celdas_imerg_pesos.png":
+        "Celdas de IMERG (0.1°) intersecadas con el polígono de la cuenca en UTM 17S; peso = área dentro de la "
+        "cuenca / área de la cuenca. Desnivel = percentil 95 − percentil 5 de la elevación GLO-30 dentro de cada celda.",
+    "fig_P_L_vs_IMERG_mensual.png":
+        "IMERG V07 Final mensual (tasa en mm/h × 24 × días del mes) promediado con los pesos por área, frente a "
+        "P_L de CAMELS-PE, mes a mes en el periodo común.",
+    f"fig_precipitacion_camels_{INI:%Y}_{FIN:%Y}.png":
+        "P_L de CAMELS-PE: (a) acumulado mensual y media móvil centrada de 12 meses; (b) totales de los años con "
+        "los 12 meses en el periodo común.",
+    f"fig_precipitacion_imerg_{INI:%Y}_{FIN:%Y}.png":
+        "IMERG con el mismo procedimiento y los mismos límites de ejes que la figura de P_L, para compararlas.",
+    "fig_histogramas_1_3.png":
+        "Valores mensuales del periodo común. Ancho de clase por Freedman–Diaconis (2·IQR·n^−1/3, redondeado); "
+        "P_L y P_I con los mismos meses y límites de clase; eje en % de meses.",
+    "fig_cajas_1_3.png":
+        "Cuartiles con interpolación lineal (tipo 7), mediana, media y bigotes de Tukey hasta el dato más extremo "
+        "dentro de 1.5·IQR; los valores fuera de los bigotes se muestran.",
+    "fig_disponibilidad_1_4.png":
+        "Días válidos de cada mes en los registros diarios de CAMELS-PE, clasificados con el mismo criterio de "
+        "completitud del análisis (antes del relleno); IMERG y ERA5-Land son mensuales.",
+    "fig_validacion_relleno_caudal.png":
+        "(a) Se borraron huecos sintéticos de distinta longitud (600 por longitud) en meses completos y se compararon "
+        "la interpolación logarítmica y el escalado con el valor real. (b) Cinco modelos mensuales evaluados con "
+        "validación cruzada dejando un año fuera.",
+    "fig_climatologia_1_5a.png":
+        "Para cada mes calendario del periodo común: media, mediana, cuartiles y percentiles 10 y 90 (tipo 7) de "
+        "los años válidos.",
+    "mapas_precipitacion_mensual_chirps.png":
+        "CHIRPS v2.0 (0.05°): media de cada mes calendario en el periodo común, celda por celda, interpolada de "
+        "forma bilineal a ~280 m solo para dibujarla; escala discreta con clases más finas en valores bajos.",
+    "fig_anio_mes_1_5a.png":
+        "Matriz año × mes de cada variable en el periodo común; caudal en escala logarítmica; trama en los meses "
+        "de temperatura estimados con ERA5-Land.",
+    "fig_ciclo_1_5b.png":
+        "Indicadores del ciclo de 12 medias: SI (Walsh & Lawler), PCI (Oliver), centroide circular de Markham, "
+        "picos y armónicos; mes del máximo de cada año hidrológico sep–ago; subperiodos 1998–2011 y 2012–fin; "
+        "CV y asimetría por mes.",
+    "fig_anomalias_1_5b.png":
+        "Anomalía = valor del mes − media de su mes calendario en el periodo común, con media móvil de 12 meses.",
+    "fig_sintesis_ciclo_1_5c.png":
+        "Ciclo de P_L frente a la evapotranspiración potencial (Penman–Monteith de CAMELS-PE hasta 2016 y "
+        "Hargreaves–Samani con PISCOt); clases FAO (P vs PET), meses secos de Gaussen y aguas altas. Figura "
+        "tentativa según el grupo.",
+    "fig_dispersion_2_1.png":
+        "Pares de meses del periodo común coloreados por estación; Pearson y Spearman; caudal en escala logarítmica; "
+        "línea 1:1 en IMERG frente a P_L y línea R = P en lámina.",
+    "fig_rezagos_2_1.png":
+        "Correlación de Spearman del caudal del mes t con la lluvia de t − k (k = 0 a 6) y con la lluvia acumulada "
+        "de t − k a t, en series originales y en anomalías.",
+    "fig_evaluacion_resumen_2_3.png":
+        "Habilidad = 1 − MAE / MAE de la referencia, fuera del periodo de ajuste, en dos particiones por bloques de "
+        "años. Modelo y rezago elegidos con validación cruzada dejando un año fuera dentro del ajuste.",
+    "fig_modelo_PL_2_3.png":
+        "Modelos de P_L a partir de IMERG ajustados en 1998–2015 y evaluados en 2016–2024; residuos frente al tiempo, "
+        "al valor estimado y al mes.",
+    "fig_modelo_Q_2_3.png":
+        "Modelos de caudal a partir de P_L ajustados en 1998–2015 y evaluados en 2016–2024; los logarítmicos usan la "
+        "corrección de Duan al volver a m³/s.",
+    "fig_series_tendencias_3_4.png":
+        "Registro completo de cada variable. Anomalías con una climatología fija 1998–2020. OLS con errores HAC "
+        "(Newey–West, 12 rezagos), Sen con Mann–Kendall (Hamed–Rao) y LOWESS de 10 años con banda por remuestreo de "
+        "residuos en bloques de 24 meses; en la serie original, modelo aditivo de efecto mensual + LOWESS.",
+    "fig_pendientes_mensuales_3_5.png":
+        "Doce subseries (un mes calendario a través de los años). OLS con HAC e intervalo de Sen–Gilbert con varianza "
+        "de Hamed–Rao; control FDR de Benjamini–Hochberg sobre 12 meses × 5 variables.",
+    "fig_robustez_3_5.png":
+        "Pendientes de las anomalías recalculadas con otros métodos, periodos (recorte de 5 años en cada extremo, "
+        "sin 1998, 2017 y 2023) y fuentes (PISCOp v3, CHIRPS, caudal solo observado).",
+    "fig_ventanas_inicio_fin_3_5.png":
+        "Pendiente de Sen y prueba de Mann–Kendall de las medias anuales de anomalías para cada par de años inicial y "
+        "final con 15 años o más.",
+    "fig_causas_3_6.png":
+        "Índice Niño 1+2 de ERSST v5 (CPC/NOAA); medias anuales de anomalías estandarizadas; balance por año "
+        "hidrológico sep–ago con P_L y R, y regresión de R sobre P para el residuo.",
+    "fig_espectros_4_2.png":
+        "Periodograma de la FFT sin relleno con ceros, densidad unilateral normalizada para que su suma sea la "
+        "varianza; Welch con Hann de 120 meses y 50 % de traslape; fondo AR(1) con umbrales χ² al 95 % puntual "
+        "y global (Bonferroni).",
+    "fig_bandas_varianza_4_2.png":
+        "Suma de las ordenadas del periodograma dentro de cada banda de periodos, dividida por la suma total.",
+    "fig_comparacion_espectros_4_2.png":
+        "Espectros de Welch divididos por la varianza de cada serie, en el periodo común; cociente de los espectros "
+        "normalizados de caudal y P_L.",
+    "fig_estabilidad_4_2.png":
+        "Fracciones por banda y periodo del pico de 2–8 años, repetidos con ventana de Hann, sin tendencia, con "
+        "anomalías recortadas en los percentiles 1 y 99, con ln Q y por mitades del registro.",
+    "fig_vacios_caudal_4_1.png":
+        "Periodograma de Lomb–Scargle con solo los meses de caudal observados completos, frente a la FFT de la serie "
+        "rellenada; ambos normalizados por su potencia total.",
+}
+
+
 def figura(p, titulo, que, leer_=None, script=None):
     p = Path(p)
-    extra = f'<p class="leer"><b>Cómo leerla.</b> {leer_}</p>' if leer_ else ""
+    if p.name not in COMO:
+        raise KeyError(f"Falta «Cómo se construyó» para {p.name} en COMO")
+    extra = f'<h5>Cómo leerla</h5><p class="leer">{leer_}</p>' if leer_ else ""
     pie = f'<span class="script">{html.escape(script)}</span>' if script else ""
     return f"""
 <figure class="fig">
@@ -164,10 +301,43 @@ def figura(p, titulo, que, leer_=None, script=None):
   </button>
   <figcaption>
     <h4>{titulo}</h4>
-    <p>{que}</p>{extra}
+    <div class="ficha">
+      <h5>Qué muestra</h5><p>{que}</p>
+      <h5>Cómo se construyó</h5><p>{COMO[p.name]}</p>{extra}
+    </div>
     <p class="meta">{pie}<a href="{rel(p)}">PNG original</a> <span class="nota">(disponible si se clona el repositorio)</span></p>
   </figcaption>
 </figure>"""
+
+
+def lista_morfometria():
+    """Lista horizontal de los parámetros morfométricos (script 06)."""
+    pm = leer(DL / "parametros_morfometricos.csv", index_col=0)["valor"]
+    filas = [  # (clave en el CSV, etiqueta, formato, unidad)
+        ("Área A (km2)", "Área A", "{:,.1f}", "km²"),
+        ("Área CAMELS-PE (km2)", "Área CAMELS-PE", "{:,.1f}", "km²"),
+        ("IoU con polígono CAMELS-PE", "Coincidencia con CAMELS-PE (IoU)", "{:.3f}", ""),
+        ("Perímetro suavizado P (km)", "Perímetro P (suavizado)", "{:.1f}", "km"),
+        ("Coef. de compacidad Kc = 0.282 P/sqrt(A)", "Coef. de compacidad Kc = 0.282·P/√A", "{:.2f}", ""),
+        ("Factor de forma Kf = A/L^2", "Factor de forma Kf = A/L²", "{:.3f}", ""),
+        ("Longitud río principal L (km)", "Longitud del río principal L", "{:.1f}", "km"),
+        ("Pendiente media río principal (m/m)", "Pendiente media del río principal", "{:.3f}", "m/m"),
+        ("Cota naciente río principal (m)", "Cota de la naciente", "{:,.0f}", "m s.n.m."),
+        ("Cota mínima (m s.n.m.)", "Cota mínima (cierre)", "{:,.0f}", "m s.n.m."),
+        ("Cota máxima (m s.n.m.)", "Cota máxima", "{:,.0f}", "m s.n.m."),
+        ("Cota media (m s.n.m.)", "Cota media", "{:,.0f}", "m s.n.m."),
+        ("Cota mediana (m s.n.m.)", "Cota mediana", "{:,.0f}", "m s.n.m."),
+        ("Pendiente media de la cuenca (°)", "Pendiente media de la cuenca", "{:.1f}", "°"),
+        ("Longitud red de drenaje, umbral 5.0 km2 (km)", "Longitud de la red (A > 5 km²)", "{:,.0f}", "km"),
+        ("Densidad de drenaje Dd (km/km2)", "Densidad de drenaje Dd", "{:.2f}", "km/km²"),
+        ("Orden de Strahler máximo", "Orden de Strahler máximo", "{:.0f}", ""),
+    ]
+    items = "".join(f'<div class="param"><span>{e}</span><b>{f.format(pm[k]).replace(",", " ")} {u}</b></div>'
+                    for k, e, f, u in filas)
+    return (f'<div class="tabla-cont"><h4>Parámetros morfométricos</h4><div class="params">{items}</div>'
+            f'<p class="nota">Calculados en UTM 17S con la delimitación GLO-30 (script 06; '
+            f'parametros_morfometricos.csv). Kc ≈ 1 indica una cuenca circular; valores mayores, más alargada. '
+            f'La red de drenaje depende del umbral de área elegido (5 km²), así que Dd es relativa a ese umbral.</p></div>')
 
 
 def tabla(df, titulo, nota=""):
@@ -217,16 +387,11 @@ secciones = [
             "con el modelo digital de elevación Copernicus GLO-30 y se comparó con el polígono oficial de CAMELS-PE.",
             figura(DL / "mapa_cuenca_el_tambo.png", "Mapa de la cuenca",
                    "Relieve (GLO-30), límite de la cuenca, río Chicama, red de drenaje, punto de cierre y estaciones de SENAMHI. "
-                   "Área delimitada 2 170 km² (CAMELS-PE: 2 171.6 km²), con cotas entre unos 680 y 4 300 m s.n.m. "
-                   "El recuadro de Sudamérica muestra el transporte de humedad de ERA5 en la estación húmeda (dic–abr): "
-                   "el color indica cuánta humedad se transporta y las flechas hacia dónde. La humedad entra desde el "
-                   "Atlántico, cruza la Amazonía hacia el oeste y llega a la cuenca desde el este; frente a la costa el "
-                   "flujo se aleja del continente.",
+                   "Área delimitada 2 170 km² (CAMELS-PE: 2 171.6 km²; índice de intersección sobre unión 0.994), con "
+                   "cotas entre unos 680 y 4 300 m s.n.m. Los recuadros ubican la cuenca en Sudamérica y en el Perú, "
+                   "con Lima como referencia.",
                    script="06_delimitacion_el_tambo_glo30.py")
-            + figura(DL / "comparacion_camels.png", "Delimitación propia frente a CAMELS-PE",
-                     "Los dos polígonos casi coinciden: índice de intersección sobre unión (IoU) = 0.994. Se usa la "
-                     "delimitación propia para ponderar las mallas (IMERG, PISCOp, ERA5-Land).",
-                     script="06_delimitacion_el_tambo_glo30.py")),
+            + lista_morfometria()),
     seccion("contexto", "Contexto físico",
             "Rasgos del terreno que ayudan a explicar cómo la cuenca recibe, guarda y entrega el agua.",
             figura(CF / "panel_contexto_fisico.png", "Panel de contexto físico",
@@ -583,13 +748,15 @@ CSS = """
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,sans-serif}
 header.top{background:var(--card);border-bottom:1px solid var(--line)}
-.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+.wrap{max-width:1600px;margin:0 auto;padding:0 16px}
 header.top .wrap{padding-top:28px;padding-bottom:22px}
 h1{font-size:1.75rem;line-height:1.25;margin:0 0 6px}
 .sub{color:var(--ink2);margin:0}
-.datos-clave{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
-.dato{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:.9rem}
-.dato b{display:block;font-size:1.05rem}
+.datos-clave{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-top:16px}
+.dato{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:.85rem;min-width:0}
+.dato b{display:block;font-size:.98rem;line-height:1.3}
+@media (max-width:900px){.datos-clave{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:520px){.datos-clave{grid-template-columns:repeat(2,minmax(0,1fr))}}
 nav{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
 nav .wrap{display:flex;gap:4px;overflow-x:auto;padding-top:8px;padding-bottom:8px}
 nav a{white-space:nowrap;color:var(--ink2);text-decoration:none;padding:6px 10px;border-radius:6px;font-size:.92rem}
@@ -610,9 +777,21 @@ h2{font-size:1.4rem;margin:0 0 8px;display:flex;align-items:center;gap:10px;flex
 .zoom:focus-visible{outline:3px solid var(--acc);outline-offset:-3px}
 .fig img{display:block;max-width:100%;max-height:82vh;width:auto;height:auto;margin:0 auto}
 figcaption{padding:14px 18px 16px;border-top:1px solid var(--line)}
-figcaption h4{margin:0 0 6px;font-size:1.05rem}
+figcaption h4{margin:0 0 10px;font-size:1.05rem}
 figcaption p{margin:0 0 8px;max-width:900px}
-.leer{color:var(--ink2);font-size:.95rem}
+.ficha{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:0 0 10px;font-size:.92rem}
+.ficha h5{margin:8px 0 2px;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:var(--acc)}
+.ficha h5:first-child{margin-top:0}
+.ficha p{margin:0 0 6px}
+.leer{color:var(--ink2)}
+@media (min-width:1200px){
+  .fig{display:grid;grid-template-columns:minmax(0,1fr) 400px;align-items:start}
+  .fig .zoom{align-self:center}
+  figcaption{border-top:0;border-left:1px solid var(--line);height:100%}
+}
+.params{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+.param{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:.85rem;color:var(--ink2)}
+.param b{display:block;color:var(--ink);font-size:1rem;font-variant-numeric:tabular-nums}
 .meta{font-size:.82rem;color:var(--ink2);display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0}
 .meta a{color:var(--acc)}
 .script{font-family:ui-monospace,Consolas,monospace;background:var(--code);padding:1px 6px;border-radius:4px}
@@ -669,8 +848,7 @@ pagina = f"""<!doctype html>
 <body>
 <header class="top"><div class="wrap">
   <h1>Clasificación hidroclimática de la cuenca del río Chicama hasta El Tambo</h1>
-  <p class="sub">Tarea 1 · Hidrología 2026-2S · Universidad Nacional de Colombia, sede Medellín. Visor de los productos
-  construidos hasta ahora, con una breve explicación de cada uno.</p>
+  <p class="sub">Tarea 1 · Hidrología 2026-2S · Universidad Nacional de Colombia - Sede Medellín</p>
   <div class="datos-clave">
     <div class="dato">Estación<b>El Tambo · PE_47E0A2A8</b></div>
     <div class="dato">Área<b>2 170 km²</b></div>

@@ -157,7 +157,6 @@ Se usa solo como contraste de magnitud (aridez en 1.5.c). Los NetCDF nacionales 
 3. **Climatología estacional a 1°** (dic–abr, may–sep, oct–nov y anual).
 
 **Con qué se trabaja:**
-- recuadro de Sudamérica del mapa de la cuenca (IVT de dic–abr);
 - mapa regional de IVT y viento en 500 hPa;
 - cálculo de la convergencia del IVT sobre la cuenca.
 
