@@ -25,6 +25,9 @@
 # ERA5 de la inversión térmica (script 29): se versiona solo la climatología del corte
 /Tarea 1/El_Tambo/datos/era5_inversion/ERA5_*.nc
 /Tarea 1/El_Tambo/datos/era5_inversion/*.tmp
+# Campos globales del punto 5 (scripts 37a y 37b, ~124 MB): se regeneran con la descarga; se versiona PROCEDENCIA.json
+/Tarea 1/El_Tambo/datos/campos_globales/*.nc
+/Tarea 1/El_Tambo/datos/campos_globales/*.tmp
 
 # --- Nunca subir ---
 __pycache__/

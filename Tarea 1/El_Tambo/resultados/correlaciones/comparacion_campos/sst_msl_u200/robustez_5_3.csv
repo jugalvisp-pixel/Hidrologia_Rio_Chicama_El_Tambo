@@ -1,0 +1,325 @@
+variable,campo,mes,variante,corr_patrones
+P_L,sst,1,Spearman,0.723
+P_L,sst,1,sin tendencia,0.977
+P_L,sst,1,"sin 1998, 2017, 2023",0.541
+P_L,sst,1,IMERG en lugar de P_L,0.812
+P_L,sst,1,1981–2002 vs 2003–2024,-0.311
+P_L,sst,2,Spearman,0.878
+P_L,sst,2,sin tendencia,0.95
+P_L,sst,2,"sin 1998, 2017, 2023",0.772
+P_L,sst,2,IMERG en lugar de P_L,0.636
+P_L,sst,2,1981–2002 vs 2003–2024,0.385
+P_L,sst,3,Spearman,0.918
+P_L,sst,3,sin tendencia,0.992
+P_L,sst,3,"sin 1998, 2017, 2023",0.67
+P_L,sst,3,IMERG en lugar de P_L,0.86
+P_L,sst,3,1981–2002 vs 2003–2024,-0.141
+P_L,sst,4,Spearman,0.952
+P_L,sst,4,sin tendencia,0.998
+P_L,sst,4,"sin 1998, 2017, 2023",0.874
+P_L,sst,4,IMERG en lugar de P_L,0.703
+P_L,sst,4,1981–2002 vs 2003–2024,-0.318
+P_L,sst,5,Spearman,0.942
+P_L,sst,5,sin tendencia,0.995
+P_L,sst,5,"sin 1998, 2017, 2023",0.971
+P_L,sst,5,IMERG en lugar de P_L,0.816
+P_L,sst,5,1981–2002 vs 2003–2024,-0.268
+P_L,sst,6,Spearman,0.933
+P_L,sst,6,sin tendencia,0.989
+P_L,sst,6,"sin 1998, 2017, 2023",0.984
+P_L,sst,6,IMERG en lugar de P_L,0.82
+P_L,sst,6,1981–2002 vs 2003–2024,0.194
+P_L,sst,7,Spearman,0.927
+P_L,sst,7,sin tendencia,0.997
+P_L,sst,7,"sin 1998, 2017, 2023",0.915
+P_L,sst,7,IMERG en lugar de P_L,0.759
+P_L,sst,7,1981–2002 vs 2003–2024,0.003
+P_L,sst,8,Spearman,0.905
+P_L,sst,8,sin tendencia,0.983
+P_L,sst,8,"sin 1998, 2017, 2023",0.951
+P_L,sst,8,IMERG en lugar de P_L,0.631
+P_L,sst,8,1981–2002 vs 2003–2024,0.293
+P_L,sst,9,Spearman,0.925
+P_L,sst,9,sin tendencia,0.967
+P_L,sst,9,"sin 1998, 2017, 2023",0.992
+P_L,sst,9,IMERG en lugar de P_L,0.727
+P_L,sst,9,1981–2002 vs 2003–2024,0.144
+P_L,sst,10,Spearman,0.898
+P_L,sst,10,sin tendencia,0.961
+P_L,sst,10,"sin 1998, 2017, 2023",0.851
+P_L,sst,10,IMERG en lugar de P_L,0.419
+P_L,sst,10,1981–2002 vs 2003–2024,0.024
+P_L,sst,11,Spearman,0.983
+P_L,sst,11,sin tendencia,0.988
+P_L,sst,11,"sin 1998, 2017, 2023",0.974
+P_L,sst,11,IMERG en lugar de P_L,0.919
+P_L,sst,11,1981–2002 vs 2003–2024,0.712
+P_L,sst,12,Spearman,0.881
+P_L,sst,12,sin tendencia,0.895
+P_L,sst,12,"sin 1998, 2017, 2023",0.779
+P_L,sst,12,IMERG en lugar de P_L,0.71
+P_L,sst,12,1981–2002 vs 2003–2024,0.384
+P_L,msl,1,Spearman,0.697
+P_L,msl,1,sin tendencia,0.982
+P_L,msl,1,"sin 1998, 2017, 2023",0.419
+P_L,msl,1,IMERG en lugar de P_L,0.726
+P_L,msl,1,1981–2002 vs 2003–2024,-0.333
+P_L,msl,2,Spearman,0.845
+P_L,msl,2,sin tendencia,0.954
+P_L,msl,2,"sin 1998, 2017, 2023",0.674
+P_L,msl,2,IMERG en lugar de P_L,0.377
+P_L,msl,2,1981–2002 vs 2003–2024,0.499
+P_L,msl,3,Spearman,0.857
+P_L,msl,3,sin tendencia,0.975
+P_L,msl,3,"sin 1998, 2017, 2023",0.616
+P_L,msl,3,IMERG en lugar de P_L,0.812
+P_L,msl,3,1981–2002 vs 2003–2024,-0.086
+P_L,msl,4,Spearman,0.97
+P_L,msl,4,sin tendencia,1.0
+P_L,msl,4,"sin 1998, 2017, 2023",0.899
+P_L,msl,4,IMERG en lugar de P_L,0.797
+P_L,msl,4,1981–2002 vs 2003–2024,-0.041
+P_L,msl,5,Spearman,0.953
+P_L,msl,5,sin tendencia,0.999
+P_L,msl,5,"sin 1998, 2017, 2023",0.975
+P_L,msl,5,IMERG en lugar de P_L,0.799
+P_L,msl,5,1981–2002 vs 2003–2024,0.09
+P_L,msl,6,Spearman,0.967
+P_L,msl,6,sin tendencia,0.992
+P_L,msl,6,"sin 1998, 2017, 2023",0.996
+P_L,msl,6,IMERG en lugar de P_L,0.778
+P_L,msl,6,1981–2002 vs 2003–2024,0.519
+P_L,msl,7,Spearman,0.919
+P_L,msl,7,sin tendencia,1.0
+P_L,msl,7,"sin 1998, 2017, 2023",0.955
+P_L,msl,7,IMERG en lugar de P_L,0.864
+P_L,msl,7,1981–2002 vs 2003–2024,0.429
+P_L,msl,8,Spearman,0.963
+P_L,msl,8,sin tendencia,0.995
+P_L,msl,8,"sin 1998, 2017, 2023",0.981
+P_L,msl,8,IMERG en lugar de P_L,0.613
+P_L,msl,8,1981–2002 vs 2003–2024,0.16
+P_L,msl,9,Spearman,0.976
+P_L,msl,9,sin tendencia,0.991
+P_L,msl,9,"sin 1998, 2017, 2023",0.996
+P_L,msl,9,IMERG en lugar de P_L,0.811
+P_L,msl,9,1981–2002 vs 2003–2024,0.677
+P_L,msl,10,Spearman,0.914
+P_L,msl,10,sin tendencia,0.974
+P_L,msl,10,"sin 1998, 2017, 2023",0.829
+P_L,msl,10,IMERG en lugar de P_L,0.303
+P_L,msl,10,1981–2002 vs 2003–2024,0.287
+P_L,msl,11,Spearman,0.979
+P_L,msl,11,sin tendencia,0.994
+P_L,msl,11,"sin 1998, 2017, 2023",0.962
+P_L,msl,11,IMERG en lugar de P_L,0.891
+P_L,msl,11,1981–2002 vs 2003–2024,0.606
+P_L,msl,12,Spearman,0.944
+P_L,msl,12,sin tendencia,0.951
+P_L,msl,12,"sin 1998, 2017, 2023",0.82
+P_L,msl,12,IMERG en lugar de P_L,0.698
+P_L,msl,12,1981–2002 vs 2003–2024,0.686
+P_L,u200,1,Spearman,0.752
+P_L,u200,1,sin tendencia,0.986
+P_L,u200,1,"sin 1998, 2017, 2023",0.59
+P_L,u200,1,IMERG en lugar de P_L,0.792
+P_L,u200,1,1981–2002 vs 2003–2024,-0.353
+P_L,u200,2,Spearman,0.836
+P_L,u200,2,sin tendencia,0.95
+P_L,u200,2,"sin 1998, 2017, 2023",0.7
+P_L,u200,2,IMERG en lugar de P_L,0.671
+P_L,u200,2,1981–2002 vs 2003–2024,0.358
+P_L,u200,3,Spearman,0.911
+P_L,u200,3,sin tendencia,0.986
+P_L,u200,3,"sin 1998, 2017, 2023",0.608
+P_L,u200,3,IMERG en lugar de P_L,0.831
+P_L,u200,3,1981–2002 vs 2003–2024,0.073
+P_L,u200,4,Spearman,0.945
+P_L,u200,4,sin tendencia,0.999
+P_L,u200,4,"sin 1998, 2017, 2023",0.842
+P_L,u200,4,IMERG en lugar de P_L,0.591
+P_L,u200,4,1981–2002 vs 2003–2024,-0.179
+P_L,u200,5,Spearman,0.949
+P_L,u200,5,sin tendencia,0.998
+P_L,u200,5,"sin 1998, 2017, 2023",0.977
+P_L,u200,5,IMERG en lugar de P_L,0.841
+P_L,u200,5,1981–2002 vs 2003–2024,0.116
+P_L,u200,6,Spearman,0.945
+P_L,u200,6,sin tendencia,0.991
+P_L,u200,6,"sin 1998, 2017, 2023",0.993
+P_L,u200,6,IMERG en lugar de P_L,0.647
+P_L,u200,6,1981–2002 vs 2003–2024,0.242
+P_L,u200,7,Spearman,0.886
+P_L,u200,7,sin tendencia,1.0
+P_L,u200,7,"sin 1998, 2017, 2023",0.953
+P_L,u200,7,IMERG en lugar de P_L,0.808
+P_L,u200,7,1981–2002 vs 2003–2024,0.387
+P_L,u200,8,Spearman,0.925
+P_L,u200,8,sin tendencia,0.992
+P_L,u200,8,"sin 1998, 2017, 2023",0.959
+P_L,u200,8,IMERG en lugar de P_L,0.537
+P_L,u200,8,1981–2002 vs 2003–2024,-0.029
+P_L,u200,9,Spearman,0.947
+P_L,u200,9,sin tendencia,0.977
+P_L,u200,9,"sin 1998, 2017, 2023",0.992
+P_L,u200,9,IMERG en lugar de P_L,0.761
+P_L,u200,9,1981–2002 vs 2003–2024,0.401
+P_L,u200,10,Spearman,0.954
+P_L,u200,10,sin tendencia,0.987
+P_L,u200,10,"sin 1998, 2017, 2023",0.934
+P_L,u200,10,IMERG en lugar de P_L,0.47
+P_L,u200,10,1981–2002 vs 2003–2024,0.275
+P_L,u200,11,Spearman,0.984
+P_L,u200,11,sin tendencia,0.995
+P_L,u200,11,"sin 1998, 2017, 2023",0.948
+P_L,u200,11,IMERG en lugar de P_L,0.833
+P_L,u200,11,1981–2002 vs 2003–2024,0.661
+P_L,u200,12,Spearman,0.957
+P_L,u200,12,sin tendencia,0.947
+P_L,u200,12,"sin 1998, 2017, 2023",0.843
+P_L,u200,12,IMERG en lugar de P_L,0.703
+P_L,u200,12,1981–2002 vs 2003–2024,0.547
+Q,sst,1,Spearman,0.649
+Q,sst,1,sin tendencia,0.981
+Q,sst,1,"sin 1998, 2017, 2023",0.464
+Q,sst,1,rezago ℓ = 1,0.871
+Q,sst,2,Spearman,0.322
+Q,sst,2,sin tendencia,0.944
+Q,sst,2,"sin 1998, 2017, 2023",0.083
+Q,sst,2,rezago ℓ = 1,0.876
+Q,sst,3,Spearman,0.467
+Q,sst,3,sin tendencia,0.957
+Q,sst,3,"sin 1998, 2017, 2023",0.117
+Q,sst,3,rezago ℓ = 1,0.892
+Q,sst,4,Spearman,0.735
+Q,sst,4,sin tendencia,0.995
+Q,sst,4,"sin 1998, 2017, 2023",0.454
+Q,sst,4,rezago ℓ = 1,0.793
+Q,sst,5,Spearman,0.945
+Q,sst,5,sin tendencia,0.996
+Q,sst,5,"sin 1998, 2017, 2023",0.912
+Q,sst,5,rezago ℓ = 1,0.818
+Q,sst,6,Spearman,0.91
+Q,sst,6,sin tendencia,0.985
+Q,sst,6,"sin 1998, 2017, 2023",0.877
+Q,sst,6,rezago ℓ = 1,0.84
+Q,sst,7,Spearman,0.909
+Q,sst,7,sin tendencia,0.997
+Q,sst,7,"sin 1998, 2017, 2023",0.782
+Q,sst,7,rezago ℓ = 1,0.768
+Q,sst,8,Spearman,0.915
+Q,sst,8,sin tendencia,0.984
+Q,sst,8,"sin 1998, 2017, 2023",0.767
+Q,sst,8,rezago ℓ = 1,0.77
+Q,sst,9,Spearman,0.94
+Q,sst,9,sin tendencia,0.933
+Q,sst,9,"sin 1998, 2017, 2023",0.793
+Q,sst,9,rezago ℓ = 1,0.815
+Q,sst,10,Spearman,0.849
+Q,sst,10,sin tendencia,0.995
+Q,sst,10,"sin 1998, 2017, 2023",0.671
+Q,sst,10,rezago ℓ = 1,0.819
+Q,sst,11,Spearman,0.919
+Q,sst,11,sin tendencia,0.977
+Q,sst,11,"sin 1998, 2017, 2023",0.948
+Q,sst,11,rezago ℓ = 1,0.562
+Q,sst,12,Spearman,0.849
+Q,sst,12,sin tendencia,0.993
+Q,sst,12,"sin 1998, 2017, 2023",0.718
+Q,sst,12,rezago ℓ = 1,0.794
+Q,msl,1,Spearman,0.525
+Q,msl,1,sin tendencia,0.987
+Q,msl,1,"sin 1998, 2017, 2023",0.289
+Q,msl,1,rezago ℓ = 1,0.824
+Q,msl,2,Spearman,0.353
+Q,msl,2,sin tendencia,0.97
+Q,msl,2,"sin 1998, 2017, 2023",-0.002
+Q,msl,2,rezago ℓ = 1,0.621
+Q,msl,3,Spearman,0.486
+Q,msl,3,sin tendencia,0.933
+Q,msl,3,"sin 1998, 2017, 2023",0.248
+Q,msl,3,rezago ℓ = 1,0.694
+Q,msl,4,Spearman,0.58
+Q,msl,4,sin tendencia,0.997
+Q,msl,4,"sin 1998, 2017, 2023",0.111
+Q,msl,4,rezago ℓ = 1,0.243
+Q,msl,5,Spearman,0.927
+Q,msl,5,sin tendencia,0.999
+Q,msl,5,"sin 1998, 2017, 2023",0.925
+Q,msl,5,rezago ℓ = 1,0.332
+Q,msl,6,Spearman,0.872
+Q,msl,6,sin tendencia,0.983
+Q,msl,6,"sin 1998, 2017, 2023",0.853
+Q,msl,6,rezago ℓ = 1,0.343
+Q,msl,7,Spearman,0.901
+Q,msl,7,sin tendencia,1.0
+Q,msl,7,"sin 1998, 2017, 2023",0.76
+Q,msl,7,rezago ℓ = 1,-0.018
+Q,msl,8,Spearman,0.956
+Q,msl,8,sin tendencia,0.989
+Q,msl,8,"sin 1998, 2017, 2023",0.856
+Q,msl,8,rezago ℓ = 1,0.053
+Q,msl,9,Spearman,0.955
+Q,msl,9,sin tendencia,0.969
+Q,msl,9,"sin 1998, 2017, 2023",0.909
+Q,msl,9,rezago ℓ = 1,0.293
+Q,msl,10,Spearman,0.837
+Q,msl,10,sin tendencia,0.997
+Q,msl,10,"sin 1998, 2017, 2023",0.605
+Q,msl,10,rezago ℓ = 1,0.079
+Q,msl,11,Spearman,0.949
+Q,msl,11,sin tendencia,0.992
+Q,msl,11,"sin 1998, 2017, 2023",0.969
+Q,msl,11,rezago ℓ = 1,0.038
+Q,msl,12,Spearman,0.92
+Q,msl,12,sin tendencia,0.998
+Q,msl,12,"sin 1998, 2017, 2023",0.834
+Q,msl,12,rezago ℓ = 1,0.491
+Q,u200,1,Spearman,0.584
+Q,u200,1,sin tendencia,0.989
+Q,u200,1,"sin 1998, 2017, 2023",0.433
+Q,u200,1,rezago ℓ = 1,0.64
+Q,u200,2,Spearman,0.221
+Q,u200,2,sin tendencia,0.954
+Q,u200,2,"sin 1998, 2017, 2023",-0.083
+Q,u200,2,rezago ℓ = 1,0.409
+Q,u200,3,Spearman,0.466
+Q,u200,3,sin tendencia,0.927
+Q,u200,3,"sin 1998, 2017, 2023",-0.022
+Q,u200,3,rezago ℓ = 1,0.587
+Q,u200,4,Spearman,0.716
+Q,u200,4,sin tendencia,0.998
+Q,u200,4,"sin 1998, 2017, 2023",0.421
+Q,u200,4,rezago ℓ = 1,0.103
+Q,u200,5,Spearman,0.917
+Q,u200,5,sin tendencia,0.999
+Q,u200,5,"sin 1998, 2017, 2023",0.919
+Q,u200,5,rezago ℓ = 1,0.37
+Q,u200,6,Spearman,0.913
+Q,u200,6,sin tendencia,0.99
+Q,u200,6,"sin 1998, 2017, 2023",0.812
+Q,u200,6,rezago ℓ = 1,0.23
+Q,u200,7,Spearman,0.928
+Q,u200,7,sin tendencia,1.0
+Q,u200,7,"sin 1998, 2017, 2023",0.815
+Q,u200,7,rezago ℓ = 1,-0.053
+Q,u200,8,Spearman,0.92
+Q,u200,8,sin tendencia,0.983
+Q,u200,8,"sin 1998, 2017, 2023",0.803
+Q,u200,8,rezago ℓ = 1,-0.096
+Q,u200,9,Spearman,0.933
+Q,u200,9,sin tendencia,0.938
+Q,u200,9,"sin 1998, 2017, 2023",0.857
+Q,u200,9,rezago ℓ = 1,0.142
+Q,u200,10,Spearman,0.855
+Q,u200,10,sin tendencia,0.998
+Q,u200,10,"sin 1998, 2017, 2023",0.678
+Q,u200,10,rezago ℓ = 1,0.031
+Q,u200,11,Spearman,0.945
+Q,u200,11,sin tendencia,0.995
+Q,u200,11,"sin 1998, 2017, 2023",0.97
+Q,u200,11,rezago ℓ = 1,0.026
+Q,u200,12,Spearman,0.905
+Q,u200,12,sin tendencia,0.998
+Q,u200,12,"sin 1998, 2017, 2023",0.839
+Q,u200,12,rezago ℓ = 1,0.477

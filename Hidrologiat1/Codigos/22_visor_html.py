@@ -143,6 +143,69 @@ _pi = _pk[(_pk.estimador == "periodograma") & (_pk.periodo_meses >= 24) & (_pk.k
 PK = {v: (g.loc[g.fraccion_varianza.idxmax(), "periodo_meses"] / 12, 100 * g.fraccion_varianza.max())
       for v, g in _pi.groupby("variable")}
 OND = leer(ES / "onditas_resumen_4_3.csv").set_index("serie")                 # script 38
+
+# Punto 5 (script 37, conjunto final: SST + presión al nivel del mar + humedad específica en 700 hPa)
+CO = R / "correlaciones"
+_rs5 = leer(CO / "resumen_mapas_5.csv")
+_ix5 = leer(CO / "indices_5_4.csv").set_index(["variable", "indice", "mes"])
+_rb5 = leer(CO / "robustez_5_3.csv").groupby(["variable", "campo", "variante"]).corr_patrones.median()
+_tm5 = leer(CO / "todos_meses_5.csv").set_index(["variable", "campo"])
+N12, N34, E_, C_, QC = ("Niño 1+2 (SST)", "Niño 3.4 (SST)", "E: Pacífico este (Takahashi 2011)",
+                        "C: Pacífico central (Takahashi 2011)", "Costa y Pacífico este (q 700)")
+
+
+def ix5(var, ind, mes, col="pearson_r"):
+    return _ix5.loc[(var, ind, mes), col]
+
+
+def area5(var, campo, mes=None, rez=0):
+    """% del área que pasa FDR: en un mes o el máximo de los 12."""
+    s = _rs5[(_rs5.variable == var) & (_rs5.campo == campo) & (_rs5.rezago == rez)].set_index("mes").frac_area_FDR
+    return 100 * (s.max() if mes is None else s.loc[mes])
+
+
+def rango5(var, ind, meses, col="pearson_r"):
+    v = [ix5(var, ind, m, col) for m in meses]
+    return f"{min(v):+.2f} a {max(v):+.2f}"
+
+
+_rbm5 = leer(CO / "robustez_5_3.csv").set_index(["variable", "campo", "variante", "mes"]).corr_patrones
+
+
+def rob5(var, campo, variante, meses=range(1, 13)):
+    """Mediana de la correlación de patrones (mapa base frente a la variante) en los meses indicados."""
+    return float(np.median([_rbm5.loc[(var, campo, variante, m)] for m in meses]))
+
+
+def fdr5(var, ind):
+    """Meses en que el índice pasa FDR (q < 0.10) para la variable."""
+    m = [MESES[k - 1] for k in range(1, 13) if ix5(var, ind, k, "q_FDR") < 0.10]
+    return ", ".join(m) if m else "ninguno"
+
+
+_ec = leer(CO / "indices_E_C_5.csv", index_col="fecha", parse_dates=True)
+_nino = pd.read_csv(PROY / "Tarea 1" / "El_Tambo" / "datos" / "indices_clima" / "ersst5.nino.mth.91-20.ascii", sep=r"\s+")
+_nino.index = pd.to_datetime(dict(year=_nino.YR, month=_nino.MON, day=1))
+EC5 = dict(rE=_ec.E.corr(_nino.iloc[:, 3].reindex(_ec.index)), rC=_ec.C.corr(_nino.iloc[:, 7].reindex(_ec.index)),
+           rEC=_ec.E.corr(_ec.C))
+# comparación de las tres elecciones de campos (mismo método): máximo % del área FDR por campo y todos los meses
+_filas = []
+for etq, sub in (("Final (SST, SLP, q 700)", ""), ("Compañera (SST, SLP, u 200)", "comparacion_campos/sst_msl_u200"),
+                 ("Contraste (SST, q 700, Z 500)", "comparacion_campos/sst_q700_z500")):
+    d = CO / sub
+    rs, tm = leer(d / "resumen_mapas_5.csv"), leer(d / "todos_meses_5.csv").set_index(["variable", "campo"])
+    for campo in rs.campo.unique():
+        if campo == "sst" and sub:
+            continue                                                        # la SST es la misma en los tres
+        g = rs[(rs.campo == campo) & (rs.rezago == 0)]
+        _filas.append([etq, {"sst": "SST", "msl": "Presión al nivel del mar", "u200": "Viento zonal 200 hPa",
+                             "q700": "Humedad específica 700 hPa", "z500": "Altura geopotencial 500 hPa"}[campo],
+                       f"{100 * g[g.variable == 'P_L'].frac_area_FDR.max():.0f}",
+                       f"{100 * g[g.variable == 'Q'].frac_area_FDR.max():.0f}",
+                       f"{100 * tm.loc[('P_L', campo), 'frac_area_FDR']:.0f}",
+                       f"{100 * tm.loc[('Q', campo), 'frac_area_FDR']:.0f}"])
+t5 = pd.DataFrame(_filas, columns=["Elección", "Campo", "P_L: máx. % área FDR (un mes)", "Q̄: máx. % área FDR (un mes)",
+                                   "P_L: % área FDR (todos los meses)", "Q̄: % área FDR (todos los meses)"])
 t4 = _pk[_pk.groupby("variable").cumcount() < 3][["variable", "N_meses", "periodo_meses", "periodo_min_meses",
                                                    "periodo_max_meses", "k_ciclos_en_registro", "fraccion_varianza",
                                                    "cociente_fondo_AR1", "supera_95_puntual", "supera_95_global"]].copy()
@@ -440,6 +503,24 @@ COMO = {
     "fig_vacios_caudal_4_1.png":
         "Periodograma de Lomb–Scargle con solo los meses de caudal observados completos, frente a la FFT de la serie "
         "rellenada; ambos normalizados por su potencia total.",
+    "fig_corr_todos_meses_5.png":
+        "Pearson entre las 324 anomalías mensuales 1998–2024 de la cuenca y de cada celda (referencia 1998–2020), sin "
+        "rezago; n efectivo según la autocorrelación mensual de ambas series; FDR de Benjamini–Hochberg con α = 0.10 "
+        "por mapa.",
+    "fig_indices_5_4.png":
+        "Correlación entre años, por mes calendario, de la cuenca con índices: Niño 1+2 y Niño 3.4 (ERSST v5 de CPC/NOAA, "
+        "base 1991–2020); E y C de Takahashi et al. (2011), reconstruidos con ERSST v5 (EOF de la SST del Pacífico "
+        "tropical 10°S–10°N, 140°E–80°O, 1981–2025, rotadas 45°; no es la serie oficial del IGP, que no se encontró "
+        "publicada); y promedios de cajas de cada campo ponderados por área. Prueba t con n efectivo; * p &lt; 0.05; "
+        "** además q &lt; 0.10 con FDR (familia: meses × índices de cada variable), el mismo umbral de los mapas.",
+    "fig_robustez_5_3.png":
+        "Correlación de patrones (centrada y ponderada por área, 40°S–40°N) entre el mapa base y cada variante: Spearman, "
+        "series sin tendencia lineal (por mes), sin 1998, 2017 y 2023, IMERG en lugar de P<sub>L</sub>, rezago de un mes "
+        "para el caudal (fijado por el desfase lluvia → caudal, no buscado) y, para P<sub>L</sub>, los subperiodos "
+        "1981–2002 y 2003–2024 comparados entre sí (excepción declarada al periodo común, solo para estabilidad).",
+    "fig_muestra_5_3.png":
+        "Pares válidos y n efectivo = n (1 − ρ<sub>x</sub>ρ<sub>y</sub>)/(1 + ρ<sub>x</sub>ρ<sub>y</sub>) por celda del "
+        "mapa P<sub>L</sub>–SST de marzo, con ρ la autocorrelación entre años consecutivos (Bretherton et al. 1999).",
     # gráficas interactivas (clave "int:<nombre>", ver visor_graficas.js)
     "int:serie11":
         "P<sub>L</sub> = suma de la precipitación diaria (PISCOp v2.1 promediado en la cuenca por CAMELS-PE), solo meses "
@@ -481,6 +562,20 @@ COMO = {
         "de 12 meses; recta = tendencia de Sen con prueba de Mann–Kendall corregida por autocorrelación (Hamed–Rao), del "
         "script 32. La ordenada de la recta es la mediana de a − b·t.",
 }
+# Punto 5: los 12 mapas de cada combinación comparten el método (script 37, de la compañera, con nuestros campos)
+_COMO_MAPAS5 = (
+    "Correlación entre años: en cada celda, los 27 valores de un mes calendario (1998–2024) de la anomalía de la cuenca "
+    "frente a los de la celda (referencia 1998–2020), sin rezago. Malla de 2°. Prueba t con n efectivo según la "
+    "persistencia entre años de ambas series (Bretherton et al. 1999) y control FDR de Benjamini–Hochberg "
+    "(α = 0.10, familia = las celdas de cada mapa en 60°S–60°N; Wilks 2016). Escala común de −1 a 1; puntos = pasa FDR; "
+    "gris = tierra en SST, nivel bajo el terreno en q 700 o sin dato; estrella = cuenca.")
+for _v in ("P_L", "Q"):
+    for _c in ("sst", "msl", "q700"):
+        COMO[f"fig_corr_{_v}_{_c}_5.png"] = _COMO_MAPAS5
+COMO["fig_corr_P_I_sst_5.png"] = _COMO_MAPAS5 + " Igual que P<sub>L</sub>–SST pero con IMERG."
+COMO["fig_corr_P_L_q700_5.png"] = COMO["fig_corr_Q_q700_5.png"] = (
+    _COMO_MAPAS5 + " Humedad específica de ERA5 en 700 hPa (g/kg), enmascarada en los meses y celdas donde ese nivel "
+    "queda bajo el terreno del modelo (presión en superficie &lt; 700 hPa; 0.85 % de las celdas-mes).")
 
 
 def tarjeta(titulo, tipo, cuerpo, que, como, leer_, meta, clase="fig"):
@@ -626,6 +721,9 @@ fuentes = pd.DataFrame([
     ["Precipitación en malla (apoyo)", "PISCOp v3.0 (SENAMHI)", "doi:10.6084/m9.figshare.32411886.v1", "diaria, 0.1°"],
     ["Mapa de precipitación media anual", "CHIRPS v2.0 (UCSB/CHC), recorte del IRI Data Library", "doi:10.15780/G2RP4Q", "mensual, 0.05°"],
     ["Transporte de humedad y viento", "ERA5 (C3S/ECMWF), niveles de presión y nivel único", "doi:10.24381/cds.6860a573; 10.24381/cds.f17050d7", "mensual, 0.5°"],
+    ["Campos globales (punto 5)", "ERSST v5 (NOAA PSL); ERA5 presión al nivel del mar, humedad específica 700 hPa "
+     "(y para comparar: viento 200 hPa, altura geopotencial 500 hPa)", "doi:10.7289/V5T72FNM; 10.24381/cds.f17050d7; "
+     "10.24381/cds.6860a573", "mensual, 2°"],
     ["Perfiles verticales (inversión térmica)", "Radiosondeos IGRA2 84516 Trujillo (NOAA NCEI); ERA5 por niveles de presión, 12 UTC",
      "doi:10.1175/JTECH-D-17-0223.1; 10.24381/cds.6860a573", "diaria 12 UTC / mensual, 0.25°"],
     ["Relieve", "Copernicus GLO-30 DSM", "ESA / Airbus", "30 m"],
@@ -1097,9 +1195,170 @@ secciones = [
                      "bibliografía.", script="38_onditas_4.py"),
             "Punto 4"),
     seccion("p5", "Mapas de correlación con el clima global",
-            "Pendiente. Esta sección reunirá los mapas de correlación, mes a mes, entre la precipitación y el caudal de "
-            "la cuenca y los campos globales de temperatura superficial del mar y de dos variables atmosféricas.",
-            '<div class="tabla-cont"><h4>En construcción</h4><p>Aún no hay productos para este punto.</p></div>',
+            "Qué regiones del océano y de la atmósfera varían de un año a otro junto con la lluvia y el caudal de la "
+            "cuenca, mes a mes. En cada celda se correlacionan los 27 valores de un mes calendario (por ejemplo, todos "
+            "los eneros 1998–2024) de la cuenca con los de esa celda: un mapa por mes, doce por combinación. "
+            "<b>Campos:</b> temperatura superficial del mar (SST, ERSST v5), que la guía exige; presión al nivel del mar "
+            "(ERA5), que representa el anticiclón del Pacífico sur, los alisios y el dipolo de presión del ENSO; y humedad "
+            "específica en 700 hPa (ERA5, ~3 km, cerca de la cota mediana de la cuenca), que representa la humedad "
+            "disponible sobre la costa y la cuenca. El método es el del visor paralelo del grupo (script 37); la elección "
+            "de campos se contrastó con otras dos (tabla al final). Lluvia de referencia P<sub>L</sub>; IMERG para la "
+            "sensibilidad a la fuente.",
+            figura(CO / "fig_corr_Q_sst_5.png", "Caudal frente a SST",
+                   f"En la estación húmeda el caudal crece con el calentamiento del Pacífico ecuatorial este, frente a la "
+                   f"costa de Perú y Ecuador: r = {ix5('Q', N12, 1):.2f} en enero y {ix5('Q', N12, 3):.2f} en marzo con "
+                   f"Niño 1+2. En los mapas pasa el FDR como máximo el {area5('Q', 'sst'):.0f} % del área de mar. La "
+                   f"asociación depende de pocos años: sin 1998, 2017 y 2023 el patrón de ene–abr se parece poco al "
+                   f"original (correlación de patrones mediana {rob5('Q', 'sst', 'sin 1998, 2017, 2023', range(1, 5)):.1f}).",
+                   "Es la huella de los El Niño costeros extremos más que una relación que se repita todos los años.",
+                   script="37a_descarga_campos_globales.py, 37_correlaciones_5.py")
+            + figura(CO / "fig_corr_P_L_sst_5.png", "Lluvia local frente a SST",
+                     f"P<sub>L</sub> muestra el mismo signo frente a Niño 1+2 en ene–abr (r = {rango5('P_L', N12, range(1, 5))}), "
+                     f"más débil que el caudal. Pocas celdas pasan el FDR (máximo {area5('P_L', 'sst'):.0f} % del área) y el "
+                     f"patrón cambia entre 1981–2002 y 2003–2024 (correlación de patrones mediana "
+                     f"{rob5('P_L', 'sst', '1981–2002 vs 2003–2024'):.1f}): la relación lluvia–SST no es estable en el tiempo.",
+                     "En jun–ago P<sub>L</sub> ≈ 0 y r es inestable.", script="37_correlaciones_5.py")
+            + figura(CO / "fig_corr_Q_msl_5.png", "Caudal frente a la presión al nivel del mar",
+                     f"El caudal de enero–febrero se asocia con presión más baja frente a la costa de Perú y Ecuador y más "
+                     f"alta en el Pacífico ecuatorial oeste: el dipolo de presión del ENSO ({area5('Q', 'msl', 1):.0f} % del "
+                     f"área pasa el FDR en enero). Con todos los meses juntos es el campo más coherente con el caudal.",
+                     script="37_correlaciones_5.py")
+            + figura(CO / "fig_corr_P_L_msl_5.png", "Lluvia local frente a la presión al nivel del mar",
+                     f"Pocas celdas pasan el FDR (máximo {area5('P_L', 'msl'):.0f} % del área); el patrón de la lluvia está "
+                     f"menos organizado que el del caudal.", script="37_correlaciones_5.py")
+            + figura(CO / "fig_corr_Q_q700_5.png", "Caudal frente a la humedad específica en 700 hPa",
+                     f"En ene–mar el caudal crece con más humedad sobre el Pacífico este frente a la cuenca y con menos humedad "
+                     f"en una franja al norte del ecuador en el Pacífico central (hasta {area5('Q', 'q700'):.0f} % del área "
+                     f"con FDR). El índice de humedad frente a la costa (0–10°S, 80–90°O) pasa el FDR con el caudal en: "
+                     f"{fdr5('Q', QC)}.",
+                     "El dipolo norte–sur es coherente con una banda de convección desplazada hacia el sur durante El Niño "
+                     "costero (ver interpretación).", script="37b_descarga_q_z.py, 37_correlaciones_5.py")
+            + figura(CO / "fig_corr_P_L_q700_5.png", "Lluvia local frente a la humedad específica en 700 hPa",
+                     f"La lluvia de enero y de noviembre se asocia con más humedad sobre el Pacífico este, frente a la costa "
+                     f"(noviembre: {area5('P_L', 'q700', 11):.0f} % del área con FDR). El índice de humedad frente a la "
+                     f"costa pasa el FDR con P<sub>L</sub> en: {fdr5('P_L', QC)} (r = {ix5('P_L', QC, 11):.2f} en noviembre).",
+                     script="37_correlaciones_5.py")
+            + figura(CO / "fig_corr_P_I_sst_5.png", "Sensibilidad a la fuente: IMERG frente a SST",
+                     f"Con IMERG la señal de Niño 1+2 en la estación húmeda se debilita (r = {ix5('P_I', N12, 2):.2f} en "
+                     f"febrero y {ix5('P_I', N12, 3):.2f} en marzo, frente a {ix5('P_L', N12, 2):.2f} y "
+                     f"{ix5('P_L', N12, 3):.2f} con P<sub>L</sub>), aunque el patrón global se parece al de P<sub>L</sub> "
+                     f"(correlación de patrones mediana {rob5('P_L', 'sst', 'IMERG en lugar de P_L'):.1f}).",
+                     "Coherente con que IMERG subestima los meses muy lluviosos (puntos 1.2 y 2).",
+                     script="37_correlaciones_5.py")
+            + figura(CO / "fig_corr_todos_meses_5.png", "Todos los meses juntos (anomalías)",
+                     f"Al juntar los 324 meses en anomalías, la presión al nivel del mar ({_tm5.loc[('Q', 'msl'), 'frac_area_FDR'] * 100:.0f} % "
+                     f"del área con el caudal) y la humedad en 700 hPa ({_tm5.loc[('Q', 'q700'), 'frac_area_FDR'] * 100:.0f} %) "
+                     f"dan los patrones más extensos; la SST, {_tm5.loc[('Q', 'sst'), 'frac_area_FDR'] * 100:.0f} %. Las "
+                     f"correlaciones son bajas porque mezclan meses secos y húmedos.", script="37_correlaciones_5.py")
+            + figura(CO / "fig_indices_5_4.png", "Índices: Niño, E y C, y cajas de cada campo",
+                     f"El índice E (calentamiento del Pacífico este) es la asociación más fuerte de todo el punto: caudal "
+                     f"r = {rango5('Q', E_, range(1, 4))} en ene–mar y P<sub>L</sub> r = {rango5('P_L', E_, range(1, 5))} "
+                     f"en ene–abr; pasa el FDR con el caudal en {fdr5('Q', E_)} y con P<sub>L</sub> en {fdr5('P_L', E_)}. El "
+                     f"índice C (Pacífico central) va con signo contrario en la lluvia de ene–abr "
+                     f"(r = {rango5('P_L', C_, range(1, 5))}; Spearman {rango5('P_L', C_, range(1, 5), 'spearman_rho')}), "
+                     f"sin pasar el FDR. Niño 3.4, que mezcla ambos, queda cerca de cero en ene–abr "
+                     f"(r = {rango5('P_L', N34, range(1, 5))}).",
+                     f"E y C reconstruidos siguen a los índices de referencia: r(E, Niño 1+2) = {EC5['rE']:.2f}, "
+                     f"r(C, Niño 4) = {EC5['rC']:.2f} y r(E, C) = {EC5['rEC']:.2f}, como en Takahashi et al. (2011). Con "
+                     f"Spearman la asociación de enero entre E y el caudal baja a {ix5('Q', E_, 1, 'spearman_rho'):.2f}: la "
+                     f"dominan los años extremos.", script="37_correlaciones_5.py")
+            + figura(CO / "fig_robustez_5_3.png", "Robustez de los patrones",
+                     f"Los mapas casi no cambian al quitar la tendencia (mediana {rob5('Q', 'sst', 'sin tendencia'):.2f} en "
+                     f"caudal–SST). Cambian al quitar 1998, 2017 y 2023 en la estación húmeda y entre los subperiodos "
+                     f"1981–2002 y 2003–2024: las asociaciones dependen de los años El Niño extremos y no son estables en "
+                     f"el tiempo. Con el caudal, el rezago de un mes da casi el mismo patrón de SST "
+                     f"({rob5('Q', 'sst', 'rezago ℓ = 1'):.2f}), porque la SST persiste, pero no el de presión "
+                     f"({rob5('Q', 'msl', 'rezago ℓ = 1'):.2f}) ni el de humedad ({rob5('Q', 'q700', 'rezago ℓ = 1'):.2f}), "
+                     f"que cambian de un mes a otro.", script="37_correlaciones_5.py")
+            + figura(CO / "fig_muestra_5_3.png", "Tamaño de muestra por celda",
+                     "Todas las celdas válidas tienen 27 pares; el n efectivo baja donde la SST persiste de un año a otro, "
+                     "lo que exige correlaciones más altas para ser significativas.", script="37_correlaciones_5.py")
+            + tabla(t5, "Elección de los campos atmosféricos: tres opciones con el mismo método",
+                    "Se ejecutó el mismo análisis con la elección del visor paralelo (presión + viento zonal en 200 hPa) y "
+                    "con humedad + altura geopotencial en 500 hPa. Se eligió presión + humedad: la presión es el campo más "
+                    "coherente y representa los alisios y la subsidencia; la humedad aporta la señal más sólida de la "
+                    "estación húmeda en la lluvia. El viento en 200 hPa solo destaca en septiembre. La altura geopotencial "
+                    "da áreas grandes en diciembre y septiembre, pero es una sola banda tropical casi uniforme (el FDR "
+                    "cuenta muchas celdas que dicen lo mismo), no regiones distintas. Resultados completos en "
+                    "resultados/correlaciones/comparacion_campos/.")
+            + f'<h3 class="sub2">Interpretación física</h3>'
+              f'<p class="intro">Propuesta de interpretación para que el grupo la revise y la contraste con la lectura '
+              f'completa de las fuentes (verificadas en cuanto a autores, revista y resumen). Distingue lo que muestran los '
+              f'datos de la cuenca de lo que dice la bibliografía.</p>'
+              f'<div class="tabla-cont interp">'
+              f'<h4>1. Por qué la cuenca es seca la mayor parte del año</h4>'
+              f'<p>La cuenca está al sur de la Zona de Convergencia Intertropical (ZCIT) del Pacífico oriental, que permanece '
+              f'casi todo el año al norte del ecuador. Takahashi y Battisti (2007a) muestran que los Andes bastan para '
+              f'enfriar el mar frente a Sudamérica y mantener la ZCIT al norte, y (2007b) que la zona seca del Pacífico '
+              f'sureste se debe en buena parte a la subsidencia que fuerza la cordillera. Nuestros datos son coherentes: en '
+              f'la estación seca la inversión térmica de Trujillo (+{SND["seca"]["dT"]:.1f} °C, {SND["seca"]["base"]:.0f}–'
+              f'{SND["seca"]["tope"]:.0f} m, {SND["seca"]["frec"]:.0f} % de los días) queda justo sobre el cierre de la '
+              f'cuenca y atrapa la humedad marina. La lluvia llega con el flujo del este desde la Amazonía en dic–abr, cuando '
+              f'la inversión se debilita y hay ascenso sobre los Andes (Garreaud 2009; Espinoza et al. 2020).</p>'
+              f'<h4>2. Qué une a la cuenca con el clima global</h4>'
+              f'<p>La señal dominante es el calentamiento del Pacífico este, frente a la costa. El índice E y Niño 1+2 se '
+              f'asocian con más caudal en ene–mar y más lluvia en ene–abr; la presión muestra a la vez el dipolo del ENSO '
+              f'(baja en el Pacífico este, alta en el oeste) y la humedad en 700 hPa aumenta sobre el mar frente a la '
+              f'cuenca. Los tres campos describen el mismo fenómeno desde distintos ángulos y no son independientes: la '
+              f'correlación de patrones entre el mapa de SST y el de cada campo atmosférico es moderada (|r| ≈ 0.2–0.3). '
+              f'La bibliografía da un mecanismo coherente: en El Niño costero de 2017 los alisios del sureste se '
+              f'debilitaron, el afloramiento se redujo y el mar frente a Perú se calentó en semanas (Garreaud 2018; '
+              f'Takahashi et al. 2018). Con el mar cálido la tapa de la inversión se debilita, el aire marino puede subir y '
+              f'llueve también desde el lado del Pacífico. La franja de humedad desplazada hacia el sur que muestran los '
+              f'mapas de q 700 es coherente con lo que describen Sulca et al. (2018) sobre los desplazamientos de la ZCIT '
+              f'y la lluvia de la costa norte.</p>'
+              f'<h4>3. Dos tipos de El Niño con efectos opuestos</h4>'
+              f'<p>Takahashi et al. (2011) separan el calentamiento del Pacífico este (E) del central (C). Lavado-Casimiro y '
+              f'Espinoza (2014) y Rau et al. (2017) encuentran más lluvia en el norte del Perú con los El Niño extremos del '
+              f'este y menos lluvia en la parte alta de la vertiente con los del Pacífico central; Sulca et al. (2018) '
+              f'asocian C positivo con condiciones secas en los Andes tropicales. En El Tambo, E va con más lluvia en ene–abr '
+              f'y C con menos (r = {rango5("P_L", C_, range(1, 5))}, sin pasar el FDR). La cuenca va de unos 680 a 4 300 m: '
+              f'es plausible que la parte baja responda a E y la alta a C, y que por eso Niño 3.4, que mezcla ambos, casi no '
+              f'se asocie con la lluvia (r = {rango5("P_L", N34, range(1, 5))}). Es una hipótesis compatible con los datos, '
+              f'no demostrada: probarla requeriría lluvia por bandas de altitud.</p>'
+              f'<h4>4. Lluvia y caudal, rezago y relación con el punto 4</h4>'
+              f'<p>Los meses de mayor asociación coinciden en la estación húmeda; en el caudal se extienden hasta mayo con '
+              f'E, coherente con el almacenamiento y la respuesta retardada del punto 2. El rezago de un mes conserva el '
+              f'patrón de SST porque el mar persiste, no porque la atmósfera anticipe el caudal. La banda de 2–7 años del '
+              f'punto 4 sigue a Niño 1+2 (r = {OND.loc["P_L", "r_comp_2_7a_con_N12"]:.2f} en la lluvia) pero reúne poca '
+              f'varianza ({100 * OND.loc["P_L", "var_componente_2_7a"]:.0f} %), y las onditas la muestran activa sobre todo '
+              f'hasta 2000: de ahí que los mapas cambien entre subperiodos. Lavado-Casimiro y Espinoza (2014) también '
+              f'encuentran anomalías significativas solo en los eventos fuertes, igual que aquí la señal depende de 1998, '
+              f'2017 y 2023.</p>'
+              f'<h4>5. Qué es sólido y qué no</h4>'
+              f'<p><b>Sólido:</b> la cuenca se asocia con el calentamiento del Pacífico este en la estación húmeda (E, Niño '
+              f'1+2, dipolo de presión, humedad frente a la costa), sobre todo a través de los eventos extremos. '
+              f'<b>Exploratorio:</b> el signo opuesto del Pacífico central (C) y la señal de noviembre en la humedad. '
+              f'<b>Sin comprobar:</b> el reparto por altitud de los efectos de E y C. Las correlaciones simultáneas describen '
+              f'asociación, no causalidad ni capacidad de pronóstico.</p>'
+              f'<h4>Referencias (verificadas: autores, revista y resumen)</h4>'
+              f'<ul class="refs">'
+              f'<li>Bretherton, C. S., et al. (1999). The effective number of spatial degrees of freedom of a time-varying '
+              f'field. <i>J. Climate</i>, 12, 1990–2009.</li>'
+              f'<li>Espinoza, J. C., et al. (2020). Hydroclimate of the Andes Part I: main climatic features. <i>Front. Earth '
+              f'Sci.</i>, 8, 64. doi:10.3389/feart.2020.00064</li>'
+              f'<li>Garreaud, R. D. (2009). The Andes climate and weather. <i>Adv. Geosci.</i>, 22, 3–11. '
+              f'doi:10.5194/adgeo-22-3-2009</li>'
+              f'<li>Garreaud, R. D. (2018). A plausible atmospheric trigger for the 2017 coastal El Niño. <i>Int. J. '
+              f'Climatol.</i>, 38(S1), e1296–e1302. doi:10.1002/joc.5426</li>'
+              f'<li>Lavado-Casimiro, W., y Espinoza, J. C. (2014). Impactos de El Niño y La Niña en las lluvias del Perú '
+              f'(1965–2007). <i>Rev. Bras. Meteorol.</i>, 29(2), 171–182. doi:10.1590/S0102-77862014000200003</li>'
+              f'<li>Rau, P., et al. (2017). Regionalization of rainfall over the Peruvian Pacific slope and coast. <i>Int. J. '
+              f'Climatol.</i>, 37(1), 143–158. doi:10.1002/joc.4693</li>'
+              f'<li>Sulca, J., et al. (2018). Impacts of different ENSO flavors and tropical Pacific convection variability '
+              f'(ITCZ, SPCZ) on austral summer rainfall in South America, with a focus on Peru. <i>Int. J. Climatol.</i>, 38, '
+              f'420–435. doi:10.1002/joc.5185</li>'
+              f'<li>Takahashi, K., y Battisti, D. S. (2007a). Processes controlling the mean tropical Pacific precipitation '
+              f'pattern. Part I: The Andes and the eastern Pacific ITCZ. <i>J. Climate</i>, 20, 3434–3451.</li>'
+              f'<li>Takahashi, K., y Battisti, D. S. (2007b). Part II: The SPCZ and the southeast Pacific dry zone. '
+              f'<i>J. Climate</i>, 20, 5696–5706. doi:10.1175/2007JCLI1656.1</li>'
+              f'<li>Takahashi, K., Montecinos, A., Goubanova, K., y Dewitte, B. (2011). ENSO regimes: reinterpreting the '
+              f'canonical and Modoki El Niño. <i>Geophys. Res. Lett.</i>, 38, L10704. doi:10.1029/2011GL047364</li>'
+              f'<li>Takahashi, K., et al. (2018). The 2017 coastal El Niño. <i>Bull. Amer. Meteor. Soc.</i>, 99(8), '
+              f'S210–S211 (State of the Climate in 2017).</li>'
+              f'<li>Wilks, D. S. (2016). “The stippling shows statistically significant grid points”. <i>Bull. Amer. '
+              f'Meteor. Soc.</i>, 97, 2263–2273. doi:10.1175/BAMS-D-15-00267.1</li>'
+              f'</ul></div>',
             "Punto 5"),
 ]
 
@@ -1170,6 +1429,9 @@ figcaption{padding:12px 18px 4px;border-top:1px solid var(--line)}
 .ficha p{margin:0 0 8px;font-size:.95rem}
 .f-leer{grid-column:1 / -1;border-top:1px solid var(--line);padding-top:8px}
 .leer{color:var(--ink2)}
+.interp p{text-align:justify;hyphens:auto;margin:0 0 12px}
+.interp h4{margin:14px 0 6px}.interp h4:first-child{margin-top:0}
+.refs{margin:0;padding-left:18px;font-size:.86rem;color:var(--ink2)}.refs li{margin:0 0 4px}
 .sub2{margin:40px 0 6px;padding-top:24px;border-top:1px solid var(--line);font-size:1.2rem}
 /* control de calidad: gráfica y panel de la variable elegida lado a lado */
 .qc-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:4px 12px;align-items:start}
@@ -1278,7 +1540,7 @@ pagina = f"""<!doctype html>
 {tabla(fuentes, "Fuentes de datos")}
 <div class="tabla-cont"><h4>Cómo reproducir</h4>
 <p>Con Python 3 y las dependencias de <code>requirements.txt</code>, ejecute en <code>Hidrologiat1/Codigos/</code>, en este orden:
-<code>06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 29 → 27 → 30 → 31 → 32 → 33 → 38 → 34a → 34b → 34c → 35 → 22</code>.
+<code>06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 29 → 27 → 30 → 31 → 32 → 33 → 38 → 34a → 34b → 34c → 35 → 37a → 37b → 37 (y «37 ella», «37 alternativo» para la comparación) → 22</code>.
 El periodo común se calcula en <code>periodo_comun.py</code>. Las descargas de IMERG y ERA5-Land requieren cuentas personales
 (NASA Earthdata y Copernicus CDS), cuyas credenciales no se incluyen en el repositorio.</p></div>
 </section>
