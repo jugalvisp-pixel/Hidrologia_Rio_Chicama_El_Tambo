@@ -377,6 +377,13 @@ COMO = {
         "malla vertical de 25 m sin extrapolar; mediana y rango intercuartílico de la temporada, adiabática seca de "
         "referencia desde la superficie y capa de inversión entre las medianas de base y tope de los sondeos con "
         "inversión. Mismas escalas en las dos filas.",
+    "fig_perfil_topografico.png":
+        "Cotas del DEM Copernicus GLO-90 (90 m; seis teselas de 1° entre 7–9° S y 77–80° O) muestreadas cada 200 m "
+        "a lo largo de (c) un corte oeste–este a la latitud de El Tambo y (d) el río principal delimitado en el script "
+        "06. Se usa GLO-90 porque el corte llega a la costa, fuera de las teselas GLO-30 de la cuenca. Franjas: base y "
+        "tope medianos de la inversión por estación, de los radiosondeos IGRA2 de Trujillo (12 UTC; script 34b), a unos "
+        "65 km al suroeste de El Tambo: la altura de la inversión sobre el valle es una extrapolación desde la costa. "
+        "Figura tomada del repositorio de la compañera (script 07c, no ejecutado en este repositorio).",
     "fig_contraste_1_trujillo_vs_era5.png":
         "Sondeos de Trujillo (IGRA2 84516, 12 UTC) de 2024-10 a 2026-09 interpolados a una malla de 25 m: media "
         "por nivel y rango intercuartílico de cada temporada. ERA5 mensual por niveles de presión, promedio de las "
@@ -770,20 +777,17 @@ secciones = [
                    "poroso, verdes = acuíferos fisurados y kársticos, marrones = acuitardos y acuífugos. La agrupación "
                    "es una propuesta del grupo (por porosidad y permeabilidad esperadas) que debe contrastarse con "
                    "INGEMMET y ANA.", script="07b_mapas_contexto_fisico.py")
-            + f'<h3 class="sub2">Fuentes de humedad e inversión térmica</h3><p class="intro">Radiosondeos observados '
-              f'de Trujillo (IGRA2 84516, a ~40 km de la salida de la cuenca): {SND["n"]} sondeos de las 7 a.m. entre '
-              f'{SND["ini"]:%Y-%m} y {SND["fin"]:%Y-%m}, con inversión en el {SND["frec"]:.0f} % de ellos; y transporte '
-              f'de humedad de ERA5 en el periodo común. Los sondeos solo existen desde {SND["ini"]:%Y-%m}, fuera del '
-              f'periodo común ({PER}); al final de la sección se comprueba con ERA5 si representan ese periodo.</p>'
-            + figura(IV / "fig_sondeo_tipico_inversion.png", "Sondeo típico de la estación seca",
-                     "La temperatura baja con la altura cerca de la adiabática seca hasta el nivel de condensación (NCA), "
-                     "donde se forman los estratocúmulos (HR ≈ 100 %). En la base de la inversión el aire se calienta de "
-                     "golpe, unos 5 °C, y por encima la humedad cae a menos del 50 %. Debajo queda el aire marino frío y "
-                     "húmedo; encima, aire de la troposfera libre que desciende y se calienta. La capa de nubes queda "
-                     "atrapada a la altura del cierre de la cuenca y no llega a la cuenca alta.",
-                     script="34a_descarga_perfiles.py, 34b_perfiles_inversion.py")
+            + f'<h3 class="sub2">Fuentes de humedad e inversión térmica</h3><p class="intro">Dos pasos: (1) de dónde '
+              f'llega la humedad y qué impide que suba, en la vertical; (2) dónde queda esa tapa respecto al valle y a la '
+              f'cuenca, en el terreno. Datos: radiosondeos observados de Trujillo (IGRA2 84516, a unos 65 km al suroeste '
+              f'de El Tambo), {SND["n"]} sondeos de las 7 a.m. entre {SND["ini"]:%Y-%m} y {SND["fin"]:%Y-%m}, con '
+              f'inversión en el {SND["frec"]:.0f} % de ellos; transporte de humedad de ERA5 en el periodo común, y el DEM '
+              f'GLO-90. Los sondeos quedan fuera del periodo común ({PER}), pero en los mismos meses coinciden con ERA5 '
+              f'por encima de la capa baja, y en ERA5 esos meses tienen la misma forma de perfil que el periodo común '
+              f'(script 34c). La inversión se menciona como contexto: según el paso 2, su efecto directo sobre la '
+              f'cuenca es pequeño.</p>'
             + figura(IV / "fig_temporadas_humedad_inversion.png",
-                     "De dónde llega la humedad y qué la frena: estación seca frente a estación húmeda",
+                     "1 · De dónde llega la humedad y qué la frena: estación seca frente a estación húmeda",
                      f"<b>La diferencia entre temporadas no está en cuánto vapor pasa sobre la cuenca, sino en si puede "
                      f"subir.</b> En ERA5 el transporte sobre la cuenca va hacia el oeste en las dos temporadas y no es "
                      f"menor en la seca (≈ {IVT['may-sep'][0]:.0f} frente a {IVT['dic-abr'][0]:.0f} kg m⁻¹ s⁻¹), aunque "
@@ -802,35 +806,20 @@ secciones = [
                      "sondeos cubren dos años y son de las 7 a.m. La explicación física (anticiclón del Pacífico sur, "
                      "corriente de Humboldt, convección andina) debe sustentarse con bibliografía.",
                      script="24_era5_vientos_humedad.py, 34b_perfiles_inversion.py, 35_temporadas_humedad_inversion.py")
-            + f'<h3 class="sub2">¿Representan los sondeos el periodo común?</h3><p class="intro">Los sondeos de '
-              f'Trujillo cubren {SND["ini"]:%Y-%m} a {SND["fin"]:%Y-%m}, casi todo fuera del periodo común ({PER}). '
-              f'Se separan dos preguntas: (1) si ERA5 reproduce los sondeos cuando se comparan los mismos meses, y '
-              f'(2) si esos meses fueron típicos del periodo común según ERA5. Estabilidad de la capa baja = '
-              f'T(1 500 m) − T(500 m); positiva indica inversión neta en esa capa.</p>'
-            + figura(IV / "fig_contraste_1_trujillo_vs_era5.png",
-                     "Comparación 1 · Trujillo (sondeos) frente a ERA5 en los mismos meses (2024-10 a 2026-09)",
-                     f"Misma hora y mismos meses, así que la diferencia es error del reanálisis. Por encima de unos "
-                     f"1 500 m ERA5 sigue de cerca a los sondeos en las dos temporadas (diferencias menores de 1 °C). "
-                     f"Por debajo, ERA5 es más cálido, hasta unos 2 °C cerca de la superficie, y no forma la inversión: "
-                     f"en may–sep la estabilidad de la capa baja es {CT['seca_snd']:+.1f} °C en los sondeos y "
-                     f"{CT['seca_e5s']:+.1f} °C en ERA5; en dic–abr, {CT['hum_snd']:+.1f} y {CT['hum_e5s']:+.1f} °C. "
-                     f"La caída de la humedad por encima de la capa en may–sep sí aparece en ERA5, aunque más gradual.",
-                     "ERA5 es un promedio mensual en niveles de presión (cada ~25–50 hPa) y una celda de 0.25° que mezcla "
-                     "mar y tierra: suaviza la inversión y no sirve para medir su intensidad. Sí distingue las dos "
-                     "temporadas por la forma del perfil: capa casi isoterma en may–sep, enfriamiento continuo en dic–abr.",
-                     script="34a_descarga_perfiles.py, 34b_perfiles_inversion.py, 34c_contraste_sondeos_era5.py")
-            + figura(IV / "fig_contraste_2_era5_periodos.png",
-                     f"Comparación 2 · ERA5: meses de los sondeos (2024-10 a 2026-09) frente al periodo común ({PER})",
-                     f"Una sola fuente, así que la diferencia es del periodo. En dic–abr los meses con sondeos son casi "
-                     f"iguales al periodo común (diferencias de unas décimas de grado). En may–sep fueron más cálidos, unos "
-                     f"0.5–1 °C cerca de la superficie y por encima de 1 500 m (casi sin diferencia hacia los 1 000 m), "
-                     f"pero con la misma forma del perfil: estabilidad de la capa baja "
-                     f"{CT['seca_e5s']:+.1f} °C frente a {CT['seca_e5c']:+.1f} °C en el periodo común.",
-                     "Si la forma del perfil en los meses con sondeos es la del periodo común, la inversión que miden los "
-                     "sondeos puede tomarse como representativa de 1998–2024 en su estructura (posición respecto a la "
-                     "cuenca, contraste entre temporadas), no en sus valores exactos. Dos años son pocos; el grupo debe "
-                     "decidir cuánto peso darle a esta comprobación.",
-                     script="34a_descarga_perfiles.py, 34c_contraste_sondeos_era5.py")),
+            + f'<h3 class="sub2">Geometría de la inversión térmica sobre la cuenca</h3>'
+            + figura(CF / "fig_perfil_topografico.png", "2 · Dónde actúa la tapa: cortes topográficos del valle",
+                     "El Chicama es un valle abierto al Pacífico, encajado en la vertiente occidental: el corte oeste–este "
+                     "(c) pasa de la llanura costera a colinas de 500–1 300 m, baja al fondo del valle en El Tambo (684 m) "
+                     "y sube hasta la divisoria de la cuenca (≈ 3 500 m) y la cordillera (&gt; 4 000 m). En la estación "
+                     "seca la inversión costera tiene su base a ≈ 840 m y su tope a ≈ 1 200 m (mediana de los radiosondeos "
+                     "de Trujillo, presente en 95 % de los sondeos): queda a la altura del fondo del valle y de las colinas "
+                     "costeras, de modo que el valle bajo funciona como un corredor bajo la tapa de la inversión. Pero esa "
+                     "tapa solo alcanza los primeros 24 km del río (de 79 km) y apenas 5 % del área de la cuenca (curva "
+                     "hipsométrica); en la estación húmeda baja a 330–720 m, por debajo de El Tambo. Por eso la inversión "
+                     "explica la aridez de la costa y del valle bajo, mientras que la sequía sobre el resto de la cuenca "
+                     "requiere la subsidencia de gran escala del anticiclón del Pacífico sur (ω500 &gt; 0 en jun–ago; "
+                     "punto 1.5), que mantiene el aire seco y descendente por encima de la inversión (paso 1).",
+                     script="07c_perfil_topografico.py (repositorio de la compañera)")),
     seccion("p11", "Series mensuales de precipitación, caudal y temperatura",
             f"Series construidas desde los registros diarios: P<sub>L</sub> = suma diaria; Q̄ = media diaria (m³/s); "
             f"R = caudal en lámina (mm/mes); T = media diaria. Todas las figuras usan el <b>periodo común {PER}</b> "
