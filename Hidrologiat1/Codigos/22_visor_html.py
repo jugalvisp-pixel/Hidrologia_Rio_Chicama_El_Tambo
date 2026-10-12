@@ -166,14 +166,6 @@ COMO = {
         "WorldCover 2021 (10 m) remuestreado por moda. (c) Geología 1:100 000 de INGEMMET (GEOCATMIN), unidades "
         "agrupadas en grupos hidrogeológicos según su litología. (d) CHIRPS v2.0 (0.05°): media anual del periodo "
         "común, interpolada de forma bilineal solo para dibujarla continua, con isoyetas cada 100 mm.",
-    "mapa_geologia_unidades_ingemmet.png":
-        "Polígonos de la Geología 1:100 000 integrada de INGEMMET descargados del servicio ArcGIS REST de GEOCATMIN, "
-        "recortados a la cuenca y disueltos por unidad (con un margen de ±25 m para borrar los bordes entre hojas). "
-        "Colores tomados de la simbología oficial de la capa; rótulos solo en polígonos de 20 km² o más.",
-    "mapa_d_precipitacion.png":
-        "CHIRPS v2.0 mensual (0.05°, IRI Data Library, con la corrección de +0.025° en longitud verificada contra "
-        "el archivo de UCSB). Suma de las 12 medias mensuales del periodo común en cada celda; interpolación bilineal "
-        "a la malla del DEM solo para la representación; isoyetas cada 100 mm.",
     "mapa_transporte_humedad_era5.png":
         "ERA5 mensual 0.5° (CDS): IVT a partir de los flujos verticalmente integrados de vapor este y norte, y viento "
         "en 500 hPa. Climatología estacional del periodo común promediada a 1°; se enmascaran las celdas donde el "
@@ -288,22 +280,23 @@ COMO = {
 }
 
 
-def figura(p, titulo, que, leer_=None, script=None):
+def figura(p, titulo, que, leer_=None, script=None, ancha=False):
+    """ancha=True: figura a todo el ancho con la ficha debajo (paneles horizontales)."""
     p = Path(p)
     if p.name not in COMO:
         raise KeyError(f"Falta «Cómo se construyó» para {p.name} en COMO")
-    extra = f'<h5>Cómo leerla</h5><p class="leer">{leer_}</p>' if leer_ else ""
+    extra = f'<div class="f-leer"><h5>Cómo leerla</h5><p class="leer">{leer_}</p></div>' if leer_ else ""
     pie = f'<span class="script">{html.escape(script)}</span>' if script else ""
     return f"""
-<figure class="fig">
+<figure class="fig{' ancha' if ancha else ''}">
   <button class="zoom" aria-label="Ampliar figura: {html.escape(titulo)}">
     <img loading="lazy" src="{img64(p)}" alt="{html.escape(titulo)}">
   </button>
   <figcaption>
     <h4>{titulo}</h4>
     <div class="ficha">
-      <h5>Qué muestra</h5><p>{que}</p>
-      <h5>Cómo se construyó</h5><p>{COMO[p.name]}</p>{extra}
+      <div class="f-que"><h5>Qué muestra</h5><p>{que}</p></div>
+      <div class="f-como"><h5>Cómo se construyó</h5><p>{COMO[p.name]}</p></div>{extra}
     </div>
     <p class="meta">{pie}<a href="{rel(p)}">PNG original</a> <span class="nota">(disponible si se clona el repositorio)</span></p>
   </figcaption>
@@ -402,20 +395,7 @@ secciones = [
                    "Colores de (c) según la convención de los mapas hidrogeológicos (IAH/UNESCO): azul = acuífero "
                    "poroso, verdes = acuíferos fisurados y kársticos, marrones = acuitardos y acuífugos. La agrupación "
                    "es una propuesta del grupo (por porosidad y permeabilidad esperadas) que debe contrastarse con "
-                   "INGEMMET y ANA.", script="07b_mapas_contexto_fisico.py")
-            + figura(CF / "mapa_geologia_unidades_ingemmet.png", "Unidades geológicas de INGEMMET (apoyo de la agrupación)",
-                     "Las 25 unidades del mapa geológico 1:100 000 con sus colores oficiales de INGEMMET, que indican "
-                     "la edad. La leyenda señala el grupo hidrogeológico (G1–G7) asignado a cada unidad.",
-                     "Las formaciones del Cretácico inferior (Carhuaz, Chimú, Farrat, Santa) comparten casi el mismo "
-                     "verde; se distinguen por los límites y los códigos rotulados.", script="07b_mapas_contexto_fisico.py")
-            + figura(CF / "mapa_d_precipitacion.png", "Precipitación media anual (CHIRPS v2.0, fuente de apoyo)",
-                     f"Media anual del periodo común de CHIRPS (celdas de 0.05°), interpolada para mostrarla como una "
-                     f"superficie continua, con isoyetas cada 100 mm. Aumenta desde unos 400 mm/año en la salida hasta "
-                     f"900 mm/año en las cabeceras del sureste. CAMELS-PE, la fuente principal de P<sub>L</sub>, solo "
-                     f"entrega el promedio de cuenca y no tiene malla. CHIRPS da un promedio menor, así que el mapa "
-                     f"sirve para ver el patrón espacial, no la magnitud.",
-                     "La interpolación suaviza la presentación pero no agrega detalle: la información sigue siendo de "
-                     "0.05° (unos 5.5 km).", script="26_chirps_cuenca.py, 07b_mapas_contexto_fisico.py")
+                   "INGEMMET y ANA.", script="07b_mapas_contexto_fisico.py", ancha=True)
             + figura(CF / "mapa_transporte_humedad_era5.png", "Transporte de humedad y viento regional (ERA5)",
                      "Climatología del periodo común. Arriba, el flujo de vapor de agua integrado en la vertical (IVT): "
                      "el color indica cuánta humedad se transporta y las flechas hacia dónde. Abajo, el viento en 500 hPa, "
@@ -782,12 +762,27 @@ figcaption p{margin:0 0 8px;max-width:900px}
 .ficha{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:0 0 10px;font-size:.92rem}
 .ficha h5{margin:8px 0 2px;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:var(--acc)}
 .ficha h5:first-child{margin-top:0}
+.ficha>div>h5{margin-top:0}
+.ficha>div+div{margin-top:8px}
+/* Figura ancha (paneles 1 × n): imagen centrada; ficha centrada debajo, "Qué muestra" y "Cómo se construyó"
+   en dos columnas y "Cómo leerla" en una fila completa */
+.fig.ancha figcaption{max-width:1200px;margin:0 auto;text-align:left}
+.fig.ancha figcaption h4{text-align:center}
+.fig.ancha .meta{text-align:center}
+.fig.ancha .ficha p{max-width:none}
+@media (min-width:800px){
+  .fig.ancha .ficha{display:grid;grid-template-columns:1fr 1fr;gap:10px 28px}
+  .fig.ancha .ficha>div+div{margin-top:0}
+  .fig.ancha .f-leer{grid-column:1 / -1;border-top:1px solid var(--line);padding-top:8px}
+}
 .ficha p{margin:0 0 6px}
 .leer{color:var(--ink2)}
 @media (min-width:1200px){
   .fig{display:grid;grid-template-columns:minmax(0,1fr) 400px;align-items:start}
   .fig .zoom{align-self:center}
   figcaption{border-top:0;border-left:1px solid var(--line);height:100%}
+  .fig.ancha{display:block}
+  .fig.ancha figcaption{border-left:0;border-top:1px solid var(--line);height:auto}
 }
 .params{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
 .param{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:.85rem;color:var(--ink2)}
