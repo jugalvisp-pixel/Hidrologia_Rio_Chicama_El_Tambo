@@ -1,0 +1,6 @@
+serie,inicio,fin,N,alfa_AR1,var_componente_2_7a,frac_tiempo_banda_2_7a_significativa,umbral_95_varianza_banda,frac_tiempo_varianza_banda_sobre_umbral,periodo_max_espectro_global_2_7a_anios,global_supera_95_en_banda,pico_global_corregido_anios,pico_global_corregido_2_7a_anios,pct_varianza_reconstruida,r_comp_2_7a_con_N12,r_max_N12_rezago_0_12m,rezago_meses_N12_antecede,n_meses_comunes_N12,r_comp_2_7a_con_N34,r_max_N34_rezago_0_12m,rezago_meses_N34_antecede,n_meses_comunes_N34
+P_L,1981-01,2025-12,540,0.317,0.117,0.307,0.439,0.0,4.908,False,0.205,2.064,91.622,0.587,0.641,3,540,0.218,0.306,6,540
+Q,1998-01,2025-12,336,0.511,0.066,0.0,0.675,0.0,2.064,False,0.487,2.064,72.908,0.455,0.455,0,336,0.165,0.165,0,336
+T_ERA5L,1981-01,2025-12,540,0.776,0.349,0.133,1.295,0.0,3.896,True,3.896,3.896,69.3,0.762,0.813,3,540,0.856,0.966,3,540
+N12,1981-01,2025-12,540,0.92,0.516,0.406,1.345,0.056,4.908,True,3.896,3.896,92.386,1.0,1.0,0,540,0.818,0.822,1,540
+N34,1981-01,2025-12,540,0.958,0.564,0.843,0.912,0.106,4.128,True,3.677,3.677,93.849,0.818,0.818,0,540,1.0,1.0,0,540

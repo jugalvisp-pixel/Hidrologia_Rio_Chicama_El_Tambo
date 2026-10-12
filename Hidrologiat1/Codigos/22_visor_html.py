@@ -138,6 +138,11 @@ RHO = _me[(_me.periodo == "completo") & (_me.transformacion == "anomalia")].set_
 _pk = leer(ES / "picos_4_2.csv")
 _pk = _pk[(_pk.periodo == "completo") & (_pk.transformacion == "anomalia")]
 N_GLOBAL = int(_pk["supera_95_global"].astype(str).eq("True").sum())
+# mayor pico interanual (≥ 2 años, ≥ 3 ciclos) de las anomalías del registro completo: (periodo en años, % varianza)
+_pi = _pk[(_pk.estimador == "periodograma") & (_pk.periodo_meses >= 24) & (_pk.k_ciclos_en_registro >= 3)]
+PK = {v: (g.loc[g.fraccion_varianza.idxmax(), "periodo_meses"] / 12, 100 * g.fraccion_varianza.max())
+      for v, g in _pi.groupby("variable")}
+OND = leer(ES / "onditas_resumen_4_3.csv").set_index("serie")                 # script 38
 t4 = _pk[_pk.groupby("variable").cumcount() < 3][["variable", "N_meses", "periodo_meses", "periodo_min_meses",
                                                    "periodo_max_meses", "k_ciclos_en_registro", "fraccion_varianza",
                                                    "cociente_fondo_AR1", "supera_95_puntual", "supera_95_global"]].copy()
@@ -403,9 +408,27 @@ COMO = {
         "Índice Niño 1+2 de ERSST v5 (CPC/NOAA); medias anuales de anomalías estandarizadas; balance por año "
         "hidrológico sep–ago con P_L y R, y regresión de R sobre P para el residuo.",
     "fig_espectros_4_2.png":
-        "Periodograma de la FFT sin relleno con ceros, densidad unilateral normalizada para que su suma sea la "
-        "varianza; Welch con Hann de 120 meses y 50 % de traslape; fondo AR(1) con umbrales χ² al 95 % puntual "
-        "y global (Bonferroni).",
+        "Periodograma de la FFT sin relleno con ceros: f<sub>k</sub> = k/N, Δf = 1/N ciclos/mes, densidad unilateral "
+        "normalizada para que Σ S·Δf sea la varianza; Welch con Hann de 120 meses y 50 % de traslape; fondo AR(1) con "
+        "umbrales χ² al 95 % puntual y global (Bonferroni). Eje inferior en periodo (años) = 1/(12 f), creciente hacia "
+        "la derecha; eje superior en frecuencia (ciclos/mes). Las dos columnas de cada variable tienen la misma escala "
+        "vertical.",
+    "fig_espectros_porcentaje_4_2.png":
+        "Los mismos periodogramas expresados como % de la varianza en cada frecuencia de Fourier: % = S<sub>k</sub>·Δf / "
+        "varianza, con el eje de periodo lineal en años (hasta 20; lo que queda por encima se indica en cada panel). "
+        "Cada pico rotulado lleva el rango de periodos que cabe en ±½ bin de frecuencia y el número de ciclos k en el "
+        "registro; solo se rotulan picos con k ≥ 3. * = supera el 95 % puntual del fondo AR(1); ** = supera también el "
+        "umbral global. Idea tomada del visor paralelo del grupo.",
+    "fig_onditas_4_3.png":
+        "Transformada continua con la ondita de Morlet (ω<sub>0</sub> = 6; Torrence y Compo 1998) de las anomalías "
+        "estandarizadas (climatología 1998–2020), con la potencia corregida por sesgo (Liu et al. 2007: se divide por la "
+        "escala) y expresada en % de la varianza por octava de periodo. Contorno: supera el 95 % de un ruido rojo AR(1); "
+        "rayado: cono de influencia (bordes); a la derecha, el espectro global sobre el periodograma de Fourier en la "
+        "misma unidad. El relleno con ceros es interno a la transformada; los datos no se rellenan.",
+    "fig_onditas_banda_4_3.png":
+        "(a) Varianza promediada en la banda de 2–7 años dividida por su umbral del 95 % (Torrence y Compo 1998, ec. "
+        "24–28). (b) Componente de 2–7 años reconstruida (ec. 29) de la cuenca y de Niño 1+2 (ERSST v5, CPC/NOAA) y su "
+        "correlación; es descriptiva, porque una serie filtrada a 2–7 años tiene muy pocos grados de libertad.",
     "fig_bandas_varianza_4_2.png":
         "Suma de las ordenadas del periodograma dentro de cada banda de periodos, dividida por la suma total.",
     "fig_comparacion_espectros_4_2.png":
@@ -979,7 +1002,20 @@ secciones = [
             "FFT sin relleno con ceros: f<sub>k</sub> = k/N, Δf = 1/N ciclos/mes, densidad unilateral normalizada para que "
             "Σ S·Δf sea la varianza (comprobado). Se contrasta con ventana de Hann y con Welch (segmentos de 10 años). "
             "Ninguna serie tiene vacíos internos; el caudal es continuo gracias al relleno documentado.",
-            figura(ES / "fig_espectros_4_2.png", "Espectros del registro completo",
+            figura(ES / "fig_espectros_porcentaje_4_2.png", "Qué periodos dominan (% de la varianza)",
+                   f"Es la lectura más directa del espectro. En las series centradas manda el ciclo anual "
+                   f"({banda('P_L', 'centrada', 'anual 11–13 m'):.0f} % de la varianza de P<sub>L</sub> y "
+                   f"{banda('Q', 'centrada', 'anual 11–13 m'):.0f} % del caudal en la banda de 11–13 meses), más el "
+                   f"semianual por la estación húmeda concentrada. Al quitar la climatología ningún periodo domina: en "
+                   f"la lluvia y el caudal el mayor pico interanual reúne apenas {PK['P_L'][1]:.1f} % "
+                   f"(P<sub>L</sub>, ≈ {PK['P_L'][0]:.1f} años) y {PK['Q'][1]:.1f} % (caudal, ≈ {PK['Q'][0]:.1f} años), "
+                   f"mientras que en la temperatura destaca un pico de ≈ {PK['T_PISCOt'][0]:.1f} años con "
+                   f"{PK['T_PISCOt'][1]:.0f} % (PISCOt).",
+                   "Los periodos largos se apoyan en pocos ciclos dentro del registro (un pico de 9 años cabe 3 veces en "
+                   "28 años): por eso cada rótulo lleva el rango de periodos compatible con la resolución y el número de "
+                   "ciclos. Un pico que supera el umbral puntual no es una periodicidad demostrada.",
+                   script="33_espectros_4.py")
+            + figura(ES / "fig_espectros_4_2.png", "Espectros del registro completo",
                    f"En las series centradas domina el ciclo anual en la lluvia (P<sub>L</sub> "
                    f"{banda('P_L', 'centrada', 'anual 11–13 m'):.0f} % de la varianza; IMERG "
                    f"{banda('P_I', 'centrada', 'anual 11–13 m'):.0f} %), con un armónico semianual que refleja la "
@@ -990,8 +1026,10 @@ secciones = [
                    f"la climatología, la lluvia se parece a ruido casi blanco (AR(1): ρ = {RHO['P_L']:.2f} P<sub>L</sub>, "
                    f"{RHO['P_I']:.2f} IMERG); el caudal es más rojo (ρ = {RHO['Q']:.2f}) y la temperatura mucho más "
                    f"(ρ = {RHO['T_PISCOt']:.2f}–{RHO['T_ERA5L']:.2f}).",
-                   f"Eje inferior en ciclos/mes y superior en periodos. Líneas rojas: fondo AR(1) al 95 % puntual (discontinua) "
-                   f"y global, con corrección por buscar entre todas las frecuencias (punteada). "
+                   f"Eje inferior en periodo (años), creciente hacia la derecha; eje superior en frecuencia (ciclos/mes): el "
+                   f"ciclo anual está en 1/12 ≈ 0.083 ciclos/mes, el semianual en 1/6 y la frecuencia de Nyquist en 0.5 "
+                   f"(periodo mínimo resoluble de 2 meses). Línea gris continua: fondo AR(1); discontinua y punteada: "
+                   f"umbrales al 95 % puntual y global (corregido por buscar entre todas las frecuencias). "
                    + ("Ningún pico de las anomalías supera el umbral global" if N_GLOBAL == 0 else
                       f"Solo {N_GLOBAL} picos de las anomalías superan el umbral global")
                    + ": los picos interanuales no son periodicidades demostradas.",
@@ -1031,7 +1069,32 @@ secciones = [
             + tabla(t4, "Picos principales de las anomalías (registro completo)",
                     "Rango = periodos que caben en ±½ bin de frecuencia (resolución Δf = 1/N). Ciclos = k, número de "
                     "oscilaciones completas en el registro. Todos los picos y transformaciones están en picos_4_2.csv; "
-                    "N, Δf, ventana y normalización de cada espectro en metadatos_espectros_4_1.csv."),
+                    "N, Δf, ventana y normalización de cada espectro en metadatos_espectros_4_1.csv.")
+            + '<h3 class="sub2">Complemento: onditas (en qué años aparece cada periodo)</h3><p class="intro">La guía '
+              'pide espectros de Fourier, que promedian todo el registro. Como complemento, la transformada de onditas '
+              'muestra si la variabilidad interanual está presente siempre o solo en algunos años, y si coincide en el '
+              'tiempo con el ENSO. Es un análisis descriptivo: no atribuye la variabilidad de la cuenca al ENSO.</p>'
+            + figura(ES / "fig_onditas_4_3.png", "Onditas: en qué años aparece cada periodo",
+                     "La variabilidad fuera del ciclo anual no es constante en el tiempo. En la lluvia, la banda de 4–5 "
+                     "años supera el ruido rojo entre 1983 y 2000 (El Niño 1983 y 1997–98) y después casi desaparece. El "
+                     "caudal solo muestra pulsos cortos en 1998 y 2017. La temperatura mantiene una banda de 3–5 años "
+                     "durante todo el registro, igual que Niño 1+2.",
+                     "Lo que queda dentro del rayado (cono de influencia) está afectado por los bordes y no se interpreta. "
+                     "El espectro global de la derecha es un Fourier suavizado: por eso sus picos coinciden con los del "
+                     "periodograma.", script="38_onditas_4.py")
+            + figura(ES / "fig_onditas_banda_4_3.png", "¿La banda de 2–7 años va con el ENSO?",
+                     f"La componente de 2–7 años de la lluvia sigue a Niño 1+2 (r = {OND.loc['P_L', 'r_comp_2_7a_con_N12']:.2f}) "
+                     f"y poco a Niño 3.4 (r = {OND.loc['P_L', 'r_comp_2_7a_con_N34']:.2f}): se parece más al ENSO costero "
+                     f"que al del Pacífico central. El caudal la sigue menos (r = {OND.loc['Q', 'r_comp_2_7a_con_N12']:.2f}) "
+                     f"y la temperatura mucho más (r = {OND.loc['T_ERA5L', 'r_comp_2_7a_con_N34']:.2f} con Niño 3.4). Pero "
+                     f"esa banda es una parte pequeña de las anomalías de la cuenca: "
+                     f"{100 * OND.loc['P_L', 'var_componente_2_7a']:.0f} % en la lluvia, "
+                     f"{100 * OND.loc['Q', 'var_componente_2_7a']:.0f} % en el caudal y "
+                     f"{100 * OND.loc['T_ERA5L', 'var_componente_2_7a']:.0f} % en la temperatura. Solo en 1997–98 la banda "
+                     f"de la lluvia se acerca al umbral del 95 %.",
+                     "Las correlaciones son descriptivas, sin valor p: una serie filtrada a 2–7 años tiene muy pocos grados "
+                     "de libertad. La explicación física (El Niño costero, Pacífico central) debe sustentarse con "
+                     "bibliografía.", script="38_onditas_4.py"),
             "Punto 4"),
     seccion("p5", "Mapas de correlación con el clima global",
             "Pendiente. Esta sección reunirá los mapas de correlación, mes a mes, entre la precipitación y el caudal de "
@@ -1215,7 +1278,7 @@ pagina = f"""<!doctype html>
 {tabla(fuentes, "Fuentes de datos")}
 <div class="tabla-cont"><h4>Cómo reproducir</h4>
 <p>Con Python 3 y las dependencias de <code>requirements.txt</code>, ejecute en <code>Hidrologiat1/Codigos/</code>, en este orden:
-<code>06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 29 → 27 → 30 → 31 → 32 → 33 → 34a → 34b → 34c → 35 → 22</code>.
+<code>06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 29 → 27 → 30 → 31 → 32 → 33 → 38 → 34a → 34b → 34c → 35 → 22</code>.
 El periodo común se calcula en <code>periodo_comun.py</code>. Las descargas de IMERG y ERA5-Land requieren cuentas personales
 (NASA Earthdata y Copernicus CDS), cuyas credenciales no se incluyen en el repositorio.</p></div>
 </section>
