@@ -15,6 +15,7 @@ from datetime import date
 import base64
 import html
 import io
+import json
 
 import numpy as np
 import pandas as pd
@@ -98,7 +99,8 @@ IVT = {e: (float(_cu["ivt"].sel(estacion=e)), float(_cu["tcwv"].sel(estacion=e))
 _fl = cam.loc[INI:FIN]
 RL = dict(interp=int((_fl.R_flag == "interpolado_diario").sum()), esc=int((_fl.R_flag == "escalado").sum()),
           mod=int((_fl.R_flag == "modelo_mensual").sum()),
-          mes_mod=", ".join(f"{f:%Y-%m}" for f in _fl.index[_fl.R_flag == "modelo_mensual"]))
+          mes_mod=", ".join(f"{f:%Y-%m}" for f in _fl.index[_fl.R_flag == "modelo_mensual"]),
+          obs=int((_fl.R_flag == "completo").sum()), excl=int(_fl.R_flag_obs.isin(["excluido", "sin_dato"]).sum()))
 TE = PROY / "Tarea 1" / "El_Tambo" / "resultados" / "tendencias"
 _td = leer(TE / "tendencias_todos_meses_3_4.csv")
 _ta = _td[(_td.representacion == "anomalia") & _td.variable.isin(["P_L", "P_I", "Q", "T_PISCOt", "T_ERA5L"])]
@@ -171,6 +173,115 @@ def img64(p):
 def rel(p):
     return Path(p).relative_to(PROY).as_posix().replace(" ", "%20")
 
+
+# ------------------------------------------------------------------ datos de las gráficas interactivas (Plotly)
+# Construcción tomada del 36_pagina_web.py del visor de la compañera; las gráficas están en visor_graficas.js.
+MO = PROY / "Tarea 1" / "El_Tambo" / "resultados" / "modelos"
+MESES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+
+
+def lista(s, nd=2):
+    return [None if pd.isna(v) else round(float(v), nd) for v in s]
+
+
+_im_full = leer(SM / "imerg_cuenca_mensual.csv", index_col="fecha", parse_dates=True)["P_I_mm_mes"]
+_chirps = leer(SM / "chirps_cuenca_mensual.csv", index_col="fecha", parse_dates=True)["P_chirps_mm_mes"]
+_piscop = leer(SM / "piscop_v3_cuenca_mensual.csv", index_col="fecha", parse_dates=True)["P_piscop_v3_mm_mes"]
+_text = leer(SM / "temperatura_piscot_extendida_era5land.csv", index_col="fecha", parse_dates=True)
+idx = pd.date_range(INI, FIN, freq="MS")
+_anom = {}
+for k, s in {"P_L": cam["P_L_mm_mes"], "P_I": _im_full, "R": cam["R_mm_mes"],
+             "T": _text["T_piscot_C"].fillna(_text["T_estimada_era5land_C"])}.items():
+    s = s.reindex(idx)
+    a = s - s.index.month.map(s.groupby(s.index.month).mean()).values         # igual que el script 21
+    _anom[k] = {"m": lista(a), "mm12": lista(a.rolling(12, center=True, min_periods=10).mean())}
+_anios_comp = [y for y in range(INI.year, FIN.year + 1) if pp.index.year.tolist().count(y) == 12]
+_anual = pd.DataFrame({"P_L": cam["P_L_mm_mes"], "P_I": _im_full}).groupby(lambda f: f.year).sum().loc[_anios_comp]
+_acal = acal.sort_values("anio")
+DATOS = {
+    "fechas": [f"{f:%Y-%m}" for f in idx],
+    "P_L": lista(cam["P_L_mm_mes"].reindex(idx)), "P_I": lista(_im_full.reindex(idx)),
+    "chirps": lista(_chirps.reindex(idx)), "piscop": lista(_piscop.reindex(idx)),
+    "Q": lista(cam["Q_m3_s"].reindex(idx), 3), "R": lista(cam["R_mm_mes"].reindex(idx)),
+    "R_flag_obs": cam["R_flag_obs"].reindex(idx).fillna("sin_dato").tolist(),
+    "T_piscot": lista(_text["T_piscot_C"].reindex(idx)), "T_est": lista(_text["T_estimada_era5land_C"].reindex(idx)),
+    "T_era5": lista(e5.reindex(idx)),
+    "anual": {"anios": [int(a) for a in _anual.index], "P_L": lista(_anual["P_L"], 1), "P_I": lista(_anual["P_I"], 1)},
+    "clim": {v: {"unid": g.unidades.iloc[0], **{c: lista(g.sort_values("mes")[c], 2)
+                                                for c in ("media", "mediana", "Q1", "Q3", "P10", "P90")}}
+             for v, g in cl.groupby("variable")},
+    "anom": _anom,
+    "anom_anual": {"anios": _acal["anio"].astype(int).tolist(),
+                   "P_L": lista(_acal["P_L_anom_total_mm"], 1), "P_I": lista(_acal["P_I_anom_total_mm"], 1),
+                   "R": lista(_acal["R_anom_total_mm"], 1), "T": lista(_acal["T_anom_media_C"], 2)},
+}
+# diarios (control de calidad): caudal sin rellenar, días interpolados, precipitación y temperatura
+_dia = leer(PROY / "Tarea 1" / "El_Tambo" / "datos" / "camels_pe" / "PE_47E0A2A8.csv", index_col="date",
+            parse_dates=True).loc[INI:FIN + pd.offsets.MonthEnd(0)]
+_qint = leer(SM / "caudal_diario_interpolado.csv", index_col="fecha", parse_dates=True).reindex(_dia.index)
+A_KM2 = 2171.585                                                  # área CAMELS-PE, igual que el script 09
+_cond = leer(CC / "disponibilidad_condicion_mes.csv", index_col="fecha", parse_dates=True).loc[INI:FIN]
+_anios = list(range(INI.year, FIN.year + 1))
+
+
+def _matriz(valido):
+    """Fracción de días válidos por año × mes."""
+    g = valido.groupby([valido.index.year, valido.index.month]).mean()
+    return [[None if (y, m) not in g.index else round(float(g[(y, m)]), 3) for m in range(1, 13)] for y in _anios]
+
+
+def _matriz_cond(col):
+    return [[_cond[col].get(pd.Timestamp(y, m, 1), None) for m in range(1, 13)] for y in _anios]
+
+
+DATOS["diario"] = {"ini": f"{_dia.index[0]:%Y-%m-%d}", "n": len(_dia),
+                   "P_L": lista(_dia["prec"], 1), "T": lista(_dia["tmean"], 1),
+                   "Q": lista(_dia["flow_obs"] * A_KM2 / 86.4, 2),
+                   "Q_int": lista((_qint["q_mm_d"] * A_KM2 / 86.4).where(_qint["interpolado"] == 1), 2)}
+DATOS["disp"] = {"anios": _anios,
+                 "P_L": {"f": _matriz(_dia["prec"].notna()), "c": _matriz_cond("P_L")},
+                 "Q": {"f": _matriz(_dia["flow_obs"].notna()), "c": _matriz_cond("Q")},
+                 "T": {"f": _matriz(_dia["tmean"].notna()), "c": _matriz_cond("T")},
+                 "P_I": {"f": _matriz(_im_full.reindex(_dia.index, method="ffill").notna()), "c": _matriz_cond("P_I")}}
+# evaluación fuera de muestra (2.3)
+_pr = leer(MO / "predicciones_2_3.csv", parse_dates=["fecha"])
+_pr = _pr[_pr.conjunto == "evaluacion"]
+_obs2 = {"P_L ← P_I": cam["P_L_mm_mes"], "Q̄ ← P_L": cam["Q_m3_s"]}
+_mod2 = {"P_L ← P_I": [("ref", "Referencia: climatología"), ("lin", "Regresión lineal"),
+                       ("mes", "Elegido: factor por mes calendario")],
+         "Q̄ ← P_L": [("ref", "Referencia: climatología"), ("lin0", "Regresión lineal"),
+                     ("logmK", "Elegido: ln Q̄ con término por mes y lluvia acumulada")]}
+DATOS["modelos"] = {"fechas": [f"{f:%Y-%m}" for f in idx]}
+for obj, mods in _mod2.items():
+    d2 = {"obs": lista(_obs2[obj].reindex(idx), 2), "mods": []}
+    for cod, nom in mods:
+        s = _pr[(_pr.objetivo == obj) & (_pr.modelo == cod)].groupby("fecha")["estimado"].mean().reindex(idx)
+        d2["mods"].append({"nombre": nom, "y": lista(s, 2)})
+    DATOS["modelos"]["PL" if obj.startswith("P_L") else "Q"] = d2
+# anomalías con la tendencia de Sen (3.4), registro completo
+_clr = leer(TE / "climatologia_referencia_3_2.csv")
+DATOS["tend"] = {}
+for v, s in {"P_L": cam["P_L_mm_mes"], "P_I": _im_full, "Q": cam["Q_m3_s"], "T_PISCOt": cam["T_C"],
+             "T_ERA5L": e5}.items():
+    r = TD.loc[(v, "completo", "MK Hamed-Rao + Sen")]
+    s = s.loc[pd.Timestamp(r.inicio + "-01"):pd.Timestamp(r.fin + "-01")]
+    mu = _clr[_clr.variable == v].set_index("mes")["media"]
+    a = (s - s.index.month.map(mu).values).dropna()
+    t = a.index.year + (a.index.month - 0.5) / 12                      # años decimales, como el script 32
+    b = r.pend / 10                                                    # pendiente por año
+    c = float(np.median(a.values - b * t))                             # ordenada de Sen
+    DATOS["tend"][v] = {"fechas": [f"{f:%Y-%m}" for f in a.index], "a": lista(a, 3),
+                        "mm12": lista(a.rolling(12, center=True, min_periods=10).mean(), 3),
+                        "sen": [round(c + b * t[0], 3), round(c + b * t[-1], 3)],
+                        "sen_x": [f"{a.index[0]:%Y-%m}", f"{a.index[-1]:%Y-%m}"],
+                        "txt": f"Sen {r.pend:+.2f} {r.unidad} [{r.lo:+.2f}, {r.hi:+.2f}], p = {r.p:.3f}",
+                        "unid": r.unidad.split("/")[0] if v.startswith("T") else r.unidad.rsplit("/", 1)[0]}
+
+# panel lateral del control de calidad (1.4): resumen, tratamiento y registro de cada variable
+_rd = leer(CC / "resumen_disponibilidad_1_4.csv")
+_rd = _rd[_rd.periodo.str.startswith("periodo")].set_index("variable")
+_VQC = {"P_L": ("P<sub>L</sub> · precipitación", r"P_L|Todas"), "Q": ("Q̄ · caudal", r"\bQ\b|Todas"),
+        "T": ("T · temperatura", r"\bT\b|Todas"), "P_I": ("P<sub>I</sub> · IMERG", r"P_I")}
 
 # «Cómo se construyó» de cada figura del visor (obligatorio: si falta una entrada, el script se detiene).
 COMO = {
@@ -306,30 +417,140 @@ COMO = {
     "fig_vacios_caudal_4_1.png":
         "Periodograma de Lomb–Scargle con solo los meses de caudal observados completos, frente a la FFT de la serie "
         "rellenada; ambos normalizados por su potencia total.",
+    # gráficas interactivas (clave "int:<nombre>", ver visor_graficas.js)
+    "int:serie11":
+        "P<sub>L</sub> = suma de la precipitación diaria (PISCOp v2.1 promediado en la cuenca por CAMELS-PE), solo meses "
+        "completos. Q̄ = media del caudal diario observado (SENAMHI), convertido de mm/d a m³/s con Q̄ = q̄·A/86.4 y "
+        "A = 2 171.6 km². R = suma de q diario en mm. T = media de la temperatura diaria (PISCOt v1.2) si faltan ≤ 10 % de "
+        "los días. El relleno de caudal sigue tres pasos: interpolación de ln q en huecos ≤ 15 días, escalado de la media "
+        "en meses con ≥ 50 % de días y modelo mensual con el caudal simulado en el resto (validación en el punto 1.4).",
+    "int:temp":
+        "ERA5-Land T2m mensual (0.1°) descargado del CDS y promediado sobre la cuenca ponderando por área (30 celdas). El "
+        "sesgo de cada mes calendario frente a PISCOt se calculó en 1998–2010 y se evaluó fuera de muestra en 2011–2020; "
+        "con él se estima T desde 2021: T<sub>est</sub> = ERA5-Land + sesgo del mes. (b) Media de cada mes calendario en "
+        "1998–2020, solo con los meses en que existen las dos fuentes.",
+    "int:precip":
+        "IMERG mensual: la tasa media (mm/h) se convierte a acumulado con mm/mes = tasa · 24 · días del mes, y se promedia "
+        "sobre la cuenca ponderando cada celda por su área de intersección con el polígono (UTM 17S). CHIRPS (0.05°) y "
+        "PISCOp v3.0 (0.1°) se promediaron igual. P<sub>L</sub> es el promedio de cuenca que entrega CAMELS-PE.",
+    "int:anual":
+        "Suma de los 12 meses de cada año calendario del periodo común (años completos).",
+    "int:qc":
+        "Días válidos contados en el registro diario de CAMELS-PE (P<sub>L</sub>, caudal y T) y meses de IMERG. Un mes es "
+        "completo si faltan ≤ 10 % de sus días, criterio aplicado igual a todas las variables; no se presentan sumas "
+        "parciales como acumulados mensuales completos. Caudal convertido de mm/d a m³/s con A = 2 171.6 km². La condición "
+        "de cada mes (completo, escalado, excluido, sin dato) aparece al pasar el cursor.",
+    "int:clim":
+        "Los meses del periodo común se agrupan por mes calendario y en cada grupo se calculan media, mediana, cuartiles "
+        "y percentiles 10 y 90 (interpolación lineal). Para T se usa PISCOt y, desde 2021, la estimación con ERA5-Land.",
+    "int:anom":
+        "Anomalía = valor del mes − media del mismo mes calendario en el periodo común. La media móvil centrada exige al "
+        "menos 10 de los 12 meses. Para T se usa PISCOt y, desde 2021, la estimación con ERA5-Land.",
+    "int:anomanual":
+        "Suma de las 12 anomalías mensuales de cada año calendario completo del periodo común (media para T); usa la "
+        "variable elegida en la gráfica anterior.",
+    "int:modelos":
+        "Predicciones de la evaluación por bloques de años (script 31): partición B (ajuste 2007–2024, evaluación "
+        "1998–2006) y partición A (ajuste 1998–2015, evaluación 2016–2024). Referencia = climatología del mes calculada "
+        "con los años de ajuste. Modelos elegidos por validación cruzada dentro del ajuste.",
+    "int:tend":
+        "Anomalía = valor del mes − media del mismo mes en 1998–2020. Barras = anomalía mensual; línea gris = media móvil "
+        "de 12 meses; recta = tendencia de Sen con prueba de Mann–Kendall corregida por autocorrelación (Hamed–Rao), del "
+        "script 32. La ordenada de la recta es la mediana de a − b·t.",
 }
 
 
-def figura(p, titulo, que, leer_=None, script=None, ancha=False):
-    """ancha=True: figura a todo el ancho con la ficha debajo (paneles horizontales)."""
+def tarjeta(titulo, tipo, cuerpo, que, como, leer_, meta, clase="fig"):
+    """Tarjeta de figura (diseño del visor de la compañera): título y tipo arriba, figura a todo el ancho y, debajo,
+    «Qué muestra» y «Cómo se construyó» en dos columnas y «Cómo leerla» en una fila completa."""
+    extra = f'<div class="f-leer"><h5>Cómo leerla</h5><p class="leer">{leer_}</p></div>' if leer_ else ""
+    chip = '<span class="tipo int">interactiva</span>' if tipo == "int" else '<span class="tipo">imagen</span>'
+    return f"""
+<figure class="{clase}">
+  <header class="fig-h"><h4>{titulo}</h4>{chip}</header>
+  {cuerpo}
+  <figcaption>
+    <div class="ficha">
+      <div class="f-que"><h5>Qué muestra</h5><p>{que}</p></div>
+      <div class="f-como"><h5>Cómo se construyó</h5><p>{como}</p></div>{extra}
+    </div>
+    <p class="meta">{meta}</p>
+  </figcaption>
+</figure>"""
+
+
+def figura(p, titulo, que, leer_=None, script=None):
     p = Path(p)
     if p.name not in COMO:
         raise KeyError(f"Falta «Cómo se construyó» para {p.name} en COMO")
-    extra = f'<div class="f-leer"><h5>Cómo leerla</h5><p class="leer">{leer_}</p></div>' if leer_ else ""
     pie = f'<span class="script">{html.escape(script)}</span>' if script else ""
-    return f"""
-<figure class="fig{' ancha' if ancha else ''}">
-  <button class="zoom" aria-label="Ampliar figura: {html.escape(titulo)}">
-    <img loading="lazy" src="{img64(p)}" alt="{html.escape(titulo)}">
-  </button>
-  <figcaption>
-    <h4>{titulo}</h4>
-    <div class="ficha">
-      <div class="f-que"><h5>Qué muestra</h5><p>{que}</p></div>
-      <div class="f-como"><h5>Cómo se construyó</h5><p>{COMO[p.name]}</p></div>{extra}
-    </div>
-    <p class="meta">{pie}<a href="{rel(p)}">PNG original</a> <span class="nota">(disponible si se clona el repositorio)</span></p>
-  </figcaption>
-</figure>"""
+    cuerpo = (f'<div class="fig-cuerpo"><button class="zoom" aria-label="Ampliar figura: {html.escape(titulo)}">'
+              f'<img loading="lazy" src="{img64(p)}" alt="{html.escape(titulo)}"></button></div>')
+    return tarjeta(titulo, "img", cuerpo, que, COMO[p.name], leer_,
+                   f'{pie}<a href="{rel(p)}">PNG original</a> <span class="nota">(disponible si se clona el repositorio)</span>')
+
+
+def selector(grafica, opciones, multi=False, etiqueta="Variable"):
+    """Botones para elegir la variable de una gráfica interactiva (multi: varias a la vez)."""
+    b = "".join(f'<button type="button" data-v="{v}" aria-pressed="{"true" if multi or i == 0 else "false"}">{t}</button>'
+                for i, (v, t) in enumerate(opciones))
+    tit = f'<span class="sel-tit">{etiqueta}:</span>' if multi else ""
+    return (f'<div class="selector{" multi" if multi else ""}" data-para="{grafica}" role="group" '
+            f'aria-label="{etiqueta}">{tit}{b}</div>')
+
+
+def grafica(nombre, titulo, que, leer_=None, script=None, controles="", lado=""):
+    """Gráfica interactiva (Plotly, visor_graficas.js). «Cómo se construyó» en COMO["int:<nombre>"].
+    lado: panel lateral junto a la gráfica (control de calidad)."""
+    clave = f"int:{nombre}"
+    if clave not in COMO:
+        raise KeyError(f"Falta «Cómo se construyó» para la gráfica interactiva {nombre} en COMO")
+    plot = f'<div class="plot" data-plot="{nombre}" role="img" aria-label="{html.escape(titulo)}"></div>'
+    cuerpo = (f'{controles}<div class="qc-grid"><div class="fig-cuerpo">{plot}</div>{lado}</div>' if lado
+              else f'<div class="fig-cuerpo">{controles}{plot}</div>')
+    pie = f'<span class="script">{html.escape(script)}</span>' if script else ""
+    return tarjeta(titulo, "int", cuerpo, que, COMO[clave], leer_, pie)
+
+
+TRAT = {
+    "P_L": "Sin días faltantes en 1981–2025. P<sub>L</sub> mensual = suma de los días del mes, solo con meses completos. "
+           "No es una observación directa: es PISCOp v2.1 (pluviómetros de SENAMHI + CHIRPS) promediado sobre la cuenca "
+           "por CAMELS-PE, y no se pudo reproducir con PISCOp v3.0 (−14.5 %). Los meses con menos de 1 mm son meses secos "
+           "reales, no faltantes.",
+    "Q": f"{_rd.loc['Q', 'pct_dias_faltantes']:.1f} % de días faltantes en el periodo común, concentrados en ago–oct y en "
+         f"2019–2021. Con el criterio de completitud (≤ 10 % de días faltantes) quedaban {RL['excl']} meses excluidos; el "
+         f"grupo decidió rellenarlos: (1) huecos ≤ 15 días, interpolación de ln q; (2) meses con ≥ 50 % de días, media × "
+         f"días del mes; (3) el resto, modelo mensual con el caudal simulado de CAMELS-PE. Resultado: {RL['obs']} meses "
+         f"observados completos, {RL['interp']} con días interpolados, {RL['esc']} escalados y {RL['mod']} reconstruido "
+         f"({RL['mes_mod']}). Lo observado se conserva aparte (R_obs, R_flag_obs) y la bandera R_flag indica el origen de "
+         f"cada mes. Validación en la figura de abajo.",
+    "T": f"PISCOt (CAMELS-PE) termina en 2020-12: los {int(_rd.loc['T', 'sin_dato'])} meses desde 2021 no tienen dato "
+         f"observado. Se estimaron con ERA5-Land + sesgo de cada mes calendario (MAE {float(val['MAE_C']):.2f} °C en la "
+         f"validación {val['evaluacion']}) y se guardan en una columna aparte, sin unir las fuentes. En las estadísticas "
+         f"del punto 1.3 solo entra PISCOt.",
+    "P_I": f"Producto mensual (IMERG V07 Final): los {N_MESES} meses del periodo común están completos. La tasa media "
+           f"(mm/h) se convirtió a mm/mes con los días de cada mes y se promedió sobre la cuenca ponderando por área. "
+           f"Nunca baja de ≈ 2 mm/mes y sus picos son mucho menores que los de P<sub>L</sub> (limitación del producto, "
+           f"no error de datos).",
+}
+
+
+def panel_qc(v, primero):
+    nombre, patron = _VQC[v]
+    r = _rd.loc[v]
+    falt = "—" if pd.isna(r.pct_dias_faltantes) else f"{r.pct_dias_faltantes:.1f} %"
+    chips = "".join(f'<div class="dato">{t}<b>{x}</b></div>' for t, x in [
+        ("Días faltantes", falt), ("Meses completos", int(r.completo)), ("Escalados", int(r.escalado)),
+        ("Excluidos", int(r.excluido)), ("Sin dato", int(r.sin_dato))])
+    filas = reg[reg.variable.str.contains(patron, regex=True)]
+    items = "".join(f'<li><span class="estado e-{html.escape(x.estado.replace(" ", "-"))}">{html.escape(x.estado)}</span> '
+                    f'<b>{html.escape(x.id)}</b> · {html.escape(str(x.fecha_o_periodo))}: {html.escape(x.anomalia)} '
+                    f'<i>→ {html.escape(x.decision)}</i></li>' for _, x in filas.iterrows())
+    return (f'<div class="qc-var" data-var="{v}"{"" if primero else " hidden"}>'
+            f'<h5>{nombre}</h5><p class="nota">Periodo común {PER}, antes del relleno.</p>'
+            f'<div class="datos-clave">{chips}</div>'
+            f'<h5>Qué se hizo</h5><p>{TRAT[v]}</p>'
+            f'<h5>Comprobaciones y decisiones</h5><ul class="qc-lista">{items}</ul></div>')
 
 
 def lista_morfometria():
@@ -427,7 +648,7 @@ secciones = [
                    "Colores de (c) según la convención de los mapas hidrogeológicos (IAH/UNESCO): azul = acuífero "
                    "poroso, verdes = acuíferos fisurados y kársticos, marrones = acuitardos y acuífugos. La agrupación "
                    "es una propuesta del grupo (por porosidad y permeabilidad esperadas) que debe contrastarse con "
-                   "INGEMMET y ANA.", script="07b_mapas_contexto_fisico.py", ancha=True)
+                   "INGEMMET y ANA.", script="07b_mapas_contexto_fisico.py")
             + f'<h3 class="sub2">Fuentes de humedad e inversión térmica</h3><p class="intro">Radiosondeos observados '
               f'de Trujillo (IGRA2 84516, a ~40 km de la salida de la cuenca): {SND["n"]} sondeos de las 7 a.m. entre '
               f'{SND["ini"]:%Y-%m} y {SND["fin"]:%Y-%m}, con inversión en el {SND["frec"]:.0f} % de ellos; y transporte '
@@ -439,7 +660,7 @@ secciones = [
                      "golpe, unos 5 °C, y por encima la humedad cae a menos del 50 %. Debajo queda el aire marino frío y "
                      "húmedo; encima, aire de la troposfera libre que desciende y se calienta. La capa de nubes queda "
                      "atrapada a la altura del cierre de la cuenca y no llega a la cuenca alta.",
-                     script="34a_descarga_perfiles.py, 34b_perfiles_inversion.py", ancha=True)
+                     script="34a_descarga_perfiles.py, 34b_perfiles_inversion.py")
             + figura(IV / "fig_temporadas_humedad_inversion.png",
                      "De dónde llega la humedad y qué la frena: estación seca frente a estación húmeda",
                      f"<b>La diferencia entre temporadas no está en cuánto vapor pasa sobre la cuenca, sino en si puede "
@@ -459,8 +680,7 @@ secciones = [
                      "El transporte de humedad no equivale a lluvia: llueve donde el flujo converge y asciende. Los "
                      "sondeos cubren dos años y son de las 7 a.m. La explicación física (anticiclón del Pacífico sur, "
                      "corriente de Humboldt, convección andina) debe sustentarse con bibliografía.",
-                     script="24_era5_vientos_humedad.py, 34b_perfiles_inversion.py, 35_temporadas_humedad_inversion.py",
-                     ancha=True)
+                     script="24_era5_vientos_humedad.py, 34b_perfiles_inversion.py, 35_temporadas_humedad_inversion.py")
             + f'<h3 class="sub2">¿Representan los sondeos el periodo común?</h3><p class="intro">Los sondeos de '
               f'Trujillo cubren {SND["ini"]:%Y-%m} a {SND["fin"]:%Y-%m}, casi todo fuera del periodo común ({PER}). '
               f'Se separan dos preguntas: (1) si ERA5 reproduce los sondeos cuando se comparan los mismos meses, y '
@@ -477,8 +697,7 @@ secciones = [
                      "ERA5 es un promedio mensual en niveles de presión (cada ~25–50 hPa) y una celda de 0.25° que mezcla "
                      "mar y tierra: suaviza la inversión y no sirve para medir su intensidad. Sí distingue las dos "
                      "temporadas por la forma del perfil: capa casi isoterma en may–sep, enfriamiento continuo en dic–abr.",
-                     script="34a_descarga_perfiles.py, 34b_perfiles_inversion.py, 34c_contraste_sondeos_era5.py",
-                     ancha=True)
+                     script="34a_descarga_perfiles.py, 34b_perfiles_inversion.py, 34c_contraste_sondeos_era5.py")
             + figura(IV / "fig_contraste_2_era5_periodos.png",
                      f"Comparación 2 · ERA5: meses de los sondeos (2024-10 a 2026-09) frente al periodo común ({PER})",
                      f"Una sola fuente, así que la diferencia es del periodo. En dic–abr los meses con sondeos son casi "
@@ -490,28 +709,34 @@ secciones = [
                      "sondeos puede tomarse como representativa de 1998–2024 en su estructura (posición respecto a la "
                      "cuenca, contraste entre temporadas), no en sus valores exactos. Dos años son pocos; el grupo debe "
                      "decidir cuánto peso darle a esta comprobación.",
-                     script="34a_descarga_perfiles.py, 34c_contraste_sondeos_era5.py", ancha=True)),
+                     script="34a_descarga_perfiles.py, 34c_contraste_sondeos_era5.py")),
     seccion("p11", "Series mensuales de precipitación, caudal y temperatura",
             f"Series construidas desde los registros diarios: P<sub>L</sub> = suma diaria; Q̄ = media diaria (m³/s); "
             f"R = caudal en lámina (mm/mes); T = media diaria. Todas las figuras usan el <b>periodo común {PER}</b> "
-            f"({N_MESES} meses): los meses con precipitación de CAMELS-PE y de IMERG a la vez.",
-            figura(SM / "fig_series_mensuales_1_1.png", "Series mensuales en paneles alineados",
-                   "Los cuatro paneles comparten el eje de tiempo. El caudal y la escorrentía tienen sus faltantes "
-                   "rellenados (ver control de calidad): los marcadores naranjas indican meses con días interpolados o "
-                   "escalados, el rombo rojo un mes reconstruido con un modelo, y el fondo naranja los meses que sin "
-                   "relleno quedaban excluidos. Desde 2021 la temperatura es una estimación con ERA5-Land (línea "
-                   "discontinua morada), no PISCOt.",
-                   "Los máximos de 1998 y 2017 corresponden a eventos de El Niño; el caudal queda alto también en los "
-                   "meses siguientes.", script="15_figura_series_1_1.py")
-            + figura(SM / "fig_T_camels_vs_era5land.png", "Temperatura: PISCOt frente a ERA5-Land",
-                     f"PISCOt (la temperatura de CAMELS-PE) termina en 2020. Se descargó ERA5-Land para compararlo y para "
-                     f"estimar 2021 en adelante. En los {TB['n']} meses con ambas fuentes varían igual (r = {TB['r']:.2f}), "
-                     f"pero ERA5-Land es {abs(TB['sesgo']):.1f} °C más fría de forma casi constante. La estimación desde "
-                     f"2021 (ERA5-Land + sesgo de cada mes) tuvo un error medio de {float(val['MAE_C']):.2f} °C al validarla "
-                     f"en {val['evaluacion']}. Las dos fuentes no se unen en una sola serie.",
-                     "(a) Series superpuestas; (b) ciclo anual medio. Solo unos 0.5 °C del desfase se explican por la "
-                     "altitud del relieve del modelo. Otra causa probable es la definición: PISCOt usa (Tmáx + Tmín)/2, "
-                     "y ERA5-Land promedia las 24 horas.", script="17_era5land_temperatura.py"), "Punto 1.1"),
+            f"({N_MESES} meses): los meses con precipitación de CAMELS-PE y de IMERG a la vez. En las gráficas "
+            f"interactivas, arrastre para hacer zoom, use la barra inferior para elegir un intervalo y haga doble clic "
+            f"para volver a la vista completa.",
+            grafica("serie11", "Series mensuales en paneles alineados",
+                    f"Los cuatro paneles comparten el eje de tiempo: al pasar el cursor se leen los valores del mismo mes. "
+                    f"El caudal y la escorrentía tienen sus faltantes rellenados ({RL['interp']} meses con días "
+                    f"interpolados, {RL['esc']} escalados y {RL['mod']} reconstruido con modelo, {RL['mes_mod']}; el "
+                    f"método de cada mes está en la columna R_flag del CSV); el fondo rojo claro marca los {RL['excl']} "
+                    f"meses que sin relleno quedaban excluidos. Desde 2021 la temperatura es una estimación con ERA5-Land "
+                    f"(línea discontinua), no PISCOt. Con los botones se eligen los paneles visibles.",
+                    "Los máximos de 1998 y 2017 corresponden a eventos de El Niño; el caudal queda alto también en los "
+                    "meses siguientes.", script="09_datos_camels_pe_el_tambo.py, relleno_caudal.py",
+                    controles=selector("serie11", [("P_L", "P<sub>L</sub>"), ("Q", "Q̄"), ("R", "R"), ("T", "T")],
+                                       multi=True, etiqueta="Paneles visibles"))
+            + grafica("temp", "Temperatura: PISCOt frente a ERA5-Land",
+                      f"PISCOt (la temperatura de CAMELS-PE) termina en 2020. En los {TB['n']} meses con ambas fuentes "
+                      f"varían igual (r = {TB['r']:.2f}), pero ERA5-Land es {abs(TB['sesgo']):.1f} °C más fría de forma "
+                      f"casi constante. La estimación desde 2021 (ERA5-Land + sesgo de cada mes) tuvo un error medio de "
+                      f"{float(val['MAE_C']):.2f} °C al validarla en {val['evaluacion']}. Las dos fuentes no se unen en "
+                      f"una sola serie. El ciclo anual (b) tiene la misma forma en las dos: casi plano, con el máximo en "
+                      f"agosto–septiembre.",
+                      "Solo unos 0.5 °C del desfase se explican por la altitud del relieve del modelo. Otra causa probable "
+                      "es la definición: PISCOt usa (Tmáx + Tmín)/2, y ERA5-Land promedia las 24 horas.",
+                      script="17_era5land_temperatura.py"), "Punto 1.1"),
     seccion("p12", "Precipitación satelital IMERG",
             f"IMERG V07 Final (0.1°) promediado sobre la cuenca, ponderando cada celda por su área dentro de la cuenca. "
             f"Frente a P<sub>L</sub>: media {IM['PI']:.1f} vs {IM['PL']:.1f} mm/mes, sesgo {IM['sesgo']:+.1f} mm/mes, "
@@ -523,15 +748,16 @@ secciones = [
                    f"completas, {PW['borde']:.0f} % del peso en celdas de borde (≈ {PW['eq']:.1f} celdas equivalentes). "
                    "(b) Desnivel del terreno dentro de cada celda: una sola celda de IMERG abarca más de 1 000 m de "
                    "desnivel; los pesos no consideran la topografía.", script="12_mapa_pesos_imerg.py")
-            + figura(SM / "fig_P_L_vs_IMERG_mensual.png", "P<sub>L</sub> frente a IMERG, mes a mes",
-                     "IMERG sigue bien el ritmo de la lluvia, pero sus picos son mucho más bajos, sobre todo en los "
-                     "meses más lluviosos.", script="10_imerg_mensual_y_grafica.py")
-            + figura(SM / f"fig_precipitacion_camels_{INI:%Y}_{FIN:%Y}.png", "P<sub>L</sub> de CAMELS-PE",
-                     "(a) Acumulado mensual y media móvil de 12 meses; (b) totales anuales.",
-                     script="11_grafica_precipitacion_camels.py")
-            + figura(SM / f"fig_precipitacion_imerg_{INI:%Y}_{FIN:%Y}.png", "P<sub>I</sub> de IMERG",
-                     "Mismo formato y mismos ejes que la figura anterior, para compararlas a simple vista.",
-                     script="16_grafica_precipitacion_imerg.py"), "Punto 1.2"),
+            + grafica("precip", "P<sub>L</sub> frente a IMERG, mes a mes",
+                      "IMERG sigue bien el ritmo de la lluvia, pero sus picos son mucho más bajos, sobre todo en los "
+                      "meses más lluviosos. CHIRPS y PISCOp v3.0 están ocultas: haga clic en su nombre en la leyenda "
+                      "para compararlas.",
+                      script="10_imerg_mensual_y_grafica.py, 26_chirps_cuenca.py, 14_piscop_v3_cuenca.py")
+            + grafica("anual", "Totales anuales de P<sub>L</sub> e IMERG",
+                      f"IMERG queda por debajo de P<sub>L</sub> todos los años; las mayores diferencias son las de "
+                      f"{', '.join(str(a) for a in (_anual.P_L - _anual.P_I).nlargest(3).index)} "
+                      f"({(_anual.P_L - _anual.P_I).nlargest(3).min():.0f} mm/año o más).", script="10_imerg_mensual_y_grafica.py, 11_grafica_precipitacion_camels.py"),
+            "Punto 1.2"),
     seccion("p13", "Distribución de los valores mensuales",
             "Histogramas, diagramas de caja y estadísticos descriptivos en el periodo común. P<sub>L</sub> y P<sub>I</sub> "
             "usan los mismos meses y los mismos límites de clase.",
@@ -549,10 +775,17 @@ secciones = [
     seccion("p14", "Control de calidad",
             "Comprobaciones sobre los datos diarios (fechas, códigos de faltante, negativos, secuencias constantes, "
             "tramos interpolados, picos aislados), revisiones manuales y registro de anomalías con la decisión tomada.",
-            figura(CC / "fig_disponibilidad_1_4.png", "Disponibilidad año × mes",
-                   "Condición de cada mes y variable según lo observado, antes del relleno. Los faltantes de caudal se "
-                   "concentran en septiembre (y agosto–octubre) casi todos los años, un patrón sistemático, además de "
-                   "un periodo con más vacíos en 2019–2021.", script="19_control_calidad_1_4.py")
+            grafica("qc", "Disponibilidad y control de calidad por variable",
+                    "Arriba, la condición de cada mes (año × mes) antes de cualquier relleno: azul completo, celeste "
+                    "escalado (≤ 10 % de días faltantes), rojo excluido (> 10 %) y gris sin dato; el número es la cantidad "
+                    "de días con dato en los meses incompletos. Abajo, la serie diaria con los vacíos sin rellenar; en el "
+                    "caudal, los días interpolados se marcan con puntos negros. A la derecha, lo que se comprobó y se "
+                    "decidió con esa variable. Los faltantes de caudal se concentran en septiembre (y agosto–octubre) casi "
+                    "todos los años, además de un periodo con más vacíos en 2019–2021.",
+                    script="19_control_calidad_1_4.py, 09_datos_camels_pe_el_tambo.py",
+                    controles=selector("qc", [("P_L", "P<sub>L</sub>"), ("Q", "Q̄ caudal"), ("T", "T"),
+                                              ("P_I", "P<sub>I</sub> IMERG")]),
+                    lado=f'<aside class="qc-lado">{"".join(panel_qc(v, i == 0) for i, v in enumerate(_VQC))}</aside>')
             + figura(SM / "fig_validacion_relleno_caudal.png", "Relleno de los faltantes de caudal y su validación",
                      f"Decisión del grupo: rellenar los faltantes de caudal. Método, en orden: (1) huecos diarios de hasta "
                      f"15 días, interpolando el logaritmo del caudal entre el día anterior y el posterior, lo que sigue la "
@@ -574,10 +807,13 @@ secciones = [
             f"estándar, cuartiles y percentiles 10 y 90. P<sub>L</sub> llega a su máximo en marzo "
             f"({cmes('P_L', 3)['media']:.0f} mm de media) y a su mínimo en julio–agosto; el caudal llega a su máximo en "
             f"abril ({cmes('Q', 4)['media']:.0f} m³/s).",
-            figura(CL / "fig_climatologia_1_5a.png", "Ciclo anual medio con bandas de dispersión",
-                   "Línea continua = media; discontinua = mediana; banda oscura = rango intercuartílico; banda clara = "
-                   "percentiles 10–90. Las bandas describen cuánto cambian los años entre sí; no son intervalos de "
-                   "confianza.", script="20_climatologia_1_5a.py")
+            grafica("clim", "Ciclo anual medio con bandas de dispersión",
+                    "Línea continua = media; discontinua = mediana; banda oscura = rango intercuartílico (Q1–Q3); banda "
+                    "clara = percentiles 10–90. Elija la variable con los botones.",
+                    "Las bandas describen cuánto cambian los años entre sí; no son intervalos de confianza.",
+                    script="20_climatologia_1_5a.py",
+                    controles=selector("clim", [("P_L", "P<sub>L</sub>"), ("P_I", "P<sub>I</sub>"), ("Q", "Q̄"),
+                                                ("R", "R"), ("T", "T")]))
             + figura(CL / "mapas_precipitacion_mensual_chirps.png", "Precipitación media de cada mes sobre la cuenca",
                      "Doce mapas con la precipitación media de cada mes calendario (CHIRPS, celdas de 0.05°), con una "
                      "escala discreta de naranja (seco) a azul oscuro (húmedo). Cada fila es un trimestre: DEF y MAM "
@@ -603,10 +839,17 @@ secciones = [
                      f"el CV es inestable porque la media es casi cero.",
                      "SI = índice de estacionalidad (Walsh & Lawler, 1981); PCI = índice de concentración (Oliver, 1980); "
                      "centroide = Markham (1970).", script="21_ciclo_anual_1_5b.py")
-            + figura(CL / "fig_anomalias_1_5b.png", "Anomalías respecto al ciclo anual",
-                     f"Diferencia de cada mes respecto a la media de su mes calendario, con la media móvil de 12 meses. "
-                     f"Años más húmedos según P<sub>L</sub>: {humedos}; más secos: {secos}.",
-                     script="21_ciclo_anual_1_5b.py")
+            + grafica("anom", "Anomalías mensuales respecto al ciclo anual",
+                      "Barras = diferencia de cada mes respecto a la media de su mes calendario (azul por encima de lo "
+                      "normal, rojo por debajo; en T, rojo = más cálido). Línea = media móvil centrada de 12 meses, que "
+                      "deja ver los años húmedos y secos sin el ciclo estacional.",
+                      script="21_ciclo_anual_1_5b.py",
+                      controles=selector("anom", [("P_L", "P<sub>L</sub>"), ("P_I", "P<sub>I</sub>"), ("R", "R"),
+                                                  ("T", "T")]))
+            + grafica("anomanual", "Anomalía anual (año calendario)",
+                      f"Suma de las anomalías de cada año (media para T), para la variable elegida arriba. Años más "
+                      f"húmedos según P<sub>L</sub>: {humedos}; más secos: {secos}.",
+                      script="21_ciclo_anual_1_5b.py")
             + tabla(t15, "Indicadores de estacionalidad (periodo común)",
                     "R = caudal en lámina. Mes seco según Bagnouls–Gaussen (P < 2T). Criterios de régimen: unimodal si "
                     "hay un solo pico y el armónico anual domina; bimodal si hay dos picos y el semianual es comparable; "
@@ -648,6 +891,13 @@ secciones = [
                      f"(ρ = {RZ['acu']:.2f}): la cuenca almacena agua y la entrega con retraso. En anomalías la asociación "
                      f"se debilita pero persiste (ρ = {RZ['an1']:.2f} con un mes de rezago).",
                      "La lluvia siempre antecede al caudal; nunca se usa lluvia futura.", script="30_relaciones_2_1.py")
+            + grafica("modelos", "Observado frente a modelado, fuera del periodo de ajuste",
+                      "Cada modelo se ajustó con unos años y se evaluó con otros que no vio; el hueco 2007–2015 no se "
+                      "evalúa. Para la lluvia local, el factor por mes calendario corrige el sesgo de IMERG en los meses "
+                      "húmedos; para el caudal, el modelo logarítmico sigue la recesión y el estiaje, pero subestima la "
+                      "crecida de El Niño costero de 2017. Elija el objetivo con los botones; las series se activan o "
+                      "desactivan en la leyenda.", script="31_modelos_2_2_2_3.py",
+                      controles=selector("modelos", [("PL", "P<sub>L</sub> ← IMERG"), ("Q", "Q̄ ← P<sub>L</sub>")]))
             + figura(MO / "fig_evaluacion_resumen_2_3.png", "¿Mejoran los modelos a una referencia sencilla?",
                      "Habilidad fuera del periodo de ajuste en dos particiones por bloques de años (A: ajuste 1998–2015, "
                      "evaluación 2016–2024; B: ajuste 2007–2024, evaluación 1998–2006). Para P<sub>L</sub> a partir de "
@@ -674,11 +924,16 @@ secciones = [
             "Mann–Kendall con pendiente de Sen (estacional en la serie original; con corrección por autocorrelación de "
             "Hamed–Rao en las anomalías y en cada mes) y LOWESS como curva exploratoria. Pendientes por década; en "
             "precipitación son cambios del acumulado mensual, no del anual.",
-            figura(TE / "fig_series_tendencias_3_4.png", "Series originales, anomalías y anomalías estandarizadas",
-                   f"La temperatura sube en las dos fuentes (anomalías, Sen: PISCOt {pend3('T_PISCOt')} °C/década; "
-                   f"ERA5-Land {pend3('T_ERA5L')} °C/década) de forma casi lineal. P<sub>L</sub> no muestra tendencia "
-                   f"({pend3('P_L')} mm/mes/década) y el caudal tampoco ({pend3('Q')} m³/s/década). IMERG sí baja "
-                   f"({pend3('P_I')} mm/mes/década), aunque la lluvia de referencia en el mismo periodo no lo hace.",
+            grafica("tend", "Anomalías y tendencia de Sen, registro completo",
+                    f"La temperatura sube en las dos fuentes (PISCOt {pend3('T_PISCOt')} °C/década; ERA5-Land "
+                    f"{pend3('T_ERA5L')} °C/década) de forma casi lineal. P<sub>L</sub> no muestra tendencia "
+                    f"({pend3('P_L')} mm/mes/década) y el caudal tampoco ({pend3('Q')} m³/s/década). IMERG sí baja "
+                    f"({pend3('P_I')} mm/mes/década), aunque la lluvia de referencia en el mismo periodo no lo hace. "
+                    f"Elija la variable con los botones.", script="32_tendencias_3.py",
+                    controles=selector("tend", [("P_L", "P<sub>L</sub>"), ("P_I", "P<sub>I</sub>"), ("Q", "Q̄"),
+                                                ("T_PISCOt", "T PISCOt"), ("T_ERA5L", "T ERA5-Land")]))
+            + figura(TE / "fig_series_tendencias_3_4.png", "Series originales, anomalías y anomalías estandarizadas",
+                   f"Las mismas tendencias vistas en la serie original, en anomalías y en anomalías estandarizadas.",
                    "Columna izquierda: serie original con un modelo aditivo (efecto de cada mes + curva suave) y OLS con "
                    "efectos de mes. Centro: anomalía a = X − μ<sub>mes</sub> con banda de remuestreo por bloques. Derecha: "
                    "z = a/s<sub>mes</sub>. El panel de caudal tiene el eje recortado por la crecida de 1998.",
@@ -791,13 +1046,19 @@ nav = [("cuenca", "Cuenca"), ("contexto", "Contexto físico"), ("p11", "1.1 Seri
        ("p4", "4. Fourier"), ("p5", "5. Clima global"), ("datos", "Datos")]
 
 CSS = """
-:root{--bg:#f6f5f2;--card:#ffffff;--ink:#1d1d1b;--ink2:#55534e;--line:#e2e0da;--acc:#1b6ca8;--chip:#e7f0f8;--code:#f0efeb}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151514;--card:#1f1f1d;--ink:#ecebe7;--ink2:#a9a7a1;--line:#34332f;--acc:#6aaee6;--chip:#1c2d3d;--code:#2a2a27}}
-:root[data-theme="dark"]{--bg:#151514;--card:#1f1f1d;--ink:#ecebe7;--ink2:#a9a7a1;--line:#34332f;--acc:#6aaee6;--chip:#1c2d3d;--code:#2a2a27}
+:root{--bg:#f6f5f2;--card:#ffffff;--ink:#1d1d1b;--ink2:#55534e;--line:#e2e0da;--acc:#1b6ca8;--chip:#e7f0f8;--code:#f0efeb;
+  --muted:#898781;--axis:#c3c2b7;--pos:#2a78d6;--neg:#e34948;--excl:rgba(208,59,59,.12);
+  --vPL:#2a78d6;--vPI:#eb6834;--vQ:#1baf7a;--vT:#c0392b;--vTE:#7d1f16;--apoyo:#898781}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#151514;--card:#1f1f1d;--ink:#ecebe7;--ink2:#a9a7a1;--line:#34332f;--acc:#6aaee6;--chip:#1c2d3d;--code:#2a2a27;
+  --muted:#898781;--axis:#383835;--pos:#3987e5;--neg:#e66767;--excl:rgba(230,103,103,.18);
+  --vPL:#3987e5;--vPI:#d95926;--vQ:#199e70;--vT:#e66767;--vTE:#f0a39b;--apoyo:#a3a19b}}
+:root[data-theme="dark"]{--bg:#151514;--card:#1f1f1d;--ink:#ecebe7;--ink2:#a9a7a1;--line:#34332f;--acc:#6aaee6;--chip:#1c2d3d;--code:#2a2a27;
+  --muted:#898781;--axis:#383835;--pos:#3987e5;--neg:#e66767;--excl:rgba(230,103,103,.18);
+  --vPL:#3987e5;--vPI:#d95926;--vQ:#199e70;--vT:#e66767;--vTE:#f0a39b;--apoyo:#a3a19b}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,sans-serif}
 header.top{background:var(--card);border-bottom:1px solid var(--line)}
-.wrap{max-width:1600px;margin:0 auto;padding:0 16px}
+.wrap{max-width:1200px;margin:0 auto;padding:0 16px}
 header.top .wrap{padding-top:28px;padding-bottom:22px}
 h1{font-size:1.75rem;line-height:1.25;margin:0 0 6px}
 .sub{color:var(--ink2);margin:0}
@@ -820,44 +1081,56 @@ section.activa{display:block}
 .pasos .sig{margin-left:auto}
 h2{font-size:1.4rem;margin:0 0 8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .chip{font-size:.75rem;font-weight:600;background:var(--chip);color:var(--acc);padding:3px 9px;border-radius:999px}
-.intro{color:var(--ink2);max-width:880px;margin:0 0 18px}
-.fig{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:0 0 22px;overflow:hidden}
-.zoom{all:unset;display:block;width:100%;box-sizing:border-box;cursor:zoom-in;background:#fff;padding:10px}
-.zoom:focus-visible{outline:3px solid var(--acc);outline-offset:-3px}
-.fig img{display:block;max-width:100%;max-height:82vh;width:auto;height:auto;margin:0 auto}
-figcaption{padding:14px 18px 16px;border-top:1px solid var(--line)}
-figcaption h4{margin:0 0 10px;font-size:1.05rem}
-figcaption p{margin:0 0 8px;max-width:900px}
-.ficha{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin:0 0 10px;font-size:.92rem}
-.ficha h5{margin:8px 0 2px;font-size:.78rem;text-transform:uppercase;letter-spacing:.04em;color:var(--acc)}
-.ficha h5:first-child{margin-top:0}
-.ficha>div>h5{margin-top:0}
-.ficha>div+div{margin-top:8px}
-/* Figura ancha (paneles 1 × n): imagen centrada; ficha centrada debajo, "Qué muestra" y "Cómo se construyó"
-   en dos columnas y "Cómo leerla" en una fila completa */
-.fig.ancha figcaption{max-width:1200px;margin:0 auto;text-align:left}
-.fig.ancha figcaption h4{text-align:center}
-.fig.ancha .meta{text-align:center}
-.fig.ancha .ficha p{max-width:none}
-@media (min-width:800px){
-  .fig.ancha .ficha{display:grid;grid-template-columns:1fr 1fr;gap:10px 28px}
-  .fig.ancha .ficha>div+div{margin-top:0}
-  .fig.ancha .f-leer{grid-column:1 / -1;border-top:1px solid var(--line);padding-top:8px}
-}
-.ficha p{margin:0 0 6px}
+.intro{color:var(--ink2);margin:0 0 20px;text-align:justify;hyphens:auto}
+/* Tarjeta de figura (diseño del visor de la compañera): título y tipo arriba; figura a todo el ancho de la
+   columna (1200 px); debajo, "Qué muestra" y "Cómo se construyó" en dos columnas y "Cómo leerla" en una fila */
+.fig{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:0 0 24px;overflow:hidden}
+.fig-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:14px 18px 6px}
+.fig-h h4{margin:0;font-size:1.08rem}
+.tipo{font-size:.72rem;font-weight:600;letter-spacing:.02em;color:var(--ink2);border:1px solid var(--line);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.tipo.int{color:var(--acc);background:var(--chip);border-color:transparent}
+.fig-cuerpo{padding:4px 12px 8px}
+.zoom{all:unset;display:block;box-sizing:border-box;width:100%;cursor:zoom-in;background:#fff;border-radius:8px;padding:8px}
+.zoom:focus-visible{outline:3px solid var(--acc)}
+.zoom img{display:block;max-width:100%;max-height:80vh;width:auto;height:auto;margin:0 auto}
+.plot{width:100%;min-height:420px}
+.selector{display:flex;flex-wrap:wrap;gap:4px;padding:4px 6px 8px}
+.fig>.selector{padding:4px 18px 8px}
+.selector button{border:1px solid var(--line);background:var(--bg);color:var(--ink2);border-radius:6px;padding:3px 12px;font:inherit;font-size:.88rem;cursor:pointer}
+.selector button[aria-pressed="true"]{background:var(--chip);color:var(--acc);border-color:var(--acc);font-weight:600}
+.selector button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.selector .sel-tit{align-self:center;color:var(--ink2);font-size:.85rem;margin-right:4px}
+figcaption{padding:12px 18px 4px;border-top:1px solid var(--line)}
+.ficha{display:grid;grid-template-columns:1fr 1fr;gap:6px 28px}
+.ficha>div{min-width:0}
+.ficha h5{margin:0 0 4px;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.ficha p{margin:0 0 8px;font-size:.95rem}
+.f-leer{grid-column:1 / -1;border-top:1px solid var(--line);padding-top:8px}
 .leer{color:var(--ink2)}
-.sub2{margin:34px 0 6px;font-size:1.2rem}
-@media (min-width:1200px){
-  .fig{display:grid;grid-template-columns:minmax(0,1fr) 400px;align-items:start}
-  .fig .zoom{align-self:center}
-  figcaption{border-top:0;border-left:1px solid var(--line);height:100%}
-  .fig.ancha{display:block}
-  .fig.ancha figcaption{border-left:0;border-top:1px solid var(--line);height:auto}
+.sub2{margin:40px 0 6px;padding-top:24px;border-top:1px solid var(--line);font-size:1.2rem}
+/* control de calidad: gráfica y panel de la variable elegida lado a lado */
+.qc-grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:4px 12px;align-items:start}
+.qc-lado{padding:4px 18px 8px 4px;font-size:.92rem}
+.qc-lado h5{margin:10px 0 4px;font-size:.8rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.qc-lado h5:first-child{margin-top:4px;font-size:1rem;text-transform:none;letter-spacing:0;color:var(--ink)}
+.qc-lado p{margin:0 0 6px}
+.qc-lado .datos-clave{display:flex;flex-wrap:wrap;margin-top:6px;gap:6px}.qc-lado .dato{padding:5px 9px;font-size:.78rem}.qc-lado .dato b{font-size:.95rem}
+.qc-lista{margin:0;padding-left:0;list-style:none;max-height:300px;overflow-y:auto}
+.qc-lista li{padding:6px 0;border-bottom:1px solid var(--line);font-size:.86rem}
+.qc-lista i{color:var(--ink2)}
+.estado{display:inline-block;font-size:.7rem;font-weight:600;border-radius:999px;padding:0 7px;border:1px solid var(--line);color:var(--ink2)}
+.estado.e-corregido{color:var(--acc);border-color:var(--acc)}
+.estado.e-incierto{color:var(--neg);border-color:var(--neg)}
+@media (max-width:900px){.qc-grid{grid-template-columns:1fr}.qc-lado{padding:4px 12px 8px}}
+@media (max-width:760px){
+  .ficha{grid-template-columns:1fr}
+  .fig-h{padding:12px 12px 4px}.fig-cuerpo{padding:4px 4px 8px}figcaption{padding:10px 12px 4px}
+  .zoom{padding:4px}.plot{min-height:360px}
 }
 .params{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
 .param{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:.85rem;color:var(--ink2)}
 .param b{display:block;color:var(--ink);font-size:1rem;font-variant-numeric:tabular-nums}
-.meta{font-size:.82rem;color:var(--ink2);display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0}
+.meta{font-size:.8rem;color:var(--ink2);display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0;padding:2px 0 12px}
 .meta a{color:var(--acc)}
 .script{font-family:ui-monospace,Consolas,monospace;background:var(--code);padding:1px 6px;border-radius:4px}
 .nota{color:var(--ink2);font-size:.82rem}
@@ -876,7 +1149,7 @@ footer code{font-family:ui-monospace,Consolas,monospace;background:var(--code);p
 #visor img{max-width:100%;max-height:100%;background:#fff;border-radius:6px}
 #visor button{position:absolute;top:12px;right:16px;font-size:1.6rem;background:none;border:0;color:#fff;cursor:pointer}
 .tema{margin-left:auto;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:.85rem}
-@media (max-width:600px){h1{font-size:1.35rem}figcaption{padding:12px}.zoom{padding:4px}}
+@media (max-width:600px){h1{font-size:1.35rem}}
 """
 
 JS = """
@@ -889,7 +1162,8 @@ secs.forEach((s,i)=>{const d=document.createElement('div');d.className='pasos';
 function mostrar(){const id=location.hash.slice(1);const s=secs.find(x=>x.id===id)||secs[0];
   secs.forEach(x=>x.classList.toggle('activa',x===s));
   enl.forEach(a=>{if(a.getAttribute('href')==='#'+s.id){a.setAttribute('aria-current','page');a.scrollIntoView({block:'nearest',inline:'nearest'});}else a.removeAttribute('aria-current');});
-  document.title=titulos[s.id]+' · Cuenca El Tambo';window.scrollTo(0,0);}
+  document.title=titulos[s.id]+' · Cuenca El Tambo';window.scrollTo(0,0);
+  if(window.Graficas)Graficas.dibujarEn(s);}
 window.addEventListener('hashchange',mostrar);mostrar();
 const visor=document.getElementById('visor'),vimg=visor.querySelector('img');
 document.querySelectorAll('.zoom').forEach(b=>b.addEventListener('click',()=>{const i=b.querySelector('img');vimg.src=i.src;vimg.alt=i.alt;visor.classList.add('abierto');visor.querySelector('button').focus();}));
@@ -899,8 +1173,15 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')cerrar();});
 const raiz=document.documentElement,bt=document.querySelector('.tema');
 function aplicar(t){if(t)raiz.setAttribute('data-theme',t);else raiz.removeAttribute('data-theme');}
 try{aplicar(localStorage.getItem('tema'));}catch(e){}
-bt.addEventListener('click',()=>{const oscuro=raiz.getAttribute('data-theme')==='dark'||(!raiz.getAttribute('data-theme')&&matchMedia('(prefers-color-scheme: dark)').matches);const t=oscuro?'light':'dark';aplicar(t);try{localStorage.setItem('tema',t);}catch(e){}});
+bt.addEventListener('click',()=>{const oscuro=raiz.getAttribute('data-theme')==='dark'||(!raiz.getAttribute('data-theme')&&matchMedia('(prefers-color-scheme: dark)').matches);const t=oscuro?'light':'dark';aplicar(t);try{localStorage.setItem('tema',t);}catch(e){}
+  if(window.Graficas)Graficas.redibujar();});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(window.Graficas)Graficas.redibujar();});
 """
+
+# Plotly (incluido en el repositorio, sin CDN) + datos + gráficas: el visor sigue siendo un solo archivo sin conexión
+PLOTLY = (Path(__file__).parent / "recursos" / "plotly-2.35.2.min.js").read_text(encoding="utf-8")
+GRAFICAS_JS = (Path(__file__).parent / "visor_graficas.js").read_text(encoding="utf-8")
+DATOS_JSON = json.dumps(DATOS, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 
 pagina = f"""<!doctype html>
 <html lang="es">
@@ -934,7 +1215,7 @@ pagina = f"""<!doctype html>
 {tabla(fuentes, "Fuentes de datos")}
 <div class="tabla-cont"><h4>Cómo reproducir</h4>
 <p>Con Python 3 y las dependencias de <code>requirements.txt</code>, ejecute en <code>Hidrologiat1/Codigos/</code>, en este orden:
-<code>06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 29 → 27 → 30 → 31 → 32 → 33 → 22</code>.
+<code>06 → 07a → 13 → 14 → 09 → 10 → 28 → 26 → 07b → 11 → 12 → 17 → 15 → 16 → 18 → 19 → 20 → 21 → 23 → 24 → 25 → 29 → 27 → 30 → 31 → 32 → 33 → 34a → 34b → 34c → 35 → 22</code>.
 El periodo común se calcula en <code>periodo_comun.py</code>. Las descargas de IMERG y ERA5-Land requieren cuentas personales
 (NASA Earthdata y Copernicus CDS), cuyas credenciales no se incluyen en el repositorio.</p></div>
 </section>
@@ -945,10 +1226,13 @@ resultados. Archivo autocontenido: funciona sin conexión y sin instalar nada. L
 datos de las hipótesis, que el grupo debe sustentar con bibliografía.
 </div></footer>
 <div id="visor" role="dialog" aria-modal="true" aria-label="Figura ampliada"><button type="button" aria-label="Cerrar">✕</button><img alt=""></div>
+<script>{PLOTLY}</script>
+<script>window.DATOS = {DATOS_JSON};</script>
+<script>{GRAFICAS_JS}</script>
 <script>{JS}</script>
 </body>
 </html>"""
 
 SALIDA.write_text(pagina, encoding="utf-8")
-print(f"Visor: {SALIDA} ({SALIDA.stat().st_size / 2**20:.1f} MB, {pagina.count('<figure')} figuras, "
-      f"{pagina.count('<table')} tablas)")
+print(f"Visor: {SALIDA} ({SALIDA.stat().st_size / 2**20:.1f} MB, {pagina.count('<figure')} figuras "
+      f"({pagina.count('class=\"plot\"')} interactivas), {pagina.count('<table')} tablas)")
