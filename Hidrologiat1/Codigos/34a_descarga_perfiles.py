@@ -2,8 +2,8 @@
 Descarga de perfiles verticales para analizar la inversión térmica sobre la cuenca El Tambo.
 
 1. Radiosondeos observados de Trujillo (IGRA2, NOAA NCEI)
-   Estación PEM00084516 «RS TRUJILLO» (WMO 84516), −8.0439°, −79.0593°, 127 m s.n.m., a ~40 km al SO de la
-   salida de la cuenca. Lanzamientos a las 12 UTC (7 a.m. hora local), desde 2024-10.
+   Estación PEM00084516 «RS TRUJILLO» (WMO 84516), −8.0439°, −79.0593°, 127 m s.n.m., a ~65 km al SO de
+   El Tambo (salida de la cuenca). Lanzamientos a las 12 UTC (7 a.m. hora local), desde 2024-10.
    Durre, I., Yin, X., Vose, R. S., Applequist, S., Arnfield, J. (2018). Enhancing the Data Coverage in the
    Integrated Global Radiosonde Archive. J. Atmos. Oceanic Technol., 35, 1753–1770. doi:10.1175/JTECH-D-17-0223.1
    Archivo: https://www.ncei.noaa.gov/data/integrated-global-radiosonde-archive/access/data-por/

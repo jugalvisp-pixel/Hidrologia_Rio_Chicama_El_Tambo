@@ -117,8 +117,8 @@ fig.suptitle("De dónde llega la humedad y qué la frena: estación seca frente 
              fontsize=13, fontweight="bold", x=0.02, ha="left", y=0.975)
 fig.text(0.02, 0.012,
          f"IVT: flujo de vapor de agua integrado en la vertical, ERA5 mensual {INI:%Y-%m} a {FIN:%Y-%m} (malla de 1°), "
-         f"una flecha cada {PASO}°; contorno rojo: cuenca El Tambo. Perfiles: radiosondeos IGRA2 84516 (Trujillo, a ~40 km "
-         f"de la salida de la cuenca),\n{sond.fecha.min():%Y-%m} a {sond.fecha.max():%Y-%m}, 12 UTC; inversión = primer "
+         f"una flecha cada {PASO}°; contorno rojo: cuenca El Tambo. Perfiles: radiosondeos IGRA2 84516 (Trujillo, a ~65 km "
+         f"al SO de El Tambo),\n{sond.fecha.min():%Y-%m} a {sond.fecha.max():%Y-%m}, 12 UTC; inversión = primer "
          "aumento continuo de T con la altura desde la superficie (≥ 1 °C, < 3 500 m). Scripts 24, 34a, 34b y 35.",
          fontsize=7.5, color="#52514e")
 fig.subplots_adjust(left=0.05, right=0.985, top=0.92, bottom=0.07)
